@@ -1,0 +1,23 @@
+{
+  "name": "2026年Thao的开支账本 (云端协同版)",
+  "short_name": "Thao的账本",
+  "description": "基于 Serverless 的家庭协同记账本",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#d97706",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
