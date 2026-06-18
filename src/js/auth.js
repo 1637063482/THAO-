@@ -16,7 +16,7 @@ import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
 const auth = getAuth(app);
 
 const SESSION_KEY = "family_expense_app_last_active";
-const SESSION_TIMEOUT_MS = 10 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
 let sessionCheckIntervalId = null;
 
 export { auth };

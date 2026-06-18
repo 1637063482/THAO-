@@ -61,6 +61,7 @@ export function setupRealtimeListener() {
       state.appState.settings = {};
     }
     if (window.softUpdateDOM) window.softUpdateDOM();
+    if (window.renderStreakPanel) window.renderStreakPanel();
     updateSyncStatus("synced");
     // 每次快照到达都隐藏 loading（首次加载、超时重登录等场景都需要）
     const loadingOverlay = document.getElementById("loading-overlay");

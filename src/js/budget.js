@@ -152,6 +152,7 @@ export function calculateAll() {
   updateBudgetProgress();
   updateGlobalStats(globalTotalIncome, globalTotalExpense);
   updateCharts();
+  updateBudgetUI();
 }
 
 function updateGlobalStats(inc, exp) {

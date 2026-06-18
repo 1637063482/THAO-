@@ -32,6 +32,7 @@ window.exportToCSV = exportToCSV;
 window.calculateAll = calculateAll;
 window.softUpdateDOM = softUpdateDOM;
 window.fullRebuildDOM = fullRebuildDOM;
+window.renderStreakPanel = renderStreakPanel;
 
 setCurrencyGetter(function() { return state.currentCurrency; });
 setRateGetter(function() { return state.fxMode === "auto" ? state.fxRateAuto : state.fxRateManual; });
@@ -109,6 +110,20 @@ document.body.addEventListener("focusout", function(e) {
     }
   }
 });
+
+// 页面浏览/交互刷新活跃计时（节流30秒，避免频繁写 localStorage）
+(function initActivityTracking() {
+  var _activityThrottle = 0;
+  function onUserActivity() {
+    var now = Date.now();
+    if (now - _activityThrottle < 30000) return;
+    _activityThrottle = now;
+    if (state.currentUser) updateActivityTime();
+  }
+  document.addEventListener("click", onUserActivity, true);
+  document.addEventListener("scroll", onUserActivity, true);
+  document.addEventListener("keydown", onUserActivity, true);
+})();
 
 window.addEventListener("beforeunload", function(e) {
   if (state.isSaving && navigator.onLine) { e.preventDefault(); e.returnValue = "数据尚未同步，确定离开吗？"; }

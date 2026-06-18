@@ -4,6 +4,7 @@ import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
 import { Fireworks } from "./fireworks.js";
+import { triggerCloudSave } from "./sync.js";
 
 export function fullRebuildDOM() {
   ["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"].forEach(function(id) {
@@ -162,15 +163,24 @@ function getDateStrings() {
  */
 function getCalibratedStreak() {
   var dates = getDateStrings();
+  var settings = state.appState.settings;
   var lastDate = "";
   var streak = 0;
-  try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-  try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
 
-  // 超过一天未记账 → streak 归零，同步回 localStorage
+  // 优先读取云端同步的 streak 数据
+  if (settings && settings.expense_last_date !== undefined) {
+    lastDate = settings.expense_last_date;
+    streak = parseInt(settings.expense_streak || "0");
+  } else {
+    // 兜底：localStorage（旧数据兼容 / 离线）
+    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
+    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
+  }
+
   if (lastDate !== dates.todayStr && lastDate !== dates.yesterdayStr) {
     streak = 0;
     try { localStorage.setItem("expense_streak", "0"); } catch (e) {}
+    // 仅本地校准显示，不写入云端（避免竞态覆盖其他终端的正确并发写入）
   }
 
   return {
@@ -179,15 +189,26 @@ function getCalibratedStreak() {
   };
 }
 
-/**
- * 记账后更新 streak（必须已确认今天还没记过）
- */
 function incrementStreak() {
   var dates = getDateStrings();
+  var settings = state.appState.settings;
   var lastDate = "";
   var streak = 0;
-  try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-  try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
+
+  // 优先读取云端同步的 streak
+  if (settings && settings.expense_last_date !== undefined) {
+    lastDate = settings.expense_last_date;
+    streak = parseInt(settings.expense_streak || "0");
+  } else {
+    // 兜底：localStorage
+    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
+    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
+  }
+
+  // 今天已记过，不重复累加
+  if (lastDate === dates.todayStr) {
+    return streak;
+  }
 
   if (lastDate === dates.yesterdayStr) {
     streak += 1;
@@ -195,10 +216,20 @@ function incrementStreak() {
     streak = 1;
   }
 
+  // 同步写入 localStorage（离线缓存）
   try {
     localStorage.setItem("expense_streak", String(streak));
     localStorage.setItem("expense_last_date", dates.todayStr);
   } catch (e) {}
+
+  // 同步写入云端 settings
+  state.appState.settings.expense_streak = streak;
+  state.appState.settings.expense_last_date = dates.todayStr;
+  if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
+  state.pendingUpdates.settings.expense_streak = streak;
+  state.pendingUpdates.settings.expense_last_date = dates.todayStr;
+  triggerCloudSave();
+
   return streak;
 }
 
@@ -213,10 +244,10 @@ export function renderStreakPanel() {
     + '<div class="flex items-center justify-between">'
     + '<div class="flex items-center gap-3">'
     + '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-200/60">' + Icons.flame('w-7 h-7 text-white') + '</div>'
-    + '<div><div class="text-xs text-slate-500 font-medium">记账连续天数</div>'
-    + '<div class="text-2xl font-black text-slate-800">' + s.streak + ' <span class="text-sm font-normal text-slate-500">天</span></div></div></div>'
+    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">记账连续天数</div>'
+    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">天</span></div></div></div>'
     + '<div class="text-right">'
-    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + '今日已打卡</span>' : '<span class="text-xs text-slate-400">THAO，今天还没记账哦~</span>')
+    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + '今日已打卡</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">THAO，今天还没记账哦~</span>')
     + '</div></div>'
     + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + '太棒了！THAO！你已经坚持了 ' + s.streak + ' 天，继续保持！</p></div>' : '')
     + '</div>';
@@ -229,18 +260,19 @@ export function updateStreakAfterRecord() {
   var lastDate = "";
   try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
 
-  var isFirstToday = (lastDate !== dates.todayStr);
-  var newStreak = state.currentStreak;
-
-  if (isFirstToday) {
-    // 今天首次记账 → 更新 streak
-    newStreak = incrementStreak();
-    state.currentStreak = newStreak;
-    renderStreakPanel();
+  // 今天已记过，不重复累加
+  if (lastDate === dates.todayStr) {
+    // 今天非首次记账，烟花照放
+    Fireworks.launch({ duration: 6000 });
+    return;
   }
 
-  // 🎆 烟花：每次记账都触发（不受 streak 限制）
-  if (isFirstToday && (newStreak === 7 || newStreak === 30)) {
+  var newStreak = incrementStreak();
+  state.currentStreak = newStreak;
+  renderStreakPanel();
+
+  // 🎆 烟花触发
+  if (newStreak === 7 || newStreak === 30) {
     showToast("恭喜！连续记账" + newStreak + "天成就达成！");
     Fireworks.launch({ duration: 12000 });
   } else {
