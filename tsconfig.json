@@ -10,5 +10,5 @@
     "checkJs": false,
     "types": ["node", "vitest/globals"]
   },
-  "include": ["src/**/*.ts", "tests/**/*.ts", "tests/**/*.d.ts"]
+  "include": ["src/**/*.ts", "tests/**/*.ts"]
 }
