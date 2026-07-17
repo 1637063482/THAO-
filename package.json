@@ -9,11 +9,14 @@
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest",
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run tests/rules\"",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^4.0.1",
     "@types/node": "^26.1.1",
     "autoprefixer": "^10.4.20",
+    "firebase-tools": "^15.24.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
