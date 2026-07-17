@@ -74,7 +74,7 @@
 - 目标: 建立默认拒绝的安全规则事实源与测试入口。
 - 修改文件: `firebase.json`（新建）、`firestore.rules`（新建）、`firestore.indexes.json`（新建）、`tests/rules/legacy-ledger.rules.test.js`（新建）、`package.json`、`package-lock.json`
 - 涉及模块: Firebase 安全
-- 详细步骤: 配置 emulator；在未完成 household 迁移前把 legacy path 规则参数化为明确 allowlist/membership 临时策略；禁止仅以“已登录”作为全部授权；测试未登录、非成员、成员读写和非法字段。
+- 详细步骤: 配置 emulator；为当前固定共享账本建立“双人授权、其他 UID 拒绝”的候选规则测试；禁止仅以“已登录”作为全部授权；不在客户端或仓库文档中写入真实 UID；测试未登录、未授权账号、授权账号读写和非法字段。线上 Rules 已由项目所有者配置，本任务不部署且不声称替代线上规则。
 - 禁止修改: 生产 Rules、客户端数据路径、真实 Firebase 项目。
 - 完成标准: 本地规则测试可重复；默认未匹配路径 deny。
 - 测试要求: 每个 allow 至少有一个对称 deny；直接 SDK 越权测试通过。
@@ -90,27 +90,27 @@
 - 完成标准: API 不接受 NaN/Infinity/小数 minor unit；跨币结果可复现。
 - 测试要求: VND/CNY/JPY、边界值、负值策略、溢出、0.1 类误差、舍入半值。
 
-## Task 009：建立 Household 与 Membership 领域模型
+## Task 009：固化固定双人共享单账本边界
 
 - Task ID: T009
-- 目标: 定义账本租户、角色与权限矩阵的纯领域模型。
-- 修改文件: `src/domain/household.ts`（新建）、`src/domain/membership.ts`（新建）、`tests/unit/domain/membership.test.ts`（新建）、`docs/adr/001-household-boundary.md`（新建）
-- 涉及模块: Domain、架构决策
-- 详细步骤: 定义 Owner/Admin/Member/Viewer 能力；最后 Owner、移除成员、角色变更规则；ADR 记录多家庭边界。
+- 目标: 明确产品只有两个既有 Firebase 账号共同使用一本账，阻止后续任务再次引入多家庭租户设计。
+- 修改文件: `docs/adr/001-fixed-shared-ledger-boundary.md`（新建）；删除误建的 `src/domain/household.ts`、`src/domain/membership.ts`、`tests/unit/domain/membership.test.ts`、`docs/adr/001-household-boundary.md`
+- 涉及模块: 产品边界、架构决策
+- 详细步骤: 记录单账本、双人同权、Firebase Auth/Rules 授权来源；明确不做 Household、Membership、角色、邀请和所有权转让；规定业务模型不携带 `householdId`，交易保留 `createdBy/updatedBy` 仅用于追溯。
 - 禁止修改: Firebase、页面、现有共享文档。
-- 完成标准: 权限决策为纯函数且没有 Firebase 依赖。
-- 测试要求: 全角色×能力矩阵、最后 Owner、不活跃成员。
+- 完成标准: ADR 与 PRD/FRD/架构/任务计划一致，代码库不存在未使用的多家庭领域模型。
+- 测试要求: `rg` 检查不得残留生产代码中的 Household/Membership/householdId；全量测试、类型检查和构建通过。
 
-## Task 010：建立新 Firestore household repository 与 Rules
+## Task 010：核对固定共享账本授权契约
 
 - Task ID: T010
-- 目标: 在 emulator 中创建/读取隔离的 household 和 member 资源。
-- 修改文件: `src/infrastructure/firebase/household-repository.ts`（新建）、`src/infrastructure/firebase/converters.ts`（新建）、`firestore.rules`、`tests/integration/household-repository.test.ts`（新建）、`tests/rules/household.rules.test.js`（新建）
-- 涉及模块: Infrastructure、Rules
-- 详细步骤: 实现 typed converter；创建者成为 Owner；所有查询带 householdId；Rules 通过 member 文档校验；加入跨 household 测试。
-- 禁止修改: 线上项目、legacy 文档、邀请流程。
-- 完成标准: A 家庭成员不能读取 B 家庭任何资源；repository 不暴露任意路径拼接。
-- 测试要求: emulator 集成 + Rules 权限矩阵；不存在成员文档时 deny。
+- 目标: 证明当前固定年度账本路径只允许两个已授权账号访问，第三个账号不能因为“已登录”而获得权限。
+- 修改文件: `tests/rules/legacy-ledger.rules.test.js`、`firestore.rules`（仅在与项目所有者提供的线上规则核对后更新）、`docs/firebase-access-contract.md`（新建）
+- 涉及模块: Firebase Rules 契约、文档
+- 详细步骤: 记录线上规则与仓库候选规则的差异；用匿名、授权账号 A、授权账号 B、未授权账号四类 emulator 上下文覆盖固定路径；验证两名使用者同权；不创建新账本、成员文档、邀请或角色。
+- 禁止修改: Firebase Auth 账号、线上 Rules、客户端账本路径、真实 UID、生产数据。
+- 完成标准: 本地测试表达双人同权/第三方拒绝；线上配置未导出时明确标记“待人工核对”，不得伪称线上已验证。
+- 测试要求: 两个 allow 与匿名/第三 UID deny；非法字段与删除 deny；`npm run test:rules` 通过。
 
 ## Task 011：建立 Account 模型与 repository
 
@@ -118,10 +118,10 @@
 - 目标: 支持账户创建、更新和归档。
 - 修改文件: `src/domain/account.ts`（新建）、`src/application/accounts/manage-account.ts`（新建）、`src/infrastructure/firebase/account-repository.ts`（新建）、`firestore.rules`、`tests/unit/domain/account.test.ts`（新建）、`tests/integration/account-repository.test.ts`（新建）
 - 涉及模块: Accounts、Rules
-- 详细步骤: 账户字段/版本校验；应用用例；Firestore converter；归档而非硬删；按角色限制配置。
+- 详细步骤: 账户字段/版本校验；应用用例；Firestore converter；归档而非硬删；两个已授权账号同权管理。
 - 禁止修改: 旧余额字段、交易模型、UI。
 - 完成标准: account round-trip 字段无漂移；归档账户仍可读且不可用于新交易（后续交易用例验证）。
-- 测试要求: 币种、opening balance、版本冲突、跨账本、角色。
+- 测试要求: 币种、opening balance、版本冲突、固定账本路径、未授权 UID。
 
 ## Task 012：建立 Transaction 模型
 
@@ -173,7 +173,7 @@
 - 目标: 测试账本可通过快速记账创建独立交易，旧用户行为不被强制切换。
 - 修改文件: `src/application/feature-flags.ts`（新建）、`src/ui/transactions/quick-add-controller.ts`（新建）、`src/js/quick-add.js`、`tests/integration/quick-add-transaction.test.ts`（新建）
 - 涉及模块: UI、Transactions、Migration
-- 详细步骤: 以 household feature flag 选择 legacy/new path；新入口统一解析金额/日期/账户/分类并调用 create use case；显示 queued/confirmed；失败保留表单。
+- 详细步骤: 以 transaction-model feature flag 选择 legacy/new path；新入口统一解析金额/日期/账户/分类并调用 create use case；显示 queued/confirmed；失败保留表单。
 - 禁止修改: 未开启 flag 的旧写入行为、表格 UI、线上 flag。
 - 完成标准: flag off 完全走旧路径；flag on 只创建 transaction，不写旧 entries。
 - 测试要求: 两分支、重复点击幂等、验证错误、离线 queued、历史日期不误算今天。
@@ -206,7 +206,7 @@
 - 目标: 从 transaction 列表生成可下钻的月度汇总。
 - 修改文件: `src/application/reports/build-summary.ts`（新建）、`src/application/reports/report-types.ts`（新建）、`tests/unit/reports/build-summary.test.ts`（新建）
 - 涉及模块: Reports、Transactions
-- 详细步骤: 过滤 soft-deleted；按本地日/分类/账户/成员聚合；排除转账；每个 bucket 保留 transaction IDs；断言总额守恒。
+- 详细步骤: 过滤 soft-deleted；按本地日/分类/账户/记录人聚合；排除转账；每个 bucket 保留 transaction IDs；断言总额守恒。
 - 禁止修改: Chart.js、旧 `calculateAll`、Firestore projection。
 - 完成标准: summary 总收入/支出与逐笔整数求和一致，bucket 可下钻。
 - 测试要求: 多币基准金额、跨月边界、删除、空数据、大整数、守恒属性测试。
