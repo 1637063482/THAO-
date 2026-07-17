@@ -45,9 +45,12 @@ export function clearPending() {
 }
 
 export function mergeBackPending(copy) {
-  if (copy.balances) Object.assign(state.pendingUpdates.balances, copy.balances);
-  if (copy.entries) Object.assign(state.pendingUpdates.entries, copy.entries);
-  if (copy.settings) Object.assign(state.pendingUpdates.settings, copy.settings);
+  ["balances", "entries", "settings"].forEach((section) => {
+    if (!copy[section]) return;
+    Object.entries(copy[section]).forEach(([key, value]) => {
+      if (!(key in state.pendingUpdates[section])) state.pendingUpdates[section][key] = value;
+    });
+  });
 }
 
 export function hasPending() {
