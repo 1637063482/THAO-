@@ -297,7 +297,13 @@ async function importDataHandler(event) {
   try {
     var result = await importData(file);
     if (result) { showToast("数据导入成功"); setTimeout(function() { window.location.reload(); }, 1000); }
-  } catch (err) { showToast("解析失败", true); }
+  } catch (err) {
+    const messages = {
+      FILE_TOO_LARGE: "导入文件过大",
+      DANGEROUS_TEXT: "导入内容包含不安全文本",
+    };
+    showToast(messages[err.code] || "导入文件格式不受支持", true);
+  }
 }
 
 function exportToCSV() {

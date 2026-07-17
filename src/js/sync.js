@@ -1,6 +1,7 @@
 import { doc, setDoc, onSnapshot } from "firebase/firestore";
 import { db, projectId } from "./firebase.js";
 import { state, copyPending, clearPending, mergeBackPending, hasPending } from "./state.js";
+import { LEGACY_IMPORT_MAX_BYTES, validateLegacyImport } from "./import-schema.js";
 
 let unsubscribeSnapshot = null;
 
@@ -139,21 +140,32 @@ export function teardownListener() {
 
 export async function importData(file) {
   if (!file || !state.currentUser) return false;
+  if (file.size > LEGACY_IMPORT_MAX_BYTES) {
+    const error = new Error("导入文件过大");
+    error.code = "FILE_TOO_LARGE";
+    throw error;
+  }
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = async function (e) {
       try {
         const importedData = JSON.parse(e.target.result);
-        if (importedData && importedData.entries) {
-          if (!confirm("警告：导入将覆盖当前云端的所有数据，确定要继续吗？")) return resolve(false);
-          const loadingOverlay = document.getElementById("loading-overlay");
-          if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
-          const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
-          await setDoc(docRef, importedData, { merge: false });
-          resolve(true);
+        const validation = validateLegacyImport(importedData, { serializedBytes: new TextEncoder().encode(e.target.result).length });
+        if (!validation.ok) {
+          const error = new Error("导入数据格式不受支持");
+          error.code = validation.code;
+          error.path = validation.path;
+          throw error;
         }
+        if (!confirm("警告：导入将覆盖当前云端的所有数据，确定要继续吗？")) return resolve(false);
+        const loadingOverlay = document.getElementById("loading-overlay");
+        if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
+        const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
+        await setDoc(docRef, validation.data, { merge: false });
+        resolve(true);
       } catch (err) { reject(err); }
     };
+    reader.onerror = () => reject(reader.error || new Error("文件读取失败"));
     reader.readAsText(file);
   });
 }
