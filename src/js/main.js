@@ -9,6 +9,7 @@ import { fullRebuildDOM, softUpdateDOM, renderMonthTable, renderStreakPanel, upd
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
 import { openQuickAdd, closeQuickAdd, submitQuickAdd } from "./quick-add.js";
 import { initIcons } from "./icons.js";
+import { buildLegacyCsv } from "./export.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -300,30 +301,14 @@ async function importDataHandler(event) {
 }
 
 function exportToCSV() {
-  var cats = expenseCategories;
-  var monthsData = Array.from({ length: 12 }, function(_, i) { return { id: i + 1, days: getDaysInMonth(state.activeYear, i + 1) }; });
-  var csvContent = "\uFEFF--- " + state.activeYear + "年Thao的云端开支账本 ---\n\n--- 年初资产 ---\n账户类型,金额\n";
-  csvContent += "银行卡," + (state.appState.balances["bal-bank"] || "0") + "\n";
-  csvContent += "支付宝," + (state.appState.balances["bal-alipay"] || "0") + "\n";
-  csvContent += "微信钱包," + (state.appState.balances["bal-wechat"] || "0") + "\n";
-  csvContent += "现金及其他," + (state.appState.balances["bal-other"] || "0") + "\n\n";
-  monthsData.forEach(function(month) {
-    csvContent += "--- " + state.activeYear + "年" + month.id + "月 ---\n";
-    csvContent += "日期," + cats.map(function(c) { return c.name; }).join(",") + ",当日总支出,当日收入,备注\n";
-    for (var d = 1; d <= month.days; d++) {
-      var rowStr = month.id + "月" + d + "日,";
-      rowStr += cats.map(function(cat) { return state.appState.entries[month.id + "_" + d + "_" + cat.id] || "0"; }).join(",") + ",";
-      rowStr += "," + (state.appState.entries[month.id + "_" + d + "_income"] || "0") + ",";
-      rowStr += (state.appState.entries[month.id + "_" + d + "_remark"] || "").replace(/,/g, ",");
-      csvContent += rowStr + "\n";
-    }
-    csvContent += "\n";
+  var csvContent = buildLegacyCsv({
+    year: state.activeYear,
+    balances: state.appState.balances,
+    entries: state.appState.entries,
+    categories: expenseCategories,
+    daysInMonth: getDaysInMonth,
+    evaluate: safeEval,
   });
-  csvContent += "\n--- 年末资产 ---\n账户类型,金额\n";
-  csvContent += "银行卡," + (state.appState.balances["end-bal-bank"] || "0") + "\n";
-  csvContent += "支付宝," + (state.appState.balances["end-bal-alipay"] || "0") + "\n";
-  csvContent += "微信钱包," + (state.appState.balances["end-bal-wechat"] || "0") + "\n";
-  csvContent += "现金及其他," + (state.appState.balances["end-bal-other"] || "0") + "\n";
   var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   var link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
