@@ -35,13 +35,13 @@
                         <label class="block text-xs font-semibold text-slate-500 mb-1">
                             <span data-icon="lock" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>密码
                         </label>
-                        <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="至少6位" onkeydown="if(event.key==='Enter')window.handleLogin()">
+                        <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="请输入密码" onkeydown="if(event.key==='Enter')window.handleLogin()">
                     </div>
                     <div id="auth-error" class="hidden text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
                 </div>
                 <div class="flex flex-col gap-2">
                     <button onclick="window.handleLogin()" class="btn-primary w-full text-base py-3">登录</button>
-                    <button onclick="window.handleRegister()" class="btn-ghost w-full text-sm py-2.5">注册新账号</button>
+                    <p class="text-center text-xs text-slate-400">仅限已配置的两个账号登录</p>
                 </div>
             </div>
         </div>
@@ -118,9 +118,9 @@
                         <span id="import-label-text">导入</span>
                         <input type="file" id="import-file" class="hidden" accept=".json" onchange="window.importData(event)">
                     </label>
-                    <button onclick="window.shareApp()" class="btn-ghost text-xs py-2" title="邀请家人">
+                    <button onclick="window.shareApp()" class="btn-ghost text-xs py-2" title="分享应用链接">
                         <span data-icon="link" data-icon-class="w-4 h-4"></span>
-                        <span id="invite-label-text">邀请</span>
+                        <span id="invite-label-text">分享</span>
                     </button>
                     <button onclick="window.exportToCSV()" class="btn-primary text-xs py-2">
                         <span data-icon="download" data-icon-class="w-4 h-4"></span>

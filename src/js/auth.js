@@ -4,7 +4,6 @@
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
@@ -106,23 +105,6 @@ export async function handleLogin() {
     if (loadingOverlay) loadingOverlay.style.display = "none";
     const errEl = document.getElementById("auth-error");
     if (errEl) { errEl.innerText = "登录失败: 账号或密码错误"; errEl.classList.remove("hidden"); }
-  }
-}
-
-export async function handleRegister() {
-  const email = document.getElementById("auth-email")?.value;
-  const pwd = document.getElementById("auth-password")?.value;
-  const errEl = document.getElementById("auth-error");
-  if (errEl) errEl.classList.add("hidden");
-  if (!email || !pwd || pwd.length < 6) {
-    if (errEl) { errEl.innerText = "需输入有效邮箱，且密码至少6位"; errEl.classList.remove("hidden"); }
-    return;
-  }
-  try {
-    await createUserWithEmailAndPassword(auth, email, pwd);
-    showToast("账号注册成功并已登录");
-  } catch (e) {
-    if (errEl) { errEl.innerText = "注册失败: " + e.message; errEl.classList.remove("hidden"); }
   }
 }
 

@@ -105,9 +105,9 @@
 
 - Task ID: T010
 - 目标: 证明当前固定年度账本路径只允许两个已授权账号访问，第三个账号不能因为“已登录”而获得权限。
-- 修改文件: `tests/rules/legacy-ledger.rules.test.js`、`firestore.rules`（仅在与项目所有者提供的线上规则核对后更新）、`docs/firebase-access-contract.md`（新建）
-- 涉及模块: Firebase Rules 契约、文档
-- 详细步骤: 记录线上规则与仓库候选规则的差异；用匿名、授权账号 A、授权账号 B、未授权账号四类 emulator 上下文覆盖固定路径；验证两名使用者同权；不创建新账本、成员文档、邀请或角色。
+- 修改文件: `src/js/auth.js`、`src/js/main.js`、`index.html`、`tests/unit/fixed-access-entry.test.js`（新建）、`tests/rules/legacy-ledger.rules.test.js`、`firestore.rules`（仅在与项目所有者提供的线上规则核对后更新）、`docs/firebase-access-contract.md`（新建）
+- 涉及模块: 登录入口、Firebase Rules 契约、文档
+- 详细步骤: 移除应用内自助注册入口与 Firebase 注册 API，只保留既有账号登录；记录线上规则与仓库候选规则的差异；用匿名、授权账号 A、授权账号 B、未授权账号四类 emulator 上下文覆盖固定路径；验证两名使用者同权；不创建新账本、邀请或角色。
 - 禁止修改: Firebase Auth 账号、线上 Rules、客户端账本路径、真实 UID、生产数据。
 - 完成标准: 本地测试表达双人同权/第三方拒绝；线上配置未导出时明确标记“待人工核对”，不得伪称线上已验证。
 - 测试要求: 两个 allow 与匿名/第三 UID deny；非法字段与删除 deny；`npm run test:rules` 通过。
