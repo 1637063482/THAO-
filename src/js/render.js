@@ -62,24 +62,18 @@ export function renderMonthTable(monthId) {
     var cellsHtml = "";
     expenseCategories.forEach(function(cat) {
       var key = monthId + "_" + d + "_" + cat.id;
-      var raw = state.appState.entries[key] || "";
-      var displayVal = raw ? formatDisplay(safeEval(raw)) : "";
-      cellsHtml += '<td><input type="text" id="entry-' + monthId + '-' + d + '-' + cat.id + '" data-type="entry" data-key="' + key + '" class="cell-input" value="' + displayVal + '" data-raw="' + raw + '" placeholder="·"></td>';
+      cellsHtml += '<td><input type="text" id="entry-' + monthId + '-' + d + '-' + cat.id + '" data-type="entry" data-key="' + key + '" class="cell-input" value="" data-raw="" placeholder="·"></td>';
     });
 
     var incomeKey = monthId + "_" + d + "_income";
-    var incomeRaw = state.appState.entries[incomeKey] || "";
-    var incomeDisplay = incomeRaw ? formatDisplay(safeEval(incomeRaw)) : "";
-
     var remarkKey = monthId + "_" + d + "_remark";
-    var remarkVal = state.appState.entries[remarkKey] || "";
 
     rowsHtml += '<tr id="row-' + monthId + '-' + d + '" class="' + rowClass + '">';
     rowsHtml += '<td class="sticky-col">' + monthId + '/' + d + '</td>';
     rowsHtml += cellsHtml;
     rowsHtml += '<td class="total-col"><input type="text" id="total-exp-' + monthId + '-' + d + '" class="cell-input total-exp-input" readonly placeholder="·"></td>';
-    rowsHtml += '<td class="income-col"><input type="text" id="entry-' + monthId + '-' + d + '-income" data-type="entry" data-key="' + incomeKey + '" class="cell-input income-input" value="' + incomeDisplay + '" data-raw="' + incomeRaw + '" placeholder="·"></td>';
-    rowsHtml += '<td class="remark-col"><input type="text" id="entry-' + monthId + '-' + d + '-remark" data-type="entry" data-key="' + remarkKey + '" class="cell-input remark-input" value="' + remarkVal + '" data-raw="' + remarkVal + '" placeholder=""></td>';
+    rowsHtml += '<td class="income-col"><input type="text" id="entry-' + monthId + '-' + d + '-income" data-type="entry" data-key="' + incomeKey + '" class="cell-input income-input" value="" data-raw="" placeholder="·"></td>';
+    rowsHtml += '<td class="remark-col"><input type="text" id="entry-' + monthId + '-' + d + '-remark" data-type="entry" data-key="' + remarkKey + '" class="cell-input remark-input" value="" data-raw="" placeholder=""></td>';
     rowsHtml += '</tr>';
   }
 
@@ -130,6 +124,16 @@ export function renderMonthTable(monthId) {
     + '</div></div>';
 
   container.innerHTML = tableHtml;
+
+  // Assign untrusted ledger values through DOM properties, never HTML strings.
+  for (var inputDay = 1; inputDay <= monthDays; inputDay++) {
+    expenseCategories.forEach(function(cat) {
+      var entryKey = monthId + "_" + inputDay + "_" + cat.id;
+      updateDOMFromState("entry-" + monthId + "-" + inputDay + "-" + cat.id, state.appState.entries[entryKey]);
+    });
+    updateDOMFromState("entry-" + monthId + "-" + inputDay + "-income", state.appState.entries[monthId + "_" + inputDay + "_income"]);
+    updateDOMFromState("entry-" + monthId + "-" + inputDay + "-remark", state.appState.entries[monthId + "_" + inputDay + "_remark"], false);
+  }
 
   var monthlyChartTitle = document.getElementById("monthly-chart-title");
   if (monthlyChartTitle) monthlyChartTitle.innerText = monthId + "月";
