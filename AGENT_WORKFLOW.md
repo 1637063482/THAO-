@@ -146,7 +146,7 @@ Terra 每次启动只执行以下算法：
 - Reviewer 的审查记录 commit 位于同一 Task 分支，作为下一轮的正式输入。
 - `CHANGES_REQUESTED` 后 Coder 在同一分支追加修复，不改写历史、不 force push。
 - `APPROVED` 后才合并或以该 approved head 作为下一 Task 基线。
-- 当前 T013/T014 已直接提交到 `main`，作为历史例外；从 T015 起执行上述分支规则。
+- 当前 T013/T014 位于共用修复分支 `fix/streak-t013-t014`；Terra 批准后才能合并。从 T015 起每个 Task 使用独立分支。
 
 ## 8. 固定启动语句
 
@@ -163,4 +163,3 @@ Terra 每次启动只执行以下算法：
 ```
 
 这两条启动语句在所有后续 Task 中保持不变。Task 细节只能从仓库事实源读取，不再嵌入聊天 Prompt。
-
