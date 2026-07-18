@@ -2,11 +2,6 @@
 // config.js - 全局配置与常量
 // ==========================================
 
-export const REAL_CURRENT_YEAR = new Date().getFullYear();
-export const TODAY = new Date();
-export const CURRENT_MONTH = TODAY.getMonth() + 1;
-export const CURRENT_DAY = TODAY.getDate();
-
 export const getDaysInMonth = (year, month) => new Date(year, month, 0).getDate();
 
 export const expenseCategories = [

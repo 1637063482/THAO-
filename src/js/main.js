@@ -1,6 +1,7 @@
 import "../css/app.css";
 import { state } from "./state.js";
-import { expenseCategories, REAL_CURRENT_YEAR, getDaysInMonth, TODAY, CURRENT_MONTH, CURRENT_DAY } from "./config.js";
+import { expenseCategories, getDaysInMonth } from "./config.js";
+import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
@@ -40,7 +41,8 @@ setRateGetter(function() { return state.fxMode === "auto" ? state.fxRateAuto : s
 
 var yearSelector = document.getElementById("year-selector");
 if (yearSelector) {
-  for (var y = REAL_CURRENT_YEAR - 2; y <= REAL_CURRENT_YEAR + 3; y++) {
+  var ledgerYear = getLedgerToday().year;
+  for (var y = ledgerYear - 2; y <= ledgerYear + 3; y++) {
     yearSelector.innerHTML += '<option value="' + y + '" ' + (y === state.activeYear ? "selected" : "") + '>' + y + '</option>';
   }
 }
@@ -145,6 +147,37 @@ function switchMonthTab(monthId) {
   if (t) t.innerText = monthId + "月";
   var b = document.getElementById("budget-label-month");
   if (b) b.innerText = monthId;
+}
+
+var lastLedgerDate = getLedgerToday();
+
+function syncYearLabels() {
+  var displayYearText = document.getElementById("display-year-text");
+  if (displayYearText) displayYearText.innerText = state.activeYear;
+  document.title = state.activeYear + "年Thao的账本";
+  var startEl = document.getElementById("ui-year-start");
+  var endEl = document.getElementById("ui-year-end");
+  if (startEl) startEl.innerText = state.activeYear;
+  if (endEl) endEl.innerText = state.activeYear;
+  var selector = document.getElementById("year-selector");
+  if (selector) selector.value = String(state.activeYear);
+}
+
+function refreshForLedgerDateChange() {
+  var today = getLedgerToday();
+  if (today.dateKey === lastLedgerDate.dateKey) return;
+  var wasViewingCurrentLedgerMonth = state.activeYear === lastLedgerDate.year && state.activeMonthId === lastLedgerDate.month;
+  lastLedgerDate = today;
+  if (wasViewingCurrentLedgerMonth) {
+    if (state.activeYear !== today.year) {
+      changeYear(today.year);
+    } else {
+      switchMonthTab(today.month);
+    }
+  } else {
+    fullRebuildDOM();
+  }
+  renderStreakPanel();
 }
 
 function switchCurrency(curr) {
@@ -266,12 +299,9 @@ function changeYear(newYear) {
   if (newYear === state.activeYear) return;
   if (state.isSaving && navigator.onLine) { showToast("数据正在同步中，请稍后切换年份", true); document.getElementById("year-selector").value = state.activeYear; return; }
   state.activeYear = newYear;
-  var dyt = document.getElementById("display-year-text");
-  if (dyt) dyt.innerText = state.activeYear;
-  document.title = state.activeYear + "年Thao的账本";
-  document.getElementById("ui-year-start").innerText = state.activeYear;
-  document.getElementById("ui-year-end").innerText = state.activeYear;
-  document.getElementById("months-container").innerHTML = "";
+  syncYearLabels();
+  var monthsContainer = document.getElementById("months-container");
+  if (monthsContainer) monthsContainer.innerHTML = "";
   state.appState = { balances: {}, entries: {}, settings: {} };
   state.previousYearEntries = {};
   state.yearlyCatSums = {};
@@ -282,7 +312,8 @@ function changeYear(newYear) {
   });
   setupRealtimeListener();
   state.isFirstLoad = true;
-  var targetMonth = state.activeYear === REAL_CURRENT_YEAR ? CURRENT_MONTH : 1;
+  var today = getLedgerToday();
+  var targetMonth = state.activeYear === today.year ? today.month : 1;
   switchMonthTab(targetMonth);
 }
 
@@ -344,10 +375,16 @@ initAuth(
     renderStreakPanel();
     setTimeout(function() {
       updateBudgetUI();
-      var targetMonth = state.activeYear === REAL_CURRENT_YEAR ? CURRENT_MONTH : 1;
+      var today = getLedgerToday();
+      var targetMonth = state.activeYear === today.year ? today.month : 1;
       switchMonthTab(targetMonth);
       initIcons();
     }, 300);
   },
   function() { teardownListener(); }
 );
+
+document.addEventListener("visibilitychange", function() {
+  if (!document.hidden) refreshForLedgerDateChange();
+});
+window.addEventListener("focus", refreshForLedgerDateChange);

@@ -1,5 +1,6 @@
 import { state } from "./state.js";
-import { expenseCategories, getDaysInMonth, TODAY, CURRENT_MONTH } from "./config.js";
+import { expenseCategories, getDaysInMonth } from "./config.js";
+import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
@@ -13,9 +14,10 @@ export function openQuickAdd() {
   const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
   const daySel = document.getElementById("qa-day");
   if (daySel) {
+    const today = getLedgerToday();
     daySel.innerHTML = "";
     for (let d = 1; d <= monthDays; d++) {
-      const isToday = d === TODAY.getDate() && state.activeMonthId === CURRENT_MONTH && state.activeYear === TODAY.getFullYear();
+      const isToday = d === today.day && state.activeMonthId === today.month && state.activeYear === today.year;
       daySel.innerHTML += '<option value="' + d + '" ' + (isToday ? "selected" : "") + '>' + state.activeMonthId + '月' + d + '日</option>';
     }
   }

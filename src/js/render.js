@@ -1,5 +1,6 @@
 import { state } from "./state.js";
-import { expenseCategories, getDaysInMonth, TODAY, CURRENT_MONTH, CURRENT_DAY } from "./config.js";
+import { expenseCategories, getDaysInMonth } from "./config.js";
+import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
@@ -44,8 +45,9 @@ export function renderMonthTable(monthId) {
   var container = document.getElementById("months-container");
   if (!container) return;
   var monthDays = getDaysInMonth(state.activeYear, monthId);
-  var isCurrentMonth = TODAY.getFullYear() === state.activeYear && TODAY.getMonth() + 1 === monthId;
-  var currentDay = TODAY.getDate();
+  var today = getLedgerToday();
+  var isCurrentMonth = today.year === state.activeYear && today.month === monthId;
+  var currentDay = today.day;
 
   // Category column headers — emoji icon + abbreviated name
   var catHeaders = "";

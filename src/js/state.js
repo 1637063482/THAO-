@@ -1,4 +1,7 @@
+import { getLedgerToday } from "./clock.js";
+
 const listeners = new Map();
+const initialLedgerDate = getLedgerToday();
 
 export function on(event, fn) {
   if (!listeners.has(event)) listeners.set(event, new Set());
@@ -7,8 +10,8 @@ export function on(event, fn) {
 }
 
 export const state = {
-  activeYear: new Date().getFullYear(),
-  activeMonthId: new Date().getMonth() + 1,
+  activeYear: initialLedgerDate.year,
+  activeMonthId: initialLedgerDate.month,
   currentCurrency: "VND",
   fxMode: "auto",
   fxRateAuto: 3500,

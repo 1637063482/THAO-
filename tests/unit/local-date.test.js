@@ -1,0 +1,148 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+vi.mock("../../src/js/fireworks.js", () => ({
+  Fireworks: { launch: vi.fn() },
+}));
+
+vi.mock("../../src/js/sync.js", () => ({
+  triggerCloudSave: vi.fn(),
+  setupRealtimeListener: vi.fn(),
+  teardownListener: vi.fn(),
+  importData: vi.fn(),
+}));
+
+vi.mock("../../src/js/charts.js", () => ({
+  initCharts: vi.fn(),
+  updateCharts: vi.fn(),
+}));
+
+vi.mock("../../src/js/auth.js", () => ({
+  initAuth: vi.fn(),
+  handleLogin: vi.fn(),
+  logoutApp: vi.fn(),
+  updateActivityTime: vi.fn(),
+}));
+
+vi.mock("../../src/js/icons.js", () => ({
+  Icons: {
+    flame: () => "",
+    check: () => "",
+  },
+  initIcons: vi.fn(),
+}));
+
+import { state } from "../../src/js/state.js";
+import { getLedgerToday } from "../../src/js/clock.js";
+import { openQuickAdd } from "../../src/js/quick-add.js";
+import { renderMonthTable, renderStreakPanel } from "../../src/js/render.js";
+
+function resetState() {
+  state.activeYear = 2026;
+  state.activeMonthId = 2;
+  state.currentCurrency = "VND";
+  state.appState = { balances: {}, entries: {}, settings: {} };
+  state.previousYearEntries = {};
+  state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
+}
+
+describe("Vietnam ledger clock", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    resetState();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    document.body.innerHTML = "";
+  });
+
+  it("uses Asia/Ho_Chi_Minh across midnight instead of the runner timezone", () => {
+    expect(getLedgerToday(new Date("2026-02-28T16:59:59.000Z"))).toMatchObject({ year: 2026, month: 2, day: 28, dateKey: "2026-02-28" });
+    expect(getLedgerToday(new Date("2026-02-28T17:00:00.000Z"))).toMatchObject({ year: 2026, month: 3, day: 1, dateKey: "2026-03-01" });
+  });
+
+  it("does not treat China midnight as Vietnam midnight", () => {
+    expect(getLedgerToday(new Date("2026-03-31T16:30:00.000Z"))).toMatchObject({ year: 2026, month: 3, day: 31, dateKey: "2026-03-31" });
+  });
+
+  it("handles leap day, month end, and year end with the Vietnam ledger date", () => {
+    expect(getLedgerToday(new Date("2028-02-29T16:59:59.000Z"))).toMatchObject({ year: 2028, month: 2, day: 29 });
+    expect(getLedgerToday(new Date("2028-02-29T17:00:00.000Z"))).toMatchObject({ year: 2028, month: 3, day: 1 });
+    expect(getLedgerToday(new Date("2026-12-31T17:00:00.000Z"))).toMatchObject({ year: 2027, month: 1, day: 1 });
+  });
+
+  it("updates quick-add default day when the app crosses Vietnam midnight without reload", async () => {
+    vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
+    document.body.innerHTML = [
+      '<div id="quick-add-modal"></div>',
+      '<div id="quick-add-panel"></div>',
+      '<select id="qa-day"></select>',
+      '<select id="qa-cat"></select>',
+      '<input id="qa-amount">',
+    ].join("");
+    state.activeYear = 2026;
+    state.activeMonthId = 2;
+    openQuickAdd();
+    expect(document.getElementById("qa-day").value).toBe("28");
+
+    vi.setSystemTime(new Date("2026-02-28T17:00:00.000Z"));
+    state.activeMonthId = 3;
+    openQuickAdd();
+
+    expect(document.getElementById("qa-day").value).toBe("1");
+  });
+
+  it("moves the highlighted today row after month-end without reloading modules", () => {
+    vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
+    document.body.innerHTML = '<div id="months-container"></div><span id="monthly-chart-title"></span>';
+    renderMonthTable(2);
+    expect(document.getElementById("row-2-28").className).toContain("row-today");
+
+    vi.setSystemTime(new Date("2026-02-28T17:00:00.000Z"));
+    state.activeMonthId = 3;
+    renderMonthTable(3);
+
+    expect(document.getElementById("row-3-1").className).toContain("row-today");
+  });
+
+  it("refreshes streak when the visible ledger date changes", () => {
+    vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
+    document.body.innerHTML = '<section id="streak-panel"></section>';
+    state.appState.entries = { "2_28_dining": "100000" };
+    renderStreakPanel();
+    expect(document.getElementById("streak-panel").textContent).toContain("1 天");
+
+    vi.setSystemTime(new Date("2026-02-28T17:00:00.000Z"));
+    state.appState.entries = { "3_1_dining": "100000" };
+    renderStreakPanel();
+
+    expect(document.getElementById("streak-panel").textContent).toContain("1 天");
+  });
+
+  it("refreshes the current ledger month on visibilitychange after Vietnam midnight", async () => {
+    vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
+    document.body.innerHTML = [
+      '<select id="year-selector"></select>',
+      '<span id="display-year-text"></span>',
+      '<span id="ui-year-start"></span>',
+      '<span id="ui-year-end"></span>',
+      '<div id="months-container"></div>',
+      '<span id="monthly-chart-title"></span>',
+      '<section id="streak-panel"></section>',
+    ].join("");
+    state.activeYear = 2026;
+    state.activeMonthId = 2;
+    state.appState.entries = { "2_28_dining": "100000" };
+    await import("../../src/js/main.js");
+    renderStreakPanel();
+    expect(state.currentStreak).toBe(1);
+
+    vi.setSystemTime(new Date("2026-02-28T17:00:00.000Z"));
+    document.dispatchEvent(new Event("visibilitychange"));
+
+    expect(state.activeYear).toBe(2026);
+    expect(state.activeMonthId).toBe(3);
+    expect(document.getElementById("row-3-1").className).toContain("row-today");
+    expect(state.currentStreak).toBe(0);
+  });
+});

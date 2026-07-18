@@ -8,7 +8,7 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { app } from "./firebase.js";
-import { REAL_CURRENT_YEAR, CURRENT_MONTH } from "./config.js";
+import { getLedgerToday } from "./clock.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
 
@@ -21,7 +21,7 @@ let sessionCheckIntervalId = null;
 export { auth };
 
 export function initAuth(onLoginCallback, onLogoutCallback) {
-  initDOM(REAL_CURRENT_YEAR, CURRENT_MONTH);
+  initDOM();
   fetchAutoRate();
   checkSessionTimeout();
   sessionCheckIntervalId = setInterval(checkSessionTimeout, 60000);
@@ -52,7 +52,7 @@ export function initAuth(onLoginCallback, onLogoutCallback) {
   });
 }
 
-function initDOM(REAL_CURRENT_YEAR, CURRENT_MONTH) {
+function initDOM() {
   const tabsContainer = document.getElementById("month-tabs");
   if (!tabsContainer) return;
   for (let i = 1; i <= 12; i++) {
@@ -60,7 +60,8 @@ function initDOM(REAL_CURRENT_YEAR, CURRENT_MONTH) {
   }
   setTimeout(() => {
     if (window.switchMonthTab) {
-      window.switchMonthTab(state.activeYear === REAL_CURRENT_YEAR ? CURRENT_MONTH : 1);
+      const today = getLedgerToday();
+      window.switchMonthTab(state.activeYear === today.year ? today.month : 1);
     }
   }, 100);
 }
