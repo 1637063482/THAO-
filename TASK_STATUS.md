@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T015 |
 | Title | 修复 PWA 跨午夜日期陈旧 |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/t015-vietnam-clock |
 | Base SHA | 85a2d680e0db9e3f536db7481842329ec675a26c |
 | Implementation Head | 5f911a766801d9176063c3befa0e02de2dd247ae |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T015_GREEN.md` |
-| Latest Review | pending Terra review |
+| Latest Review | `docs/task-reviews/T015-R1.md` - CHANGES_REQUESTED: continuously visible PWA does not refresh at Vietnam midnight |
 | Next Task | T016 |
 
 ## Reviewer Attention
