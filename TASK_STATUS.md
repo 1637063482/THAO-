@@ -1,31 +1,32 @@
 # Task Workflow Status
 
-> 本文件由 Coder 和 Reviewer 按 `AGENT_WORKFLOW.md` 更新。聊天摘要不是状态事实源。
+> This file is maintained by Coder and Reviewer following `AGENT_WORKFLOW.md`. Chat summaries are not the source of truth.
 
 ## Current Task
 
 | Field | Value |
 |---|---|
-| Task ID | T015 |
-| Title | 修复 PWA 跨午夜日期陈旧 |
-| State | APPROVED |
-| Branch | task/t015-vietnam-clock |
-| Base SHA | 85a2d680e0db9e3f536db7481842329ec675a26c |
-| Implementation Head | a926da70a910804fea79f356c87b5e570839c50a |
-| Review Round | 2 |
-| Evidence | `docs/review-evidence/T015_GREEN.md` |
-| Latest Review | `docs/task-reviews/T015-R2.md` - APPROVED |
-| Next Task | T016 |
+| Task ID | T016 |
+| Title | Lock VND fact with CNY read-only view |
+| State | IMPLEMENTING |
+| Branch | task/t016-vnd-currency-view |
+| Base SHA | f363b2b454924926fbb98240670c0487e967737a |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/T016_GREEN.md` |
+| Latest Review | pending |
+| Next Task | T017 |
 
 ## Reviewer Attention
 
-- 必须核对账本日期使用 `Asia/Ho_Chi_Minh`，不跟随设备时区。
-- 必须核对跨越越南午夜后，今日行、快速记账默认日和 streak 自动刷新。
-- 必须覆盖月末、年末、闰年和中国/越南设备时区 fake clock。
+- Verify VND remains the only persisted accounting fact; CNY switching may only change DOM/ViewModel and must not rewrite `state.appState` or `state.pendingUpdates`.
+- Cover 100 repeated switches without drift, auto/manual exchange rates, and large/zero/decimal display cases.
+- Verify Quick Add CNY input converts exactly once at submit boundary and writes VND.
 
 ## History
 
 | Task | Final State | Approved Head | Review |
 |---|---|---|---|
-| T013 | APPROVED | `1d4903c` | T013 Review PASS（T014 开始前已完成；旧流程未生成仓库 review 文件） |
+| T013 | APPROVED | `1d4903c` | T013 Review PASS; legacy workflow did not generate a repository review file |
 | T014 | APPROVED | `c1eadec` | `docs/task-reviews/T014-R2.md` |
+| T015 | APPROVED | `a926da7` | `docs/task-reviews/T015-R2.md` |

@@ -2,6 +2,7 @@ import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
+import { convertCnyAmountToVnd } from "./currency-view.js";
 import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
@@ -55,7 +56,7 @@ export function submitQuickAdd() {
   if (!rawAmt || isNaN(rawAmt)) { showToast("请输入有效纯数字金额", true); return; }
 
   let amtVND = rawAmt;
-  if (state.currentCurrency === "CNY") amtVND = (parseFloat(rawAmt) * getActiveRate()).toString();
+  if (state.currentCurrency === "CNY") amtVND = convertCnyAmountToVnd(rawAmt, getActiveRate());
 
   const key = state.activeMonthId + "_" + d + "_" + cat;
   const remarkKey = state.activeMonthId + "_" + d + "_remark";

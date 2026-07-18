@@ -3,6 +3,7 @@ import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
+import { formatVndForCurrencyInput, parseCurrencyInputToVnd } from "./currency-view.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
 import { initCharts } from "./charts.js";
@@ -89,14 +90,13 @@ document.body.addEventListener("input", function(e) {
 
 document.body.addEventListener("focusin", function(e) {
   if (isMathOrCell(e.target) && !e.target.readOnly) {
+    e.target.dataset.currencyRawBefore = e.target.dataset.raw || "";
     if (state.currentCurrency === "VND") {
       if (e.target.dataset.raw !== undefined && e.target.dataset.raw !== "") e.target.value = e.target.dataset.raw;
     } else {
-      if (e.target.dataset.raw) {
-        var vndVal = parseFloat(e.target.dataset.raw) || 0;
-        e.target.value = vndVal ? parseFloat((vndVal / getActiveRate()).toFixed(2)) : "";
-      } else e.target.value = "";
+      e.target.value = formatVndForCurrencyInput(e.target.dataset.raw, state.currentCurrency, getActiveRate());
     }
+    e.target.dataset.currencyViewBefore = e.target.value;
   }
 });
 
@@ -107,11 +107,18 @@ document.body.addEventListener("focusout", function(e) {
       e.target.dataset.raw = rawInput;
       e.target.value = rawInput ? formatDisplay(safeEval(rawInput)) : "";
     } else {
-      var cnyVal = safeEval(rawInput);
-      var vndVal = cnyVal * getActiveRate();
+      var vndVal = parseCurrencyInputToVnd(rawInput, {
+        currency: state.currentCurrency,
+        rate: getActiveRate(),
+        previousRawVnd: e.target.dataset.currencyRawBefore,
+        previousViewValue: e.target.dataset.currencyViewBefore,
+        evaluate: safeEval,
+      });
       e.target.dataset.raw = vndVal;
       e.target.value = rawInput ? formatDisplay(vndVal) : "";
     }
+    delete e.target.dataset.currencyRawBefore;
+    delete e.target.dataset.currencyViewBefore;
   }
 });
 

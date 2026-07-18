@@ -2,6 +2,7 @@
 // utils.js - 安全数学解析器 + 格式化工具
 // ==========================================
 import { DEFAULT_FX_RATE } from "./config.js";
+import { formatVndForCurrencyDisplay } from "./currency-view.js";
 
 const SAFE_MATH_RE = /^[\d\s+\-*/().eE]+$/;
 const MAX_EXPR_LEN = 200;
@@ -32,9 +33,7 @@ export function getCurrentCurrency() { return _currencyGetter(); }
 export function getActiveRate() { return _rateGetter(); }
 
 export function formatDisplay(vndVal) {
-  const val = parseFloat(vndVal) || 0;
-  if (_currencyGetter() === "VND") return Math.round(val).toLocaleString("en-US");
-  else return (val / _rateGetter()).toFixed(2);
+  return formatVndForCurrencyDisplay(vndVal, _currencyGetter(), _rateGetter());
 }
 
 export function formatSymbol(vndVal) {
