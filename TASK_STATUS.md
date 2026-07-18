@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T014 |
 | Title | 从 legacy entries 派生连续记账并修复奖励 |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | fix/streak-t013-t014 |
 | Base SHA | 1d4903c40205cef48c241e4313fe97ebf574dbb5 |
 | Implementation Head | c1eadecf1cef2d2dc87f07bac2d628dd76d6c573 |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/T014_GREEN.md` |
-| Latest Review | `docs/task-reviews/T014-R1.md` — CHANGES_REQUESTED；R2 返修实现 `c1eadec` 已等待复审 |
+| Latest Review | `docs/task-reviews/T014-R2.md` — APPROVED；审查实现 `c1eadec` |
 | Next Task | T015 |
 
 ## Reviewer Attention
