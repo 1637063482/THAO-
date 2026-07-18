@@ -4,6 +4,12 @@ import { state, copyPending, clearPending, mergeBackPending, hasPending } from "
 import { LEGACY_IMPORT_MAX_BYTES, validateLegacyImport } from "./import-schema.js";
 
 let unsubscribeSnapshot = null;
+let unsubscribePreviousYearSnapshot = null;
+
+function refreshStreakFromSnapshot() {
+  if (window.updateStreakAfterRecord) window.updateStreakAfterRecord({ launchDefaultFireworks: false });
+  else if (window.renderStreakPanel) window.renderStreakPanel();
+}
 
 export function createSyncQueue({
   takeBatch,
@@ -106,7 +112,15 @@ export function triggerCloudSave() {
 
 export function setupRealtimeListener() {
   if (unsubscribeSnapshot) unsubscribeSnapshot();
+  if (unsubscribePreviousYearSnapshot) unsubscribePreviousYearSnapshot();
   const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
+  const previousDocRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + (state.activeYear - 1));
+  unsubscribePreviousYearSnapshot = onSnapshot(previousDocRef, (snapshot) => {
+    state.previousYearEntries = snapshot.exists() ? (snapshot.data().entries || {}) : {};
+    refreshStreakFromSnapshot();
+  }, (error) => {
+    console.error("拉取上一年度数据失败:", error);
+  });
   unsubscribeSnapshot = onSnapshot(docRef, (snapshot) => {
     if (snapshot.exists()) {
       const cloudData = snapshot.data();
@@ -119,7 +133,7 @@ export function setupRealtimeListener() {
       state.appState.settings = {};
     }
     if (window.softUpdateDOM) window.softUpdateDOM();
-    if (window.renderStreakPanel) window.renderStreakPanel();
+    refreshStreakFromSnapshot();
     updateSyncStatus("synced");
     // 每次快照到达都隐藏 loading（首次加载、超时重登录等场景都需要）
     const loadingOverlay = document.getElementById("loading-overlay");
@@ -136,6 +150,7 @@ export function setupRealtimeListener() {
 
 export function teardownListener() {
   if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
+  if (unsubscribePreviousYearSnapshot) { unsubscribePreviousYearSnapshot(); unsubscribePreviousYearSnapshot = null; }
 }
 
 export async function importData(file) {

@@ -52,15 +52,20 @@ function entryDateFromKey(key, year) {
   return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
 }
 
-export function buildLegacyStreak(entries, year, today = new Date(), timezone = "Asia/Ho_Chi_Minh") {
-  const todayStr = localDateString(today, timezone);
-  const recordedDates = new Set();
-
+function collectRecordedDates(recordedDates, entries, year) {
   Object.entries(entries || {}).forEach(([key, value]) => {
     if (!isCalculableNonZero(value)) return;
     const dateStr = entryDateFromKey(key, year);
     if (dateStr) recordedDates.add(dateStr);
   });
+}
+
+export function buildLegacyStreak(entries, year, today = new Date(), timezone = "Asia/Ho_Chi_Minh", options = {}) {
+  const todayStr = localDateString(today, timezone);
+  const recordedDates = new Set();
+
+  collectRecordedDates(recordedDates, entries, year);
+  collectRecordedDates(recordedDates, options.previousYearEntries, year - 1);
 
   let streak = 0;
   let cursor = todayStr;

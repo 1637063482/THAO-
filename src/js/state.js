@@ -17,6 +17,7 @@ export const state = {
   isFirstLoad: true,
   currentUser: null,
   appState: { balances: {}, entries: {}, settings: {} },
+  previousYearEntries: {},
   pendingUpdates: { balances: {}, entries: {}, settings: {} },
   yearlyCatSums: {},
   monthlyCatSums: {},

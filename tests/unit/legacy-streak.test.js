@@ -34,6 +34,7 @@ vi.mock("../../src/js/icons.js", () => ({
 import { state } from "../../src/js/state.js";
 import { Fireworks } from "../../src/js/fireworks.js";
 import { renderStreakPanel, updateStreakAfterRecord } from "../../src/js/render.js";
+import { buildLegacyStreak } from "../../src/js/streak.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
 
 const FIXED_NOW = new Date("2026-02-03T05:00:00.000Z");
@@ -61,6 +62,7 @@ function resetLedgerDom() {
   state.fxRateManual = 3500;
   state.currentUser = null;
   state.appState = { balances: {}, entries: {}, settings: {} };
+  state.previousYearEntries = {};
   state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
   state.yearlyCatSums = {};
   state.monthlyCatSums = {};
@@ -302,16 +304,22 @@ describe("legacy accounting streak RED", () => {
     expect(state.pendingUpdates.settings.expense_last_date).toBeUndefined();
   });
 
-  it("does not fabricate cross-year continuity from the current year's single document", () => {
+  it("derives Dec 31 to Jan 1 continuity from adjacent-year entries", () => {
     vi.setSystemTime(new Date("2026-01-01T05:00:00.000Z"));
     state.activeMonthId = 1;
     state.appState.entries = {
       "1_1_income": "100000",
     };
+    state.previousYearEntries = {
+      "12_31_dining": "200000",
+    };
     setLegacyStreak({ cloudLastDate: "2025-12-31", cloudStreak: 9, localLastDate: "2025-12-31", localStreak: 9 });
 
     renderStreakPanel();
 
-    expect(getDisplayedStreak()).toBe(1);
+    expect(getDisplayedStreak()).toBe(2);
+    expect(buildLegacyStreak(state.appState.entries, 2026, new Date(), "Asia/Ho_Chi_Minh", {
+      previousYearEntries: state.previousYearEntries,
+    }).streak).toBe(2);
   });
 });

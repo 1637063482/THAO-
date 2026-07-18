@@ -40,4 +40,3 @@ git diff --check
 ```
 
 Rules 相关 Task 还必须运行 `npm run test:rules`。所有成功声明必须附实际退出码；已知构建包体警告不能伪装成新错误，也不能被静默省略。
-

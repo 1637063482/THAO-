@@ -4,13 +4,21 @@
 
 T014 converts the T013 RED tests to GREEN by deriving the visible accounting streak from current-year legacy `entries`.
 
-Changed files:
+Initial T014 changed files:
 
 - `src/js/streak.js`
 - `src/js/render.js`
 - `src/js/main.js`
 - `tests/unit/legacy-streak.test.js`
 - `docs/review-evidence/T014_GREEN.md`
+
+R2 rework also changes:
+
+- `src/js/state.js`
+- `src/js/sync.js`
+- `tests/unit/sync-state.test.js`
+- `AGENTS.md`
+- `TASK_STATUS.md`
 
 Not changed:
 
@@ -23,7 +31,8 @@ Not changed:
 ## Commits
 
 - T013 RED SHA: `1d4903c40205cef48c241e4313fe97ebf574dbb5`
-- T014 GREEN SHA: self-referential to the commit containing this file. The exact final SHA is recorded by `git rev-parse HEAD` after commit creation and in the task handoff output.
+- T014 R1 implementation SHA: `08da24d0819b2a69f1bddb03446666853df873e7`
+- T014 R2 rework implementation SHA: `pending` until the rework commit is created; this file is corrected in the immediate follow-up evidence/status commit.
 
 ## TDD RED Before Fix
 
@@ -178,8 +187,150 @@ warning: in the working copy of 'tests/unit/legacy-streak.test.js', LF will be r
 - Clearing today's only valid entry recomputes the visible streak to `0`.
 - 7-day and 30-day milestone fireworks trigger once per threshold per Vietnam local day.
 - The fix no longer writes `pendingUpdates.settings.expense_streak` or `pendingUpdates.settings.expense_last_date`.
-- Jan 1 boundary coverage does not fabricate Dec 31 continuity from old settings because the runtime only holds one annual document.
+- Jan 1 boundary coverage derives Dec 31 continuity from `previousYearEntries`, not from old `expense_streak` settings.
 
 ## Cross-Year Note
 
-The current runtime receives a single annual ledger document through `state.appState.entries`. T014 therefore implements and tests the current-year boundary honestly: Jan 1 with a valid Jan 1 entry derives `1`, even if old settings claim a previous-year streak. A true Dec 31 to Jan 1 cross-year continuity calculation would require supplying previous-year entries to the pure function and loading that adjacent annual document in the runtime; that is outside this T014 change and was not faked.
+R2 supplies adjacent-year entries explicitly. The active-year snapshot populates `state.appState.entries`; the previous-year snapshot populates `state.previousYearEntries`. `buildLegacyStreak()` receives both and derives Dec 31 to Jan 1 continuity from actual eligible entries. Old `expense_streak` and `expense_last_date` values are still not used as streak facts.
+
+## R2 Rework After T014-R1
+
+Reviewer file: `docs/task-reviews/T014-R1.md`
+
+R1 decision: `CHANGES_REQUESTED`
+
+Blocking findings addressed:
+
+- Dec 31 to Jan 1 continuity was missing.
+- Remote snapshots rendered the streak panel but did not trigger deduplicated 7/30 milestones.
+- GREEN evidence used a self-referential SHA.
+- `AGENTS.md` had a trailing blank line that made the post-implementation range fail `git diff --check`.
+
+R2 implementation summary:
+
+- `buildLegacyStreak()` now accepts `previousYearEntries` and can derive Dec 31 to Jan 1 continuity from adjacent-year entries.
+- Runtime state now carries `state.previousYearEntries`.
+- `setupRealtimeListener()` listens to both active-year and previous-year ledger documents.
+- Current-year and previous-year remote snapshots call the same `updateStreakAfterRecord()` refresh path, with ordinary fireworks suppressed for remote snapshots while milestone fireworks remain enabled and deduplicated.
+- `window.updateStreakAfterRecord` is exposed for the snapshot path.
+- The Jan 1 test now expects `2` when Jan 1 current-year entries and Dec 31 previous-year entries are both present.
+- Snapshot tests now prove the path calls the unified refresh function and that 7-day and 30-day remote-snapshot milestones fire once.
+- The trailing blank line in `AGENTS.md` was removed.
+
+### R2 RED
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/legacy-streak.test.js tests/unit/sync-state.test.js
+```
+
+Exit code: `1`
+
+Key output:
+
+```text
+Test Files  2 failed (2)
+     Tests  2 failed | 25 passed (27)
+
+FAIL tests/unit/legacy-streak.test.js > legacy accounting streak RED > derives Dec 31 to Jan 1 continuity from adjacent-year entries
+AssertionError: expected 1 to be 2
+
+FAIL tests/unit/sync-state.test.js > sync queue > routes remote snapshots through the streak milestone refresh path
+AssertionError: expected "vi.fn()" to be called 1 times, but got 0 times
+
+EXIT_CODE=1
+```
+
+### R2 GREEN And Gates
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/legacy-streak.test.js tests/unit/sync-state.test.js
+```
+
+Exit code: `0`
+
+Output:
+
+```text
+Test Files  2 passed (2)
+     Tests  29 passed (29)
+EXIT_CODE=0
+```
+
+Command:
+
+```powershell
+npm test -- --run
+```
+
+Exit code: `0`
+
+Output:
+
+```text
+Test Files  11 passed | 2 skipped (13)
+     Tests  83 passed | 7 skipped (90)
+EXIT_CODE=0
+```
+
+Command:
+
+```powershell
+npm run typecheck
+```
+
+Exit code: `0`
+
+Output:
+
+```text
+> my-expense-app@2.0.0 typecheck
+> tsc -p tsconfig.json --noEmit
+
+EXIT_CODE=0
+```
+
+Command:
+
+```powershell
+npm run build
+```
+
+Exit code: `0`
+
+Output:
+
+```text
+vite v6.4.3 building for production...
+✓ 39 modules transformed.
+
+(!) Some chunks are larger than 500 kB after minification.
+✓ built in 3.72s
+EXIT_CODE=0
+```
+
+Command:
+
+```powershell
+git diff --check
+```
+
+Exit code: `0`
+
+Known warnings:
+
+```text
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'TASK_STATUS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/js/main.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/js/render.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/js/state.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/js/streak.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/js/sync.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/unit/legacy-streak.test.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'tests/unit/sync-state.test.js', LF will be replaced by CRLF the next time Git touches it
+EXIT_CODE=0
+```

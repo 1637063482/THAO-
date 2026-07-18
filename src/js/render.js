@@ -153,7 +153,9 @@ export function renderMonthTable(monthId) {
 // ---- streak helpers ----
 
 function getDerivedStreak() {
-  return buildLegacyStreak(state.appState.entries, state.activeYear, new Date(), "Asia/Ho_Chi_Minh");
+  return buildLegacyStreak(state.appState.entries, state.activeYear, new Date(), "Asia/Ho_Chi_Minh", {
+    previousYearEntries: state.previousYearEntries,
+  });
 }
 
 function hasRewardFired(threshold, todayStr) {
@@ -189,7 +191,9 @@ export function renderStreakPanel() {
   return s;
 }
 
-export function updateStreakAfterRecord() {
+export function updateStreakAfterRecord(options) {
+  options = options || {};
+  var launchDefaultFireworks = options.launchDefaultFireworks !== false;
   var s = renderStreakPanel();
   if (!s || !s.hasRecordedToday) {
     return;
@@ -199,7 +203,7 @@ export function updateStreakAfterRecord() {
     markRewardFired(s.streak, s.todayStr);
     showToast("恭喜！连续记账" + s.streak + "天成就达成！");
     Fireworks.launch({ duration: 12000 });
-  } else {
+  } else if (launchDefaultFireworks) {
     Fireworks.launch({ duration: 6000 });
   }
 }

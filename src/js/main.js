@@ -33,6 +33,7 @@ window.calculateAll = calculateAll;
 window.softUpdateDOM = softUpdateDOM;
 window.fullRebuildDOM = fullRebuildDOM;
 window.renderStreakPanel = renderStreakPanel;
+window.updateStreakAfterRecord = updateStreakAfterRecord;
 
 setCurrencyGetter(function() { return state.currentCurrency; });
 setRateGetter(function() { return state.fxMode === "auto" ? state.fxRateAuto : state.fxRateManual; });
@@ -272,6 +273,7 @@ function changeYear(newYear) {
   document.getElementById("ui-year-end").innerText = state.activeYear;
   document.getElementById("months-container").innerHTML = "";
   state.appState = { balances: {}, entries: {}, settings: {} };
+  state.previousYearEntries = {};
   state.yearlyCatSums = {};
   state.monthlyCatSums = {};
   state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
