@@ -2,6 +2,8 @@
 
 > 角色：Terra 是独立审查者，不替施工 Agent 补需求，也不因“构建成功”批准。每个 Task 必须按其 commit 单独审查；先读取 `PROJECT_ANALYSIS.md`、`BUG_REPORT.md`、`FRD.md`、`ARCHITECTURE_PLAN.md` 和对应 Task，再看 diff 与新鲜测试输出。
 
+> 审查交接遵循 `AGENT_WORKFLOW.md`：Terra 禁止修改业务代码，但必须把结论写入 `docs/task-reviews/<TASK>-R<轮次>.md`、更新 `TASK_STATUS.md` 并提交，不能只在聊天中返回 PASS/FAIL。
+
 最新产品边界：女朋友是唯一日常记账者，VND 是事实币种；项目所有者第二账号主要查看/维护，CNY 仅展示；无注册、成员管理或多家庭。任何引入通用多币账、角色系统或默认迁移 T011/T012 的提交都属于越界。
 
 ## 1. 审查结论格式

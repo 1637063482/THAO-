@@ -2,6 +2,8 @@
 
 > 产品事实：这是为越南籍女朋友定制的私人账本。她是唯一日常记账者，VND 是唯一账务事实币种；项目所有者使用第二个既有 Firebase 账号查看/维护，CNY 仅为显示换算。应用没有注册、成员管理或多家庭需求。线上账号、Rules 和数据已在 Firebase，未经明确授权不得部署、迁移或改动真实权限。
 
+> 执行与交接必须遵循 `AGENT_WORKFLOW.md` 和 `TASK_STATUS.md`。Coder 与 Reviewer 不通过聊天复制结论；每个 Task 必须形成 evidence、仓库 review 文件和状态提交。
+
 ## 已完成 T001–T012 回顾
 
 | Task | 结论 | 处理要求 |
