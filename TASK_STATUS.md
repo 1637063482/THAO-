@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T015 |
 | Title | 修复 PWA 跨午夜日期陈旧 |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t015-vietnam-clock |
 | Base SHA | 85a2d680e0db9e3f536db7481842329ec675a26c |
 | Implementation Head | a926da70a910804fea79f356c87b5e570839c50a |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/T015_GREEN.md` |
-| Latest Review | pending Terra R2 review; previous `docs/task-reviews/T015-R1.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/T015-R2.md` - APPROVED |
 | Next Task | T016 |
 
 ## Reviewer Attention
