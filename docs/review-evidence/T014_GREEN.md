@@ -32,7 +32,7 @@ Not changed:
 
 - T013 RED SHA: `1d4903c40205cef48c241e4313fe97ebf574dbb5`
 - T014 R1 implementation SHA: `08da24d0819b2a69f1bddb03446666853df873e7`
-- T014 R2 rework implementation SHA: `pending` until the rework commit is created; this file is corrected in the immediate follow-up evidence/status commit.
+- T014 R2 rework implementation SHA: `c1eadecf1cef2d2dc87f07bac2d628dd76d6c573`
 
 ## TDD RED Before Fix
 
