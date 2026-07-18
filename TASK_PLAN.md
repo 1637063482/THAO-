@@ -25,23 +25,23 @@
 
 - Task ID: T013
 - 目标: 把用户已观察到的 streak 故障固化为可重复测试，并明确当前两个事实源的冲突。
-- 修改文件: `tests/unit/legacy-streak.test.js`（新建）、`src/js/render.js`（仅导出/抽取测试入口，不改变行为）
+- 修改文件: `tests/unit/legacy-streak.test.js`（新建）、`src/js/render.js`（仅导出/抽取测试入口，不改变行为）、`docs/review-evidence/T013_RED.md`（新建）
 - 涉及模块: Legacy streak、日期
-- 详细步骤: 注入 clock；构造连续两天 entries、云端 settings 与 localStorage 不一致、直接编辑、快速记账、历史补录场景；先运行测试并确认失败原因分别命中“未触发”和“状态源不一致”。
+- 详细步骤: 先记录当前基线门禁；注入 clock；构造连续两天 entries（覆盖收入、支出及二者混合）、云端 settings 与 localStorage 不一致、直接编辑、快速记账、历史补录场景；运行定向测试并确认失败原因分别命中“未触发”和“状态源不一致”；把命令、完整输出、退出码、预期失败断言及基线 commit 写入 `docs/review-evidence/T013_RED.md`。
 - 禁止修改: Firestore 数据、奖励阈值、UI 文案、T011/T012。
 - 完成标准: RED 输出能稳定证明连续两天仍得不到 2，且不是测试环境/时区错误。
-- 测试要求: `npm test -- --run tests/unit/legacy-streak.test.js` 预期失败；保存完整 RED 输出供 Terra 审查。
+- 测试要求: 修改前先证明 `npm test -- --run`、`npm run typecheck`、`npm run build` 通过；修改后 `npm test -- --run tests/unit/legacy-streak.test.js` 必须因 streak 行为断言失败，而不是导入、语法、环境或时区错误。T013 的失败测试提交只允许留在 `fix/streak-t013-t014` 分支，禁止单独合并到 `main`。
 
 ## Task 014：从 legacy entries 派生连续记账并修复奖励
 
 - Task ID: T014
 - 目标: 直接编辑和快速记账都得到相同连续天数，连续 7/30 天奖励准确且不重复。
-- 修改文件: `src/js/streak.js`（新建）、`src/js/render.js`、`src/js/main.js`、`src/js/quick-add.js`、`tests/unit/legacy-streak.test.js`
+- 修改文件: `src/js/streak.js`（新建）、`src/js/render.js`、`src/js/main.js`、`src/js/quick-add.js`、`tests/unit/legacy-streak.test.js`、`docs/review-evidence/T014_GREEN.md`（新建）
 - 涉及模块: Streak、Gamification、Legacy entries
-- 详细步骤: 实现纯函数 `buildLegacyStreak(entries, year, today, timezone, eligibleCategories)`；从可计算且非零的合格 entries 提取日期并去重；从越南本地 today 向前连续计算；所有录入/删除和远端快照后统一重算；里程碑事件按日期+阈值去重；旧 `expense_streak/expense_last_date` 只读兼容且停止作为计算依据。进入 GREEN 前由项目所有者确认收入分类是否属于 `eligibleCategories`，并把结论写入测试名称或 ADR。
-- 禁止修改: 删除旧云端 settings、生产数据、在未确认时擅自决定收入是否算打卡、烟花视觉、交易新模型。
-- 完成标准: 连续两天=2；连续七天触发一次 7 天奖励；当天多笔不重复；断一天后从 1 开始；直接/快速入口一致；收入计入规则有明确产品结论和测试。
-- 测试要求: RED→GREEN；覆盖 1/2/6/7/8/29/30/31 天、同日多笔、昨天缺口、历史补录、删除唯一支出、非法公式、跨年边界。
+- 详细步骤: 实现纯函数 `buildLegacyStreak(entries, year, today, timezone)`；从可计算且非零的收入和支出 entries 提取日期并去重；从越南本地 today 向前连续计算；所有收入/支出录入、删除和远端快照后统一重算；里程碑事件按日期+阈值去重；旧 `expense_streak/expense_last_date` 只读兼容且停止作为计算依据。
+- 禁止修改: 删除旧云端 settings、生产数据、烟花视觉、交易新模型。
+- 完成标准: 收入、支出或混合记录均可形成连续天数；连续两天=2；连续七天触发一次 7 天奖励；当天多笔不重复；断一天后从 1 开始；直接/快速入口一致。
+- 测试要求: RED→GREEN；覆盖纯收入、纯支出、收入支出混合、1/2/6/7/8/29/30/31 天、同日多笔、昨天缺口、历史补录、删除当天唯一有效记录、非法公式、跨年边界；在 `docs/review-evidence/T014_GREEN.md` 记录 T013 RED commit、T014 GREEN commit、定向测试和全量门禁的完整命令、摘要及退出码。
 
 ## Task 015：修复 PWA 跨午夜日期陈旧
 
