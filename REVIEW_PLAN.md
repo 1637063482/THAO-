@@ -2,6 +2,8 @@
 
 > 角色：Terra 是独立审查者，不替施工 Agent 补需求，也不因“构建成功”批准。每个 Task 必须按其 commit 单独审查；先读取 `PROJECT_ANALYSIS.md`、`BUG_REPORT.md`、`FRD.md`、`ARCHITECTURE_PLAN.md` 和对应 Task，再看 diff 与新鲜测试输出。
 
+最新产品边界：女朋友是唯一日常记账者，VND 是事实币种；项目所有者第二账号主要查看/维护，CNY 仅展示；无注册、成员管理或多家庭。任何引入通用多币账、角色系统或默认迁移 T011/T012 的提交都属于越界。
+
 ## 1. 审查结论格式
 
 每个任务输出：
@@ -47,7 +49,7 @@ Task ID:
 
 - 依赖方向 `ui → application → domain`，infrastructure 实现 port。
 - 所有业务资源必须落在固定共享账本命名空间；uid 只能来自认证上下文，不能由表单伪造。
-- transaction 是事实源；聚合/预算/streak 是可重建派生值。
+- 当前运行系统以 VND `entries` 为事实源；streak 是可重建派生值。只有 T019 批准迁移后 transaction 才能成为事实源。
 - legacy 代码只存在于明确 adapter/feature flag，不扩散到新模型。
 - schema 变更是否同步更新 converter、Rules、indexes、migration 和 ADR。
 
@@ -72,7 +74,7 @@ Task ID:
 
 - 单元测试：纯领域规则、边界值、确定性 clock/fetch/id。
 - 集成测试：Firestore Emulator、repository round-trip、并发、outbox。
-- Rules 测试：每个 allow 都有 deny；未登录/第三 UID/非法字段，并证明两个授权账号同权。
+- Rules 测试：每个 allow 都有 deny；未登录/第三 UID/非法字段；两个既有账号按已核对的线上权限分别验证，不预设同权。
 - E2E：真实用户流程与错误恢复，不只检查元素存在。
 - 测试不得过度 mock 核心逻辑；不得只做 snapshot。
 - 审查者必须自己运行相关测试与 `npm run build`，读取完整 exit code。
@@ -89,23 +91,19 @@ Task ID:
 | T006 | 所有导入分支终止，写前 schema/大小验证 | Promise pending；未知字段/XSS/超长文本通过 | 合法/非法/边界 fixture，无 emulator 写入 |
 | T007 | Rules 候选基线、默认 deny、emulator 可重复 | 使用 auth-only；规则与实际路径不匹配；把候选规则误称线上事实 | 未登录/授权 UID/第三 UID/非法字段 Rules 测试 |
 | T008 | Money/rate 全整数且舍入唯一 | 内部偷偷转 Number 浮点；超出 safe integer；货币精度写死 | VND/CNY/JPY、半值、溢出测试 |
-| T009 | 固定双人单账本 ADR 与全部文档一致 | 残留 Household/Membership/角色/邀请设计；误动 Firebase | `rg` 范围检查 + 全量测试/构建 |
-| T010 | 两个授权账号同权，第三 UID 拒绝 | 把真实 UID 写进客户端；擅自部署线上 Rules；创建成员系统 | A/B 两账号 allow + 第三 UID/匿名 deny |
-| T011 | account 版本、归档、币种和期初余额 | 硬删有交易账户；余额用浮点；归档丢历史 | round-trip、版本冲突、双账号授权测试 |
-| T012 | transaction 不变量、时区日、soft delete | type 用金额正负表达；缺 createdBy/version/fx snapshot | income/expense/invalid/timezone/version 测试 |
-| T013 | 幂等、cursor、事务版本更新和 Rules | operationId 只在客户端去重；并发覆盖；无界 query | emulator 并发 + 重复提交 + 分页 + Rules |
-| T014 | 旧公式拆分确定，汇总差异为 0 | 解析失败按 0 静默吞；备注被任意猜分；浮点迁移 | 闰年/异常公式 fixture + 差异报告 |
-| T015 | dry-run 绝不写、失败 exit non-zero、源哈希 | 脚本默认指向 prod；报告含明文金额/备注 | emulator 写计数不变 + 三种退出码 |
-| T016 | feature flag off/on 完全隔离，新路径幂等 | 双写造成重复；失败清表单；历史记录误打卡 | 两分支 E2E/integration + duplicate click |
-| T017 | 分页列表、编辑版本、软删恢复、冲突 UI | 列表 N+1；冲突静默覆盖；用户内容 innerHTML | E2E happy/error/conflict/mobile |
-| T018 | 过去/当前/未来预算语义、clock 注入 | 调用 `new Date()`；软删交易仍计入；跨币漂移 | 月边界/时区/零/超支测试 |
-| T019 | 报表守恒、转账/删除排除、bucket 可下钻 | 聚合用显示金额；bucket 总和不等总额 | 属性测试 + 多币/跨月 fixtures |
-| T020 | 超时、schema、缓存日期/来源、历史不变 | `@latest` 覆盖历史交易；失败回退 0；无 abort | fake fetch timeout/bad JSON/cache tests |
-| T021 | IndexedDB 重启恢复、幂等、权限失败终止 | 内存队列冒充持久化；无限重试 403；多消费者重复发 | browser 集成：断网→重启→联网仅一笔 |
-| T022 | streak 按交易日/账本时区派生 | 直接写 streak；历史补录算今天；产品未决项被擅自选 | 跨午夜/删除/历史/并发测试 |
-| T023 | 图表/烟花真按需，首屏包体下降 | manualChunks 只隐藏警告未减少首屏；离线缺 chunk | 构建前后尺寸 + network/lazy E2E |
-| T024 | CI 在干净环境执行全部门禁 | audit 继续使用不支持 endpoint；secret 写日志；测试失败不阻断 | 一次故意红→修复绿的运行链接/日志 |
-| T025 | 仅获批 staging 账本，备份/双读/回滚 | 无明确授权即运行；差异非零仍切换；报告泄漏数据 | 授权记录、哈希、0 差异、回滚演练 |
+| T009 | 单账本/主记账者边界与文档一致 | 残留“双人同权”、Household、角色或邀请设计 | `rg` 范围检查 + 文档一致性 |
+| T010 | 注册入口确实移除，权限不超出线上事实 | 测试擅自假设两账号同权；把真实 UID 写入仓库 | 登录入口静态测试 + 候选 Rules 说明 |
+| T011 | 冻结状态，不得接入运行路径 | 未经 T019 决策继续创建账户 UI/生产集合 | `rg` 证明无 legacy UI import/实例化 |
+| T012 | 冻结状态，不得接入运行路径 | 把 CNY/JPY/FX snapshot 当当前需求继续扩张 | `rg` 证明未接线；原单测仍绿 |
+| T013 | RED 确实复现 streak=1 与入口不一致 | 测试直接断言实现细节；未控制 clock/timezone | 完整失败输出，连续两天预期 2 实际非 2 |
+| T014 | entries 派生、所有入口一致、奖励去重，收入规则已有产品结论 | 仍写/信任 streak 数字；收入规则被擅自决定；同日重复奖励 | 1/2/7/8/30/31、缺口、删除、两入口及合格分类策略测试 |
+| T015 | 越南午夜/月末/年末自动刷新 | 继续使用模块级 TODAY；按设备时区漂移 | fake clock + Asia/Ho_Chi_Minh 边界 |
+| T016 | VND 是唯一持久事实，CNY 只改 ViewModel | 切换/聚焦时改写 raw/pending；反复换算累计误差 | state/pending 深度不变 + 100 次切换 |
+| T017 | 仓库权限契约忠于线上 Rules | 无线上内容仍宣称验证；擅自部署/改账号 | 两账号按实际权限 + 第三 UID/匿名 deny |
+| T018 | 覆盖导入前恢复点真实可用 | 先覆盖后备份；备份失败仍继续；日志含财务数据 | 四终态 + 恢复文件 schema/hash |
+| T019 | ADR 明确 T011/T012 去留且有所有者选择 | Agent 静默选择迁移；以沉没成本为理由继续 | 两方案成本/风险/价值与签字结论 |
+| T020 | FX 故障不阻塞 VND 记账 | 失败写 0；缓存无时间；改动历史 entries | timeout/bad JSON/cache + VND 不变 |
+| T021 | CI test/type/rules/build 均阻断且不部署 | secret/真实 UID 泄漏；失败被 `continue-on-error` 吞掉 | 一次红→绿 CI 证据 |
 
 ## 4. 关键跨任务审查
 
@@ -118,21 +116,17 @@ Terra 要检查这些任务能否独立发布到当前 legacy 架构，且没有
 - CSV 在常见表格软件中不执行公式；
 - Rules 的线上现状尚未核实时，不能宣称“数据隔离已修复”。
 
-### 4.2 T008–T013 新事实模型
+### 4.2 T008–T012 冻结的新事实模型
 
-必须做一次架构一致性审查：所有 persisted amount 都是 minor integer，所有资源都在固定共享账本命名空间下，所有写入带 actor/audit/version/idempotency，Rules 与 converter 字段完全一致。发现 UI 传入任意 ledger path、把真实 UID 硬编码进客户端，或 Rules 使用宽泛 `request.auth != null` 应拒绝。
+T011/T012 当前只允许保持隔离和测试绿色，不允许继续接 repository/UI/生产路径。T008 的 VND 整数可复用，但 CNY/JPY 支持不能被解释为当前产品需要多币事实模型。
 
-### 4.3 T014–T017 迁移切换
+### 4.3 T013–T016 当前主链路
 
-迁移最重要的是“不猜”。旧公式可拆项，但旧备注无法可靠分配到每笔交易；报告必须保留不确定性。功能开关开启前需要逐月、逐分类、全年三层守恒证明。新旧双写不是默认方案；若施工 Agent引入双写，必须有单独 ADR、幂等和回滚设计，否则拒绝。
+优先证明并修复真实 streak Bug。Terra 必须检查直接表格、快速记账和云端快照三条路径；连续天数必须从 entries 日期派生，不能通过把 `expense_streak += 1` 修补。CNY 审查重点是切换显示前后持久 state 完全不变。
 
-### 4.4 T018–T022 派生能力
+### 4.4 T017–T021 权限、恢复与决策
 
-预算、报表、streak 都必须从 transaction 事实计算，不能维护多个可独立修改的真相。Terra 应随机抽取 fixture 手算，并验证下钻 IDs 的金额和等于展示 bucket。
-
-### 4.5 T023–T025 发布准备
-
-性能只接受可复现的前后数据；CI 只接受干净环境输出；迁移只接受明确环境与账本授权。任何生产写入都超出普通代码任务授权范围。
+线上权限无法从仓库猜测；缺少现行 Rules 时 T017 应 BLOCKED。T019 之前任何 Transaction repository/迁移提交都应拒绝。任何生产 Firebase 写入或部署仍需用户另行授权。
 
 ## 5. 缺陷严重度与处置时限
 

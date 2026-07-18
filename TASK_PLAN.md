@@ -1,288 +1,127 @@
-# GPT-5.4 mini 施工任务计划
+# MyExpenseApp 后续施工计划（2026-07-18 重排）
 
-> 执行原则：严格按依赖顺序；每个 Task 单一目标、单独 commit、预计不超过半天。先写失败测试并看到预期失败，再写最小实现。任何任务不得顺手重构相邻代码。涉及 Firebase 的任务只在 emulator/dev project 验证；未获得生产项目授权不得部署、迁移或修改线上 Rules。
+> 产品事实：这是为越南籍女朋友定制的私人账本。她是唯一日常记账者，VND 是唯一账务事实币种；项目所有者使用第二个既有 Firebase 账号查看/维护，CNY 仅为显示换算。应用没有注册、成员管理或多家庭需求。线上账号、Rules 和数据已在 Firebase，未经明确授权不得部署、迁移或改动真实权限。
 
-## Task 001：建立测试与类型检查基线
+## 已完成 T001–T012 回顾
 
-- Task ID: T001
-- 目标: 为现有 JS 建立 Vitest/jsdom 测试入口，并启用渐进式 TypeScript strict。
-- 修改文件: `package.json`、`package-lock.json`、`vitest.config.js`（新建）、`tsconfig.json`（新建）、`tests/setup.js`（新建）、`tests/unit/smoke.test.js`（新建）、`tests/typecheck.ts`（新建）
-- 涉及模块: 工程基础设施
-- 详细步骤: 添加 `test/test:watch/typecheck` 脚本；配置 jsdom；写一个导入 `safeEval` 的 smoke test；配置 TS 仅检查后续 `.ts` 和声明文件，不一次性检查 legacy JS。添加 `tests/typecheck.ts`（仅 `export {};`）避免 tsc 在零 .ts 输入时无实质性检查。
-- 禁止修改: `src/js` 业务行为、Firebase 配置、构建输出。
-- 完成标准: `npm test -- --run`、`npm run typecheck`、`npm run build` 均 exit 0。
-- 测试要求: smoke test 必须先因测试环境缺失失败，再在配置完成后通过。RED 阶段证据因初始提交 (870c731) 将配置与测试一次性加入而缺失。重建式 RED 复现（非原始历史）于 2026-07-17 在 commit 82f2dbe（pre-T001）执行：`npm test` → "Missing script: test" exit 1；`npm run typecheck` → "Missing script: typecheck" exit 1。GREEN 阶段见下方验证输出。
+| Task | 结论 | 处理要求 |
+|---|---|---|
+| T001 测试/类型基线 | 保留 | 与产品范围无冲突，是后续修 Bug 的必要门禁。 |
+| T002 `safeEval` 特征测试 | 保留 | 锁定 legacy 金额公式行为，不代表鼓励继续扩展公式存储。 |
+| T003 XSS 修复 | 保留 | 私人应用仍会同步备注和导入数据，安全边界有效。 |
+| T004 同步状态修复 | 保留 | Firebase 云同步是核心链路。 |
+| T005 CSV 修复 | 保留 | 数据可携带与公式注入防护仍必要。 |
+| T006 JSON 导入校验 | 保留，但仍需备份/预览 | 当前只解决格式与安全，覆盖式导入仍是高风险。 |
+| T007 Rules/Emulator 基线 | 条件保留 | 仓库 Rules 只是候选规则，不等于线上配置；不得部署。测试需从“双账号同权”改为“按线上权限契约验证”。 |
+| T008 Money 定点模型 | 保留、缩小范围 | VND 整数能力正确；CNY/JPY 只作为库能力，当前产品不得据此引入多币事实账。 |
+| T009 单账本边界 | 修改文档后保留 | 保留“唯一账本/无 Household”，删除“双人同权记账”假设；女朋友主记账，第二账号权限以线上 Rules 为准。 |
+| T010 移除注册入口 | 保留 | 完全符合最新信息；Rules 测试中的两个账号同权假设需在 T017 核对。 |
+| T011 Account 模型/repository | 冻结，不立即撤销 | 未接入 UI/线上路径，不影响运行；模型允许多币且增加维护成本。禁止继续接线，待 T019 决策后改为 VND-only 或删除。 |
+| T012 Transaction 模型 | 冻结，不立即撤销 | 未接入运行路径；审计/version/soft-delete 可复用，但原币/FX snapshot 超出当前需求。待 T019 决策，禁止直接进入旧 T013 repository。 |
 
-## Task 002：锁定现有金额解析行为
+结论：T001–T010 不需要回滚；T009/T010 文档语义需要本次修正。T011/T012 不做破坏性回滚，因为它们尚未影响现有应用且部分领域能力可复用，但从施工主线移除。
 
-- Task ID: T002
-- 目标: 用 characterization tests 固化 `safeEval` 当前合法与异常输入行为，暴露未来改造边界。
-- 修改文件: `tests/unit/utils.safe-eval.test.js`（新建）
-- 涉及模块: `src/js/utils.js`
-- 详细步骤: 覆盖空值、四则运算、除零、指数、超长、尾随运算符、非法文本、负数和浮点；明确哪些是当前行为而非目标行为。
-- 禁止修改: `src/js/utils.js`、金额存储格式。
-- 完成标准: 测试精确记录当前输出，无随机/时区依赖。
-- 测试要求: 至少 15 个表驱动用例；`npm test -- --run tests/unit/utils.safe-eval.test.js` 通过。
-
-## Task 003：消除表格渲染的持久化 XSS
-
-- Task ID: T003
-- 目标: 用户输入不再通过 HTML 字符串进入属性。
-- 修改文件: `src/js/render.js`、`tests/unit/render-xss.test.js`（新建）
-- 涉及模块: 表格渲染、安全
-- 详细步骤: 先用恶意 raw/remark 构造失败测试；保留静态表格骨架生成，但输入元素创建后用 `.value` 和 `.dataset.raw` 赋用户数据，或完全用 DOM API 创建；验证重渲染不产生额外元素/事件属性。
-- 禁止修改: 表格视觉样式、Firestore schema、分类清单。
-- 完成标准: 恶意 payload 只作为输入框文本出现；现有月表格布局不变。
-- 测试要求: 覆盖双引号、`<img onerror>`、换行、Unicode；相关测试与构建通过。
-
-## Task 004：修复当前同步状态的伪成功
-
-- Task ID: T004
-- 目标: Firestore 未确认时绝不显示“已同步”，失败数据可重试。
-- 修改文件: `src/js/sync.js`、`src/js/state.js`、`tests/unit/sync-state.test.js`（新建）
-- 涉及模块: 同步、状态管理
-- 详细步骤: 抽出可测试 save executor；给每批写入状态和 promise；超时只标记 delayed；写成功再 clear 对应 batch；失败 merge back；多批并发时只有全部确认才显示 synced。
-- 禁止修改: Firestore 文档路径、数据模型、UI CSS。
-- 完成标准: success/timeout/reject/第二批排队四种状态转移确定；切年/离开可检测所有未确认写入。
-- 测试要求: fake timers；覆盖延迟后失败、先后两批、重试不丢字段。
-
-## Task 005：修复当前 CSV 导出
-
-- Task ID: T005
-- 目标: CSV 符合字段转义规则、补齐日支出且不触发表格公式。
-- 修改文件: `src/js/export.js`（新建）、`src/js/main.js`、`tests/unit/csv-export.test.js`（新建）
-- 涉及模块: 导出、安全
-- 详细步骤: 抽出纯函数 `escapeCsvCell/buildLegacyCsv`；导出解析后的数值；文本前缀防公式注入；正确处理引号/逗号/CRLF；计算每日总支出；main 只负责下载。
-- 禁止修改: 页面文案、Firestore 数据、JSON 导入。
-- 完成标准: Excel/通用解析器可稳定得到固定列数；危险公式保持文本。
-- 测试要求: 中文、越南文、逗号、双引号、换行、`=+-@`、空值、日合计。
-
-## Task 006：为 legacy JSON 导入增加 schema 与终态
-
-- Task ID: T006
-- 目标: 非法导入明确失败，合法导入在确认前完成本地校验。
-- 修改文件: `src/js/import-schema.js`（新建）、`src/js/sync.js`、`src/js/main.js`、`tests/unit/import-schema.test.js`（新建）
-- 涉及模块: 导入、安全、同步
-- 详细步骤: 定义允许的 balances/entries/settings 键、类型、长度、总文件大小；所有 Promise 分支 resolve/reject；输出结构化错误；拒绝未知危险字段和超长文本。
-- 禁止修改: 导入仍覆盖当前年度的产品语义（备份/预览在后续任务）、线上数据。
-- 完成标准: 缺 entries、错误类型、超限、危险文本均在写云端前拒绝；UI 显示稳定错误。
-- 测试要求: 合法样本、每类非法结构、Promise 完成性、边界长度。
-
-## Task 007：把 Firestore Rules 和 Emulator 纳入仓库
-
-- Task ID: T007
-- 目标: 建立默认拒绝的安全规则事实源与测试入口。
-- 修改文件: `firebase.json`（新建）、`firestore.rules`（新建）、`firestore.indexes.json`（新建）、`tests/rules/legacy-ledger.rules.test.js`（新建）、`package.json`、`package-lock.json`
-- 涉及模块: Firebase 安全
-- 详细步骤: 配置 emulator；为当前固定共享账本建立“双人授权、其他 UID 拒绝”的候选规则测试；禁止仅以“已登录”作为全部授权；不在客户端或仓库文档中写入真实 UID；测试未登录、未授权账号、授权账号读写和非法字段。线上 Rules 已由项目所有者配置，本任务不部署且不声称替代线上规则。
-- 禁止修改: 生产 Rules、客户端数据路径、真实 Firebase 项目。
-- 完成标准: 本地规则测试可重复；默认未匹配路径 deny。
-- 测试要求: 每个 allow 至少有一个对称 deny；直接 SDK 越权测试通过。
-
-## Task 008：建立 Money 定点值对象
-
-- Task ID: T008
-- 目标: 新模型所有金额和汇率计算不使用二进制浮点事实值。
-- 修改文件: `src/domain/money.ts`（新建）、`src/domain/currency.ts`（新建）、`src/domain/errors.ts`（新建）、`tests/unit/domain/money.test.ts`（新建）
-- 涉及模块: Domain
-- 详细步骤: 定义 ISO currency metadata、minor integer 校验、加减、同币约束、格式化输入解析、scaled rate 换算和明确舍入策略。
-- 禁止修改: legacy `safeEval`、UI、Firestore。
-- 完成标准: API 不接受 NaN/Infinity/小数 minor unit；跨币结果可复现。
-- 测试要求: VND/CNY/JPY、边界值、负值策略、溢出、0.1 类误差、舍入半值。
-
-## Task 009：固化固定双人共享单账本边界
-
-- Task ID: T009
-- 目标: 明确产品只有两个既有 Firebase 账号共同使用一本账，阻止后续任务再次引入多家庭租户设计。
-- 修改文件: `docs/adr/001-fixed-shared-ledger-boundary.md`（新建）；删除误建的 `src/domain/household.ts`、`src/domain/membership.ts`、`tests/unit/domain/membership.test.ts`、`docs/adr/001-household-boundary.md`
-- 涉及模块: 产品边界、架构决策
-- 详细步骤: 记录单账本、双人同权、Firebase Auth/Rules 授权来源；明确不做 Household、Membership、角色、邀请和所有权转让；规定业务模型不携带 `householdId`，交易保留 `createdBy/updatedBy` 仅用于追溯。
-- 禁止修改: Firebase、页面、现有共享文档。
-- 完成标准: ADR 与 PRD/FRD/架构/任务计划一致，代码库不存在未使用的多家庭领域模型。
-- 测试要求: `rg` 检查不得残留生产代码中的 Household/Membership/householdId；全量测试、类型检查和构建通过。
-
-## Task 010：核对固定共享账本授权契约
-
-- Task ID: T010
-- 目标: 证明当前固定年度账本路径只允许两个已授权账号访问，第三个账号不能因为“已登录”而获得权限。
-- 修改文件: `src/js/auth.js`、`src/js/main.js`、`index.html`、`tests/unit/fixed-access-entry.test.js`（新建）、`tests/rules/legacy-ledger.rules.test.js`、`firestore.rules`（仅在与项目所有者提供的线上规则核对后更新）、`docs/firebase-access-contract.md`（新建）
-- 涉及模块: 登录入口、Firebase Rules 契约、文档
-- 详细步骤: 移除应用内自助注册入口与 Firebase 注册 API，只保留既有账号登录；记录线上规则与仓库候选规则的差异；用匿名、授权账号 A、授权账号 B、未授权账号四类 emulator 上下文覆盖固定路径；验证两名使用者同权；不创建新账本、邀请或角色。
-- 禁止修改: Firebase Auth 账号、线上 Rules、客户端账本路径、真实 UID、生产数据。
-- 完成标准: 本地测试表达双人同权/第三方拒绝；线上配置未导出时明确标记“待人工核对”，不得伪称线上已验证。
-- 测试要求: 两个 allow 与匿名/第三 UID deny；非法字段与删除 deny；`npm run test:rules` 通过。
-
-## Task 011：建立 Account 模型与 repository
-
-- Task ID: T011
-- 目标: 支持账户创建、更新和归档。
-- 修改文件: `src/domain/account.ts`（新建）、`src/application/accounts/manage-account.ts`（新建）、`src/infrastructure/firebase/account-repository.ts`（新建）、`firestore.rules`、`tests/unit/domain/account.test.ts`（新建）、`tests/integration/account-repository.test.ts`（新建）
-- 涉及模块: Accounts、Rules
-- 详细步骤: 账户字段/版本校验；应用用例；Firestore converter；归档而非硬删；两个已授权账号同权管理。
-- 禁止修改: 旧余额字段、交易模型、UI。
-- 完成标准: account round-trip 字段无漂移；归档账户仍可读且不可用于新交易（后续交易用例验证）。
-- 测试要求: 币种、opening balance、版本冲突、固定账本路径、未授权 UID。
-
-## Task 012：建立 Transaction 模型
-
-- Task ID: T012
-- 目标: 定义独立收入/支出交易及其不变量。
-- 修改文件: `src/domain/transaction.ts`（新建）、`src/application/transactions/create-transaction.ts`（新建）、`src/application/transactions/update-transaction.ts`（新建）、`tests/unit/domain/transaction.test.ts`（新建）、`docs/adr/002-transaction-and-money.md`（新建）
-- 涉及模块: Transactions、Domain
-- 详细步骤: 定义 ID、kind、Money、account/category、occurredAt/localDate、fx snapshot、audit metadata、version、soft delete；实现创建/更新命令验证。
-- 禁止修改: Firestore、legacy entries、转账。
-- 完成标准: 无效金额、日期、币种/汇率、归档引用被领域错误拒绝。
-- 测试要求: 收入/支出、时区本地日、版本、软删/恢复、幂等键字段。
-
-## Task 013：实现 Transaction repository 与权限规则
+## Task 013：用失败测试复现连续记账长期为 1 天
 
 - Task ID: T013
-- 目标: 在 emulator 中幂等创建、分页读取、版本更新交易。
-- 修改文件: `src/infrastructure/firebase/transaction-repository.ts`（新建）、`src/infrastructure/firebase/converters.ts`、`firestore.rules`、`firestore.indexes.json`、`tests/integration/transaction-repository.test.ts`（新建）、`tests/rules/transaction.rules.test.js`（新建）
-- 涉及模块: Transactions、Firestore、Rules
-- 详细步骤: transaction/converter；cursor query；operationId 去重策略；transaction/precondition 版本更新；软删；字段类型与不可变字段 Rules。
-- 禁止修改: UI、legacy writer、生产索引。
-- 完成标准: 两个并发 create 都保留；相同 operationId 只产生一笔；旧 version 更新冲突。
-- 测试要求: 并发、幂等、分页无重复/遗漏、权限、非法字段直写拒绝。
+- 目标: 把用户已观察到的 streak 故障固化为可重复测试，并明确当前两个事实源的冲突。
+- 修改文件: `tests/unit/legacy-streak.test.js`（新建）、`src/js/render.js`（仅导出/抽取测试入口，不改变行为）
+- 涉及模块: Legacy streak、日期
+- 详细步骤: 注入 clock；构造连续两天 entries、云端 settings 与 localStorage 不一致、直接编辑、快速记账、历史补录场景；先运行测试并确认失败原因分别命中“未触发”和“状态源不一致”。
+- 禁止修改: Firestore 数据、奖励阈值、UI 文案、T011/T012。
+- 完成标准: RED 输出能稳定证明连续两天仍得不到 2，且不是测试环境/时区错误。
+- 测试要求: `npm test -- --run tests/unit/legacy-streak.test.js` 预期失败；保存完整 RED 输出供 Terra 审查。
 
-## Task 014：实现 Legacy 迁移解析器
+## Task 014：从 legacy entries 派生连续记账并修复奖励
 
 - Task ID: T014
-- 目标: 把一个旧年度文档确定性转换为迁移交易草稿和校验报告。
-- 修改文件: `src/legacy/parse-legacy-ledger.ts`（新建）、`src/legacy/legacy-schema.ts`（新建）、`tests/unit/legacy/parse-legacy-ledger.test.ts`（新建）、`docs/adr/003-legacy-migration.md`（新建）
-- 涉及模块: Migration、Domain
-- 详细步骤: 解析 keys 和安全算术项；收入/支出映射；记录无法分配的日备注；输出每月旧/新合计与 rejected items；ADR 固化公式拆分规则。
-- 禁止修改: 任何云端数据、旧代码写路径、UI。
-- 完成标准: 对合法 fixture 每月/分类/全年合计差异为 0 minor unit；异常项不静默吞掉。
-- 测试要求: 闰年、负数/非法公式、空格、长公式、备注、CNY 历史信息缺失标记。
+- 目标: 直接编辑和快速记账都得到相同连续天数，连续 7/30 天奖励准确且不重复。
+- 修改文件: `src/js/streak.js`（新建）、`src/js/render.js`、`src/js/main.js`、`src/js/quick-add.js`、`tests/unit/legacy-streak.test.js`
+- 涉及模块: Streak、Gamification、Legacy entries
+- 详细步骤: 实现纯函数 `buildLegacyStreak(entries, year, today, timezone, eligibleCategories)`；从可计算且非零的合格 entries 提取日期并去重；从越南本地 today 向前连续计算；所有录入/删除和远端快照后统一重算；里程碑事件按日期+阈值去重；旧 `expense_streak/expense_last_date` 只读兼容且停止作为计算依据。进入 GREEN 前由项目所有者确认收入分类是否属于 `eligibleCategories`，并把结论写入测试名称或 ADR。
+- 禁止修改: 删除旧云端 settings、生产数据、在未确认时擅自决定收入是否算打卡、烟花视觉、交易新模型。
+- 完成标准: 连续两天=2；连续七天触发一次 7 天奖励；当天多笔不重复；断一天后从 1 开始；直接/快速入口一致；收入计入规则有明确产品结论和测试。
+- 测试要求: RED→GREEN；覆盖 1/2/6/7/8/29/30/31 天、同日多笔、昨天缺口、历史补录、删除唯一支出、非法公式、跨年边界。
 
-## Task 015：增加迁移 dry-run 命令
+## Task 015：修复 PWA 跨午夜日期陈旧
 
 - Task ID: T015
-- 目标: 只读生成旧账迁移报告，不写新集合。
-- 修改文件: `scripts/migrate-legacy-dry-run.mjs`（新建）、`tests/integration/migration-dry-run.test.js`（新建）、`package.json`、`MIGRATION_RUNBOOK.md`（新建）
-- 涉及模块: Migration、运维
-- 详细步骤: 从 emulator/导出 fixture 读取；调用 parser；输出 JSON/Markdown 报告；记录源哈希、条目数、拒绝项和差异；runbook 明确禁用生产写。
-- 禁止修改: Firestore 数据、生产凭证、legacy parser 规则。
-- 完成标准: 相同输入产生确定性报告；发现任一非零差异时 exit non-zero。
-- 测试要求: 成功/差异/损坏输入三种退出码。
+- 目标: 应用跨过越南午夜后，今日日期、快速记账默认日和 streak 自动刷新。
+- 修改文件: `src/js/clock.js`（新建）、`src/js/config.js`、`src/js/quick-add.js`、`src/js/render.js`、`src/js/main.js`、`tests/unit/local-date.test.js`（新建）
+- 涉及模块: Clock、时区、PWA 生命周期
+- 详细步骤: 以 `Asia/Ho_Chi_Minh` 计算本地日期；移除模块加载时固定 TODAY 的业务依赖；`visibilitychange`/重新聚焦时检测日期边界并刷新。
+- 禁止修改: 用户设备时区、Firestore 时间、历史 entries。
+- 完成标准: 不刷新页面跨午夜也切换到正确日期；月末/年末正确。
+- 测试要求: 越南午夜前后、中国/越南设备时区、闰年、月末、年末 fake clock。
 
-## Task 016：让快速记账写入新 Transaction 用例（功能开关）
+## Task 016：锁定 VND 事实与 CNY 只读展示
 
 - Task ID: T016
-- 目标: 测试账本可通过快速记账创建独立交易，旧用户行为不被强制切换。
-- 修改文件: `src/application/feature-flags.ts`（新建）、`src/ui/transactions/quick-add-controller.ts`（新建）、`src/js/quick-add.js`、`tests/integration/quick-add-transaction.test.ts`（新建）
-- 涉及模块: UI、Transactions、Migration
-- 详细步骤: 以 transaction-model feature flag 选择 legacy/new path；新入口统一解析金额/日期/账户/分类并调用 create use case；显示 queued/confirmed；失败保留表单。
-- 禁止修改: 未开启 flag 的旧写入行为、表格 UI、线上 flag。
-- 完成标准: flag off 完全走旧路径；flag on 只创建 transaction，不写旧 entries。
-- 测试要求: 两分支、重复点击幂等、验证错误、离线 queued、历史日期不误算今天。
+- 目标: 切换 CNY 查看绝不改变 Firestore 待写或已存 VND 值。
+- 修改文件: `tests/unit/currency-view.test.js`（新建）、`src/js/currency-view.js`（新建）、`src/js/main.js`、`src/js/quick-add.js`
+- 涉及模块: Currency ViewModel、Legacy entries
+- 详细步骤: 抽取 VND→CNY 格式化纯函数；所有输入保存契约明确为 VND；若保留 CNY 输入，必须先经单一转换边界写 VND；测试切换前后 state/pendingUpdates 深度相等。
+- 禁止修改: 历史云端金额、引入多基准币、T012 FX snapshot、汇率供应商。
+- 完成标准: CNY 切换只改变 DOM/ViewModel；VND round-trip 无漂移。
+- 测试要求: 大额/零/小数显示、反复切换 100 次、手动/自动汇率、pending 数据不变。
 
-## Task 017：实现交易列表最小 UI
+## Task 017：核对线上 Firebase 权限契约
 
 - Task ID: T017
-- 目标: 新模型交易可分页查看并下钻编辑。
-- 修改文件: `src/ui/transactions/transaction-list.ts`（新建）、`src/ui/transactions/transaction-form.ts`（新建）、`src/css/app.css`、`index.html`、`tests/e2e/transaction-list.spec.ts`（新建）
-- 涉及模块: UI、Transactions
-- 详细步骤: 加 feature-flag 页面；cursor 加载；显示时间/账户/分类/原币/创建人/同步状态；编辑带 version；冲突显示，不覆盖。
-- 禁止修改: 旧月矩阵、图表、预算。
-- 完成标准: 可创建→列表出现→编辑→软删→恢复；分页顺序稳定。
-- 测试要求: Playwright happy path、空态、加载失败、冲突、键盘/移动端基本可用性。
+- 目标: 让仓库 Rules 测试与项目所有者已经配置的线上规则语义一致。
+- 修改文件: `docs/firebase-access-contract.md`、`tests/rules/legacy-ledger.rules.test.js`、`firestore.rules`（仅候选规则；是否修改取决于核对结果）
+- 涉及模块: Firebase Auth/Rules
+- 详细步骤: 由项目所有者提供/确认当前线上 Rules；记录女朋友账号与项目所有者账号分别需要 read/write 哪些路径；Emulator 使用假 UID 重现同一权限；第三 UID 和匿名拒绝。
+- 禁止修改: 真实 UID、Firebase Auth 账号、线上 Rules、生产数据、客户端角色 UI。
+- 完成标准: 文档明确两个账号各自权限，测试不再无依据假设同权；若没有线上 Rules 内容，只能标记 BLOCKED。
+- 测试要求: 每个 allow 有对应 deny；直接 SDK 覆盖 read/create/update/delete。
 
-## Task 018：重建预算纯函数与新数据适配
+## Task 018：为覆盖式导入增加恢复点
 
 - Task ID: T018
-- 目标: 预算计算从 DOM 脱离，并正确区分过去/当前/未来月。
-- 修改文件: `src/domain/budget.ts`（新建）、`src/application/budgets/build-budget-status.ts`（新建）、`tests/unit/domain/budget.test.ts`（新建）、`src/ui/budgets/budget-view-model.ts`（新建）
-- 涉及模块: Budget、Reports
-- 详细步骤: 输入月、账本时区、整数限额和有效交易；输出 spent/remaining/pct/periodState/dailyAllowance；UI adapter 只格式化。
-- 禁止修改: 旧 `budget.js`，直到 feature flag 接线任务另行批准。
-- 完成标准: 纯函数无 DOM/Date.now；所有状态可由注入 clock 重现。
-- 测试要求: 月首/月末/闰年/跨时区、零预算、超支、删除交易、未来/过去月。
+- 目标: 导入 JSON 前可恢复当前年度账本。
+- 修改文件: `src/js/sync.js`、`src/js/import-schema.js`、`tests/unit/import-backup.test.js`（新建）、`IMPORT_RECOVERY.md`（新建）
+- 涉及模块: Import、Backup
+- 详细步骤: 写入前读取当前快照并生成本地下载备份及哈希；只有备份成功才允许覆盖；失败保持原数据；记录恢复流程。
+- 禁止修改: 自动写生产备份集合、真实数据、导入 schema 之外的重构。
+- 完成标准: 取消/备份失败/写失败均不破坏原账；恢复文件可通过现有 schema。
+- 测试要求: 四个终态、哈希一致、无敏感日志、重复操作。
 
-## Task 019：重建报表聚合纯函数
+## Task 019：决定 T011/T012 去留并形成 ADR
 
 - Task ID: T019
-- 目标: 从 transaction 列表生成可下钻的月度汇总。
-- 修改文件: `src/application/reports/build-summary.ts`（新建）、`src/application/reports/report-types.ts`（新建）、`tests/unit/reports/build-summary.test.ts`（新建）
-- 涉及模块: Reports、Transactions
-- 详细步骤: 过滤 soft-deleted；按本地日/分类/账户/记录人聚合；排除转账；每个 bucket 保留 transaction IDs；断言总额守恒。
-- 禁止修改: Chart.js、旧 `calculateAll`、Firestore projection。
-- 完成标准: summary 总收入/支出与逐笔整数求和一致，bucket 可下钻。
-- 测试要求: 多币基准金额、跨月边界、删除、空数据、大整数、守恒属性测试。
+- 目标: 基于真实需求决定冻结代码是改为 VND-only 继续，还是删除并保持 legacy 矩阵。
+- 修改文件: `docs/adr/003-account-transaction-scope.md`（新建）、`ARCHITECTURE_PLAN.md`、`TASK_PLAN.md`
+- 涉及模块: Product/Architecture
+- 详细步骤: 比较方案 A“修稳现有矩阵”和方案 B“迁移独立交易”的用户价值、迁移风险、维护成本；列出 T011/T012 可复用与必须删除字段；由项目所有者选定后再排施工。
+- 禁止修改: 业务代码、Firestore schema、生产数据。
+- 完成标准: ADR 明确选项、依据、后果和后续 Task；未获选择不得默认继续 Transaction repository。
+- 测试要求: 文档一致性检查；无代码测试要求。
 
-## Task 020：修正汇率 adapter
+## Task 020：汇率显示 adapter 可靠性
 
 - Task ID: T020
-- 目标: 汇率请求有超时、日期、来源与缓存，不改变历史交易事实。
-- 修改文件: `src/infrastructure/fx/fx-provider.ts`（新建）、`src/infrastructure/fx/fx-cache.ts`（新建）、`tests/unit/fx/fx-provider.test.ts`（新建）、`src/js/auth.js`
-- 涉及模块: FX、UI
-- 详细步骤: 注入 fetch/clock；AbortController 超时；runtime schema；缓存指定日期 rate；legacy UI 只消费 adapter 展示值；错误显示最后有效值与时间。
-- 禁止修改: 已保存 legacy entries、新 Transaction fx snapshot、第三方供应商（除非产品所有者批准）。
-- 完成标准: 慢/坏响应不会永久加载；展示来源与更新时间；失败不写 0 汇率。
-- 测试要求: timeout、HTTP 错误、畸形 JSON、cache hit/stale、手动 rate。
+- 目标: CNY 辅助显示在汇率服务慢/坏时可理解地降级，不影响 VND 记账。
+- 修改文件: `src/js/fx-display.js`（新建）、`src/js/auth.js`、`tests/unit/fx-display.test.js`（新建）
+- 涉及模块: FX Display
+- 详细步骤: 加超时、响应校验、最后有效缓存、来源与更新时间；失败继续显示 VND，不写入 0 或改动 entries。
+- 禁止修改: 历史金额、第三方供应商、交易事实模型。
+- 完成标准: FX 完全不可用时 VND 记账仍正常；CNY 显示明确为不可用/缓存值。
+- 测试要求: timeout、HTTP 错误、畸形 JSON、cache hit/stale、VND 写入不变。
 
-## Task 021：实现可靠 IndexedDB outbox
+## Task 021：建立 CI 门禁
 
 - Task ID: T021
-- 目标: 页面重启和断网后仍能幂等补传交易命令。
-- 修改文件: `src/application/sync/sync-outbox.ts`（新建）、`src/infrastructure/storage/indexeddb-outbox.ts`（新建）、`src/ui/shared/sync-indicator.ts`（新建）、`tests/integration/outbox.test.ts`（新建）、`docs/adr/004-sync-outbox.md`（新建）
-- 涉及模块: Sync、Offline
-- 详细步骤: 持久化 operation；状态机；单消费者顺序 flush；指数退避；权限/validation 失败停止自动重试；冲突保留；确认后删除。
-- 禁止修改: Service Worker 缓存策略、legacy pending queue、生产数据。
-- 完成标准: 断网创建→关闭→重开→联网只产生一笔；UI 状态与 outbox 一致。
-- 测试要求: 重启、重复 flush、乱序网络、401/403、validation、冲突、网络恢复。
+- 目标: 每次提交自动验证普通测试、类型、Rules 和构建。
+- 修改文件: `.github/workflows/ci.yml`（新建）、`package.json`、`SECURITY.md`（新建）
+- 涉及模块: CI、Release
+- 详细步骤: 固定 Node LTS/JDK；`npm ci`；test/typecheck/test:rules/build；不自动部署；失败日志不含财务数据或真实 UID。
+- 禁止修改: 生产凭证、自动部署、线上 Rules。
+- 完成标准: 任一门禁失败阻断；Windows 本地与 CI 命令语义一致。
+- 测试要求: 保存一次红→绿运行证据；所有退出码明确。
 
-## Task 022：修正 streak 为派生指标
+## 新执行顺序
 
-- Task ID: T022
-- 目标: 连续天数由交易发生日和账本时区计算，不能直接写数字。
-- 修改文件: `src/application/reports/build-streak.ts`（新建）、`src/ui/reports/streak-view-model.ts`（新建）、`tests/unit/reports/build-streak.test.ts`（新建）
-- 涉及模块: Reports、Gamification
-- 详细步骤: 明确合格 transaction kind；按 localDate 去重；从 today 向前连续计算；删除/恢复自然回算；UI feature flag 使用新结果。
-- 禁止修改: 产品未确认前不得决定收入是否算打卡；旧 settings 数据不得删除。
-- 完成标准: 历史补录不改变今天状态；直接录入和快速录入结果一致。
-- 测试要求: 跨午夜、时区、昨天缺口、同日多笔、删除唯一交易、历史补录。
+`T013 → T014 → T015 → T016 → T017 → T018 → T019 → T020 → T021`
 
-## Task 023：拆分首屏包体
-
-- Task ID: T023
-- 目标: Chart.js 和烟花按需加载，消除当前 500 kB 主包警告或给出证据化预算。
-- 修改文件: `src/js/main.js`、`src/js/charts.js`、`src/js/render.js`、`vite.config.js`、`tests/e2e/lazy-load.spec.ts`（新建）
-- 涉及模块: Build、Performance
-- 详细步骤: dynamic import 图表与烟花；只在分析面板/动画触发加载；设置 chunk budget；对比构建产物。
-- 禁止修改: 图表数据口径、动画视觉、依赖大版本。
-- 完成标准: 初始 chunk 小于约定预算且功能按需可用；构建无当前大 chunk 警告，或 ADR 记录经批准的例外。
-- 测试要求: 构建产物断言、图表打开、离线缓存后按需加载、无 JS 错误。
-
-## Task 024：建立 CI 质量门禁
-
-- Task ID: T024
-- 目标: 每个提交自动验证类型、测试、Rules、构建、依赖和包体。
-- 修改文件: `.github/workflows/ci.yml`（新建）、`package.json`、`scripts/check-bundle-size.mjs`（新建）、`SECURITY.md`（新建）
-- 涉及模块: CI、Security、Release
-- 详细步骤: 固定 Node LTS；npm ci；typecheck；unit/integration/rules；e2e smoke；build；npm audit official registry；bundle budget；上传失败报告但不上传敏感数据。
-- 禁止修改: 自动部署、生产凭证、分支保护设置（需仓库管理员操作）。
-- 完成标准: 故意失败的测试/Rules/包体能阻断 CI；绿色运行包含完整证据。
-- 测试要求: 在 PR 分支验证一次红→绿；记录每个 job 的实际退出码。
-
-## Task 025：执行首次迁移灰度（需单独授权）
-
-- Task ID: T025
-- 目标: 仅在指定 staging 测试账本执行备份、迁移、双读和回滚演练。
-- 修改文件: `MIGRATION_RUNBOOK.md`、`migration-reports/<approved-test-ledger-id>.md`（运行时新建；不得包含明文财务数据）
-- 涉及模块: Migration、Release
-- 详细步骤: 获取书面账本 ID/环境授权；导出备份并哈希；dry-run；写 staging 新集合；逐月比较；模拟回滚；记录结果。
-- 禁止修改: 未明确批准的账本、生产默认开关、旧文档内容、真实用户权限。
-- 完成标准: 每月/分类/全年差异为 0 minor unit；回滚恢复原读路径；所有拒绝项由所有者签字处理。
-- 测试要求: 备份可恢复、迁移可重入、第二次执行不重复、故障中断后可继续。
-
-## 提交顺序与门禁
-
-- 止血：T001 → T002 → T003/T004/T005/T006 → T007。
-- 新模型：T008 → T009 → T010 → T011 → T012 → T013。
-- 迁移与 UI：T014 → T015 → T016 → T017 → T018/T019/T020/T022。
-- 可靠性：T021、T023、T024。
-- T025 必须最后且需要项目所有者单独授权，不能由 Agent 自行触发。
-
-每个任务提交信息建议使用 `test: ...`、`fix: ...`、`feat: ...` 或 `chore: ...`，不得把多个 Task 合并为一个 commit。
+T013/T014 是当前最高优先级。T017 需要线上 Rules 信息；T019 需要项目所有者产品选择。任何任务都不得部署 Firebase 或迁移真实数据，除非用户另行明确授权。

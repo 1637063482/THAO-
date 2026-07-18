@@ -1,6 +1,6 @@
 # MyExpenseApp 架构演进方案
 
-> 目标不是一次重写，而是在保持两名使用者可用的前提下，把“年度共享表格”演进为“可追溯的双人共享交易账本”。账号和登录规则已由项目所有者在 Firebase 配置；仓库只建立可测试契约，任何线上 Rules 修改或数据迁移仍需单独授权。
+> 目标是优先修好女朋友实际使用的 VND 私人账本，而不是建设通用财务平台。项目所有者的第二账号和 CNY 切换服务于查看/维护。账号、登录规则和数据已在 Firebase；任何线上 Rules 修改或迁移仍需单独授权。
 
 ## 1. 当前架构问题
 
@@ -109,8 +109,8 @@ tests/
 ### 模块职责
 
 - Identity：认证状态；应用只接受两个既有账号，最终授权由 Firestore Rules 强制执行。
-- Shared Ledger Boundary：唯一逻辑账本、双人同权；不暴露建账本、邀请、角色或成员管理。
-- Ledger Settings：名称、基准币、时区、功能开关。
+- Shared Ledger Boundary：唯一逻辑账本、女朋友主记账、项目所有者查看/维护；权限以线上 Rules 为准，不暴露建账本、邀请、角色或成员管理。
+- Ledger Settings：名称、固定 VND、`Asia/Ho_Chi_Minh` 时区、功能开关。
 - Accounts：账户元数据与期初余额。
 - Transactions：收入、支出、转账、软删除、版本与审计。
 - Categories/Tags：账本内字典，不直接嵌入交易显示文案。
@@ -129,15 +129,14 @@ artifacts/{projectId}/private/data/sharedLedger/config
   baseCurrency, timezone, schemaVersion, createdAt, updatedAt
 
 artifacts/{projectId}/private/data/sharedLedger/accounts/{accountId}
-  name, type, currency, openingBalanceMinor, openingDate,
+  name, type, openingBalanceVnd, openingDate,
   archivedAt, version, createdAt, updatedAt
 
 artifacts/{projectId}/private/data/sharedLedger/categories/{categoryId}
   kind, name, icon, color, sortOrder, archivedAt
 
 artifacts/{projectId}/private/data/sharedLedger/transactions/{transactionId}
-  kind, accountId, amountMinor, currency,
-  baseAmountMinor, fxRateScaled, fxRateScale, fxDate, fxSource,
+  kind, accountId, amountVnd,
   occurredAt, localDate, categoryId, tagIds, note,
   createdBy, updatedBy, createdAt, updatedAt,
   version, deletedAt, idempotencyKey
@@ -161,11 +160,10 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
 
 ### 4.2 金额与汇率
 
-- `amountMinor` 是原币最小单位整数；VND 为 1，CNY 为分。
-- `baseAmountMinor` 在创建/确认交易时一次性按规定舍入固化。
-- 汇率用 scaled integer（例如 rate × 1e8）或十进制定点库计算，不用二进制浮点作为持久事实。
-- 展示换算不回写交易；修改交易汇率形成审计事件。
-- 聚合全部在基准币 minor unit 上求和。
+- 当前事实金额固定为 VND 整数；预算、余额、entries 和报表都以 VND 为准。
+- CNY 是 ViewModel 的辅助显示，可按当前汇率重算，不持久化为交易事实。
+- 展示切换不得写入 raw state、pendingUpdates 或 Firestore。
+- T011/T012 中的多币字段属于冻结探索；若 T019 决定继续，必须先改为符合 VND-only 产品边界。
 
 ### 4.3 索引与查询
 
@@ -276,17 +274,17 @@ UI 只展示稳定本地化文案；原始第三方错误进入脱敏日志。
 
 修复 XSS、同步伪成功、CSV/导入安全；加入测试、Rules 入库和 CI；不改变数据模型。
 
-### Phase 1：新模型旁路
+### Phase 1：先修现有产品主链路
 
-加入 Money/Transaction/Account 模型和 repositories；旧矩阵继续读，新交易写入固定共享账本的独立集合；只在 emulator/测试数据开启。
+从现有年度 `entries` 派生连续天数，统一直接录入/快速录入/云端快照刷新，修复 7/30 天奖励；验证 VND 保存与 CNY 仅展示；核对线上 Firebase Rules。T011/T012 新模型保持未接线状态。
 
-### Phase 2：迁移与切换
+### Phase 2：决定是否需要新模型
 
-备份旧文档、执行迁移、逐月双读校验；新交易列表/预算/报表成为默认；旧矩阵只读。
+基于真实使用痛点评估独立 Account/Transaction 是否值得迁移。只有项目所有者再次批准，才进行备份、dry-run、双读校验和 UI 切换。
 
-### Phase 3：协同与可靠离线
+### Phase 3：可靠离线与恢复
 
-加入双人变更审计、回收站、IndexedDB outbox、冲突处理、月度对账。
+按实际需要加入备份恢复、IndexedDB outbox、冲突处理和月度对账；不建设成员协同平台。
 
 ### Phase 4：智能能力
 

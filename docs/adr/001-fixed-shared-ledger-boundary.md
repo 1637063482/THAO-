@@ -5,17 +5,17 @@
 
 ## 背景
 
-MyExpenseApp 是项目所有者为自己和女朋友开发的私人应用。两个既有 Firebase Auth 账号共同读写同一本账，不面向其他家庭，也不提供公开注册后的自动授权、建账本、邀请成员或角色管理。
+MyExpenseApp 是项目所有者为越南籍女朋友开发的私人应用。女朋友是唯一日常记账者；项目所有者使用第二个既有 Firebase Auth 账号查看和维护。应用不面向其他家庭，也不提供注册、建账本、邀请成员或角色管理。
 
 当前客户端按年度访问固定路径 `artifacts/{projectId}/public/data/ledgers/shared_ledger_{year}`。账号和线上登录/授权规则已经由项目所有者在 Firebase 中配置；仓库不得擅自重建或部署该配置。
 
 ## 决策
 
-1. 产品只有一个逻辑账本，两名使用者拥有相同的记账权限。
+1. 产品只有一个逻辑账本；女朋友是主记账者，项目所有者主要查看。两账号真实读写权限以已配置的线上 Firebase Rules 为准，客户端不自创角色判断。
 2. Firebase Auth 负责身份认证；Firestore Rules 负责确认 UID 属于既定的双人授权集合。
 3. 客户端不实现 Household、Membership、Owner/Admin/Member/Viewer、邀请、退出或所有权转让。
 4. 后续账户、交易、分类、预算和报表均属于这一本共享账；模型不携带 `householdId`。
-5. 每笔交易仍记录 `createdBy/updatedBy`，用途是协作追溯，不是角色授权。
+5. 若未来启用独立交易，可保留 `createdBy/updatedBy` 用于审计，但不把双人协作当成核心产品功能。
 6. 仓库中的 Rules 只作为可测试候选规则；部署前必须与 Firebase 控制台中的现行规则逐条核对并由项目所有者明确授权。
 
 ## 后果
