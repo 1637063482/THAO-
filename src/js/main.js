@@ -1,7 +1,7 @@
 import "../css/app.css";
 import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
-import { getLedgerToday } from "./clock.js";
+import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
@@ -150,6 +150,7 @@ function switchMonthTab(monthId) {
 }
 
 var lastLedgerDate = getLedgerToday();
+var ledgerDateTimer = null;
 
 function syncYearLabels() {
   var displayYearText = document.getElementById("display-year-text");
@@ -178,6 +179,14 @@ function refreshForLedgerDateChange() {
     fullRebuildDOM();
   }
   renderStreakPanel();
+}
+
+function scheduleLedgerDateRefresh() {
+  if (ledgerDateTimer) clearTimeout(ledgerDateTimer);
+  ledgerDateTimer = setTimeout(function() {
+    refreshForLedgerDateChange();
+    scheduleLedgerDateRefresh();
+  }, getNextLedgerMidnightDelay());
 }
 
 function switchCurrency(curr) {
@@ -385,6 +394,13 @@ initAuth(
 );
 
 document.addEventListener("visibilitychange", function() {
-  if (!document.hidden) refreshForLedgerDateChange();
+  if (!document.hidden) {
+    refreshForLedgerDateChange();
+    scheduleLedgerDateRefresh();
+  }
 });
-window.addEventListener("focus", refreshForLedgerDateChange);
+window.addEventListener("focus", function() {
+  refreshForLedgerDateChange();
+  scheduleLedgerDateRefresh();
+});
+scheduleLedgerDateRefresh();

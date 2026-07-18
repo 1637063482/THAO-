@@ -19,3 +19,9 @@ export function getLedgerToday(date = new Date()) {
     dateKey: parts.year + "-" + parts.month + "-" + parts.day,
   };
 }
+
+export function getNextLedgerMidnightDelay(date = new Date()) {
+  const today = getLedgerToday(date);
+  const nextMidnightUtc = Date.UTC(today.year, today.month - 1, today.day + 1, -7, 0, 0, 0);
+  return Math.max(0, nextMidnightUtc - date.getTime());
+}

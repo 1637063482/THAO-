@@ -33,7 +33,7 @@ vi.mock("../../src/js/icons.js", () => ({
 
 import { state } from "../../src/js/state.js";
 import { getLedgerToday } from "../../src/js/clock.js";
-import { openQuickAdd } from "../../src/js/quick-add.js";
+import { openQuickAdd, submitQuickAdd } from "../../src/js/quick-add.js";
 import { renderMonthTable, renderStreakPanel } from "../../src/js/render.js";
 
 function resetState() {
@@ -48,6 +48,7 @@ function resetState() {
 describe("Vietnam ledger clock", () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    HTMLElement.prototype.scrollTo = vi.fn();
     resetState();
   });
 
@@ -144,5 +145,47 @@ describe("Vietnam ledger clock", () => {
     expect(state.activeMonthId).toBe(3);
     expect(document.getElementById("row-3-1").className).toContain("row-today");
     expect(state.currentStreak).toBe(0);
+  });
+
+  it("refreshes a continuously visible app at Vietnam midnight without focus or visibility events", async () => {
+    vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
+    document.body.innerHTML = [
+      '<select id="year-selector"></select>',
+      '<span id="display-year-text"></span>',
+      '<span id="ui-year-start"></span>',
+      '<span id="ui-year-end"></span>',
+      '<div id="quick-add-modal"></div>',
+      '<div id="quick-add-panel"></div>',
+      '<select id="qa-day"></select>',
+      '<select id="qa-cat"><option value="income">income</option></select>',
+      '<input id="qa-amount" value="50000">',
+      '<input id="qa-remark" value="">',
+      '<div id="months-container"></div>',
+      '<span id="monthly-chart-title"></span>',
+      '<section id="streak-panel"></section>',
+    ].join("");
+    state.activeYear = 2026;
+    state.activeMonthId = 2;
+    state.appState.entries = { "2_28_dining": "100000" };
+    await import("../../src/js/main.js?continuous-visible-midnight");
+    renderMonthTable(2);
+    renderStreakPanel();
+    expect(document.getElementById("row-2-28").className).toContain("row-today");
+    expect(state.currentStreak).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(state.activeYear).toBe(2026);
+    expect(state.activeMonthId).toBe(3);
+    expect(document.getElementById("row-3-1").className).toContain("row-today");
+    expect(state.currentStreak).toBe(0);
+
+    openQuickAdd();
+    expect(document.getElementById("qa-day").value).toBe("1");
+    submitQuickAdd();
+
+    expect(state.appState.entries["3_1_income"]).toBe("=50000");
+    expect(state.appState.entries["2_1_income"]).toBeUndefined();
+    expect(state.currentStreak).toBe(2);
   });
 });

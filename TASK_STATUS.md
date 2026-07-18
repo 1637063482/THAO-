@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T015 |
 | Title | 修复 PWA 跨午夜日期陈旧 |
-| State | CHANGES_REQUESTED |
+| State | IMPLEMENTING |
 | Branch | task/t015-vietnam-clock |
 | Base SHA | 85a2d680e0db9e3f536db7481842329ec675a26c |
 | Implementation Head | 5f911a766801d9176063c3befa0e02de2dd247ae |
