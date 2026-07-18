@@ -6,7 +6,7 @@
 - Title: 修复 PWA 跨午夜日期陈旧
 - Branch: `task/t015-vietnam-clock`
 - Base SHA: `85a2d680e0db9e3f536db7481842329ec675a26c`
-- Implementation SHA: `5f911a766801d9176063c3befa0e02de2dd247ae`
+- Implementation SHA: `a926da70a910804fea79f356c87b5e570839c50a`
 - Evidence file: `docs/review-evidence/T015_GREEN.md`
 
 ## RED
@@ -210,7 +210,7 @@ warning: in the working copy of '<file>', LF will be replaced by CRLF the next t
 
 - Review file: `docs/task-reviews/T015-R1.md`
 - Review commit: `75f15c5`
-- Rework implementation SHA: `pending`
+- Rework implementation SHA: `a926da70a910804fea79f356c87b5e570839c50a`
 - Blocking finding addressed: a continuously visible PWA did not refresh at Vietnam midnight unless `visibilitychange` or `focus` fired.
 
 ### R1 RED
