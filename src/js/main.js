@@ -76,6 +76,7 @@ document.body.addEventListener("input", function(e) {
       state.appState.entries[dataKey] = vndValueToSave;
       if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
       state.pendingUpdates.entries[dataKey] = vndValueToSave;
+      if (!dataKey.endsWith("_remark")) updateStreakAfterRecord();
     }
     clearTimeout(window._calcTimeout);
     window._calcTimeout = setTimeout(function() { calculateAll(); }, 150);

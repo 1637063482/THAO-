@@ -4,7 +4,7 @@ import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
 import { Fireworks } from "./fireworks.js";
-import { triggerCloudSave } from "./sync.js";
+import { buildLegacyStreak } from "./streak.js";
 
 export function fullRebuildDOM() {
   ["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"].forEach(function(id) {
@@ -152,89 +152,18 @@ export function renderMonthTable(monthId) {
 
 // ---- streak helpers ----
 
-function getDateStrings() {
-  var today = new Date();
-  var todayStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-  var yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  var yesterdayStr = yesterday.getFullYear() + "-" + String(yesterday.getMonth() + 1).padStart(2, "0") + "-" + String(yesterday.getDate()).padStart(2, "0");
-  return { todayStr: todayStr, yesterdayStr: yesterdayStr };
+function getDerivedStreak() {
+  return buildLegacyStreak(state.appState.entries, state.activeYear, new Date(), "Asia/Ho_Chi_Minh");
 }
 
-/**
- * 读取并校准 streak 状态（读写 localStorage，保证一致性）
- * 返回 { streak, hasRecordedToday }
- */
-function getCalibratedStreak() {
-  var dates = getDateStrings();
-  var settings = state.appState.settings;
-  var lastDate = "";
-  var streak = 0;
-
-  // 优先读取云端同步的 streak 数据
-  if (settings && settings.expense_last_date !== undefined) {
-    lastDate = settings.expense_last_date;
-    streak = parseInt(settings.expense_streak || "0");
-  } else {
-    // 兜底：localStorage（旧数据兼容 / 离线）
-    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
-  }
-
-  if (lastDate !== dates.todayStr && lastDate !== dates.yesterdayStr) {
-    streak = 0;
-    try { localStorage.setItem("expense_streak", "0"); } catch (e) {}
-    // 仅本地校准显示，不写入云端（避免竞态覆盖其他终端的正确并发写入）
-  }
-
-  return {
-    streak: streak,
-    hasRecordedToday: lastDate === dates.todayStr
-  };
+function hasRewardFired(threshold, todayStr) {
+  try { return localStorage.getItem("expense_streak_reward_" + threshold + "_" + todayStr) === "1"; }
+  catch (e) { return false; }
 }
 
-function incrementStreak() {
-  var dates = getDateStrings();
-  var settings = state.appState.settings;
-  var lastDate = "";
-  var streak = 0;
-
-  // 优先读取云端同步的 streak
-  if (settings && settings.expense_last_date !== undefined) {
-    lastDate = settings.expense_last_date;
-    streak = parseInt(settings.expense_streak || "0");
-  } else {
-    // 兜底：localStorage
-    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
-  }
-
-  // 今天已记过，不重复累加
-  if (lastDate === dates.todayStr) {
-    return streak;
-  }
-
-  if (lastDate === dates.yesterdayStr) {
-    streak += 1;
-  } else {
-    streak = 1;
-  }
-
-  // 同步写入 localStorage（离线缓存）
-  try {
-    localStorage.setItem("expense_streak", String(streak));
-    localStorage.setItem("expense_last_date", dates.todayStr);
-  } catch (e) {}
-
-  // 同步写入云端 settings
-  state.appState.settings.expense_streak = streak;
-  state.appState.settings.expense_last_date = dates.todayStr;
-  if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
-  state.pendingUpdates.settings.expense_streak = streak;
-  state.pendingUpdates.settings.expense_last_date = dates.todayStr;
-  triggerCloudSave();
-
-  return streak;
+function markRewardFired(threshold, todayStr) {
+  try { localStorage.setItem("expense_streak_reward_" + threshold + "_" + todayStr, "1"); }
+  catch (e) {}
 }
 
 // ---- render ----
@@ -242,7 +171,7 @@ function incrementStreak() {
 export function renderStreakPanel() {
   var panel = document.getElementById("streak-panel");
   if (!panel) return;
-  var s = getCalibratedStreak();
+  var s = getDerivedStreak();
 
   panel.innerHTML = '<div class="card p-4">'
     + '<div class="flex items-center justify-between">'
@@ -257,27 +186,18 @@ export function renderStreakPanel() {
     + '</div>';
 
   state.currentStreak = s.streak;
+  return s;
 }
 
 export function updateStreakAfterRecord() {
-  var dates = getDateStrings();
-  var lastDate = "";
-  try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-
-  // 今天已记过，不重复累加
-  if (lastDate === dates.todayStr) {
-    // 今天非首次记账，烟花照放
-    Fireworks.launch({ duration: 6000 });
+  var s = renderStreakPanel();
+  if (!s || !s.hasRecordedToday) {
     return;
   }
 
-  var newStreak = incrementStreak();
-  state.currentStreak = newStreak;
-  renderStreakPanel();
-
-  // 🎆 烟花触发
-  if (newStreak === 7 || newStreak === 30) {
-    showToast("恭喜！连续记账" + newStreak + "天成就达成！");
+  if ((s.streak === 7 || s.streak === 30) && !hasRewardFired(s.streak, s.todayStr)) {
+    markRewardFired(s.streak, s.todayStr);
+    showToast("恭喜！连续记账" + s.streak + "天成就达成！");
     Fireworks.launch({ duration: 12000 });
   } else {
     Fireworks.launch({ duration: 6000 });

@@ -32,7 +32,8 @@ vi.mock("../../src/js/icons.js", () => ({
 }));
 
 import { state } from "../../src/js/state.js";
-import { renderStreakPanel } from "../../src/js/render.js";
+import { Fireworks } from "../../src/js/fireworks.js";
+import { renderStreakPanel, updateStreakAfterRecord } from "../../src/js/render.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
 
 const FIXED_NOW = new Date("2026-02-03T05:00:00.000Z");
@@ -79,6 +80,29 @@ function getDisplayedStreak() {
   return match ? Number(match[1]) : NaN;
 }
 
+function keyForDate(dateStr, category = "dining") {
+  const [, month, day] = dateStr.match(/^\d{4}-(\d{2})-(\d{2})$/);
+  return `${Number(month)}_${Number(day)}_${category}`;
+}
+
+function localDateStringFromUtcMs(ms) {
+  return vietnamDateString(new Date(ms));
+}
+
+function entriesForStreak(length, { today = new Date(), category = "dining" } = {}) {
+  const entries = {};
+  const todayMs = Date.UTC(
+    Number(vietnamDateString(today).slice(0, 4)),
+    Number(vietnamDateString(today).slice(5, 7)) - 1,
+    Number(vietnamDateString(today).slice(8, 10)),
+    12
+  );
+  for (let offset = 0; offset < length; offset += 1) {
+    entries[keyForDate(localDateStringFromUtcMs(todayMs - offset * 86400000), category)] = "100000";
+  }
+  return entries;
+}
+
 function expectVisibleStreakFromTwoAccountingDays() {
   expect(vietnamDateString()).toBe(TODAY);
   renderStreakPanel();
@@ -89,6 +113,7 @@ describe("legacy accounting streak RED", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(FIXED_NOW);
+    vi.clearAllMocks();
     resetLedgerDom();
   });
 
@@ -191,5 +216,102 @@ describe("legacy accounting streak RED", () => {
 
     expect(state.appState.entries["2_2_income"]).toBe("=200000");
     expect(getDisplayedStreak()).toBe(2);
+  });
+
+  it.each([1, 2, 6, 7, 8, 29, 30, 31])("derives a %i day streak from current-year entries", (days) => {
+    vi.setSystemTime(new Date("2026-03-31T05:00:00.000Z"));
+    state.activeMonthId = 3;
+    state.appState.entries = entriesForStreak(days);
+    setLegacyStreak({ cloudLastDate: TODAY, cloudStreak: 99, localLastDate: TODAY, localStreak: 99 });
+
+    renderStreakPanel();
+
+    expect(getDisplayedStreak()).toBe(days);
+  });
+
+  it("counts multiple income and expense entries on the same day once", () => {
+    state.appState.entries = {
+      "2_3_income": "500000",
+      "2_3_dining": "200000",
+      "2_3_transport": "100000",
+    };
+    setLegacyStreak({ cloudLastDate: TODAY, cloudStreak: 3, localLastDate: TODAY, localStreak: 3 });
+
+    renderStreakPanel();
+
+    expect(getDisplayedStreak()).toBe(1);
+  });
+
+  it("starts from 1 when yesterday has no valid accounting entry", () => {
+    state.appState.entries = {
+      "2_1_dining": "100000",
+      "2_3_dining": "200000",
+    };
+    setLegacyStreak({ cloudLastDate: TODAY, cloudStreak: 6, localLastDate: TODAY, localStreak: 6 });
+
+    renderStreakPanel();
+
+    expect(getDisplayedStreak()).toBe(1);
+  });
+
+  it("ignores zero and invalid formulas when deriving accounting days", () => {
+    state.appState.entries = {
+      "2_1_dining": "100000",
+      "2_2_dining": "0",
+      "2_2_income": "=1++2",
+      "2_3_dining": "not-a-number",
+      "2_3_income": "200000",
+    };
+    setLegacyStreak({ cloudLastDate: TODAY, cloudStreak: 5, localLastDate: TODAY, localStreak: 5 });
+
+    renderStreakPanel();
+
+    expect(getDisplayedStreak()).toBe(1);
+  });
+
+  it("recomputes to 0 after direct table edit deletes today's only valid entry", async () => {
+    document.body.innerHTML += [
+      '<span id="ui-year-start"></span>',
+      '<span id="ui-year-end"></span>',
+      '<input id="delete-entry" class="cell-input" data-type="entry" data-key="2_3_dining">',
+    ].join("");
+    state.appState.entries = { "2_3_dining": "100000" };
+    setLegacyStreak({ cloudLastDate: TODAY, cloudStreak: 1, localLastDate: TODAY, localStreak: 1 });
+    renderStreakPanel();
+
+    await import("../../src/js/main.js");
+    const input = document.getElementById("delete-entry");
+    input.value = "";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(getDisplayedStreak()).toBe(0);
+  });
+
+  it.each([7, 30])("triggers the %i day reward once without writing legacy streak counters", (days) => {
+    vi.setSystemTime(new Date("2026-03-31T05:00:00.000Z"));
+    state.activeMonthId = 3;
+    state.appState.entries = entriesForStreak(days);
+    setLegacyStreak({ cloudLastDate: YESTERDAY, cloudStreak: days - 1, localLastDate: YESTERDAY, localStreak: days - 1 });
+
+    updateStreakAfterRecord();
+    updateStreakAfterRecord();
+
+    const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 12000);
+    expect(milestoneCalls).toHaveLength(1);
+    expect(state.pendingUpdates.settings.expense_streak).toBeUndefined();
+    expect(state.pendingUpdates.settings.expense_last_date).toBeUndefined();
+  });
+
+  it("does not fabricate cross-year continuity from the current year's single document", () => {
+    vi.setSystemTime(new Date("2026-01-01T05:00:00.000Z"));
+    state.activeMonthId = 1;
+    state.appState.entries = {
+      "1_1_income": "100000",
+    };
+    setLegacyStreak({ cloudLastDate: "2025-12-31", cloudStreak: 9, localLastDate: "2025-12-31", localStreak: 9 });
+
+    renderStreakPanel();
+
+    expect(getDisplayedStreak()).toBe(1);
   });
 });
