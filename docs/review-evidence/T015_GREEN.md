@@ -6,7 +6,7 @@
 - Title: 修复 PWA 跨午夜日期陈旧
 - Branch: `task/t015-vietnam-clock`
 - Base SHA: `85a2d680e0db9e3f536db7481842329ec675a26c`
-- Implementation SHA: `pending`
+- Implementation SHA: `5f911a766801d9176063c3befa0e02de2dd247ae`
 - Evidence file: `docs/review-evidence/T015_GREEN.md`
 
 ## RED
