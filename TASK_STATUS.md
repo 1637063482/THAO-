@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T016 |
 | Title | Lock VND fact with CNY read-only view |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/t016-vnd-currency-view |
 | Base SHA | f363b2b454924926fbb98240670c0487e967737a |
-| Implementation Head | pending |
+| Implementation Head | 6abc1e0162d1c171ab4891360888bf3ae147a9b5 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T016_GREEN.md` |
-| Latest Review | pending |
+| Latest Review | pending Terra review |
 | Next Task | T017 |
 
 ## Reviewer Attention

@@ -6,7 +6,7 @@
 - Title: Lock VND fact with CNY read-only view
 - Branch: `task/t016-vnd-currency-view`
 - Base SHA: `f363b2b454924926fbb98240670c0487e967737a`
-- Implementation SHA: `pending`
+- Implementation SHA: `6abc1e0162d1c171ab4891360888bf3ae147a9b5`
 - Evidence file: `docs/review-evidence/T016_GREEN.md`
 
 ## RED
