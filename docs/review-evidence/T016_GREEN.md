@@ -6,7 +6,7 @@
 - Title: Lock VND fact with CNY read-only view
 - Branch: `task/t016-vnd-currency-view`
 - Base SHA: `f363b2b454924926fbb98240670c0487e967737a`
-- Implementation SHA: `6abc1e0162d1c171ab4891360888bf3ae147a9b5`
+- Implementation SHA: `02ee0113c074efde24860694361b70a28156f5a5`
 - Evidence file: `docs/review-evidence/T016_GREEN.md`
 
 ## RED
@@ -173,7 +173,7 @@ warning: in the working copy of '<file>', LF will be replaced by CRLF the next t
 
 - Review file: `docs/task-reviews/T016-R1.md`
 - Review commit: `edafffa`
-- Rework implementation SHA: `pending`
+- Rework implementation SHA: `02ee0113c074efde24860694361b70a28156f5a5`
 - Blocking finding addressed: CNY direct-cell no-op-equivalent input could restore only DOM raw while leaving `state.appState` and `state.pendingUpdates` at a drifted VND value.
 
 ### R1 RED

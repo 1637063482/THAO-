@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T016 |
 | Title | Lock VND fact with CNY read-only view |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/t016-vnd-currency-view |
 | Base SHA | f363b2b454924926fbb98240670c0487e967737a |
-| Implementation Head | 6abc1e0162d1c171ab4891360888bf3ae147a9b5 |
-| Review Round | 1 |
+| Implementation Head | 02ee0113c074efde24860694361b70a28156f5a5 |
+| Review Round | 2 |
 | Evidence | `docs/review-evidence/T016_GREEN.md` |
-| Latest Review | `docs/task-reviews/T016-R1.md` - CHANGES_REQUESTED: CNY direct-cell no-op-equivalent edit can split DOM raw from persisted VND |
+| Latest Review | pending Terra R2 review; previous `docs/task-reviews/T016-R1.md` - CHANGES_REQUESTED |
 | Next Task | T017 |
 
 ## Reviewer Attention
