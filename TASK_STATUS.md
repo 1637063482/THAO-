@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T016 |
 | Title | Lock VND fact with CNY read-only view |
-| State | CHANGES_REQUESTED |
+| State | IMPLEMENTING |
 | Branch | task/t016-vnd-currency-view |
 | Base SHA | f363b2b454924926fbb98240670c0487e967737a |
 | Implementation Head | 02ee0113c074efde24860694361b70a28156f5a5 |

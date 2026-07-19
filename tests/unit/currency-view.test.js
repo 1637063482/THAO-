@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../../src/js/fireworks.js", () => ({
   Fireworks: { launch: vi.fn() },
@@ -34,6 +34,7 @@ vi.mock("../../src/js/icons.js", () => ({
 import { state } from "../../src/js/state.js";
 import { convertCnyAmountToVnd, formatVndForCurrencyDisplay } from "../../src/js/currency-view.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
+import { triggerCloudSave } from "../../src/js/sync.js";
 
 function mountShell(extraHtml = "") {
   document.body.innerHTML = [
@@ -85,6 +86,11 @@ describe("currency view", () => {
   beforeEach(() => {
     resetState();
     mountShell();
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   it("formats large, zero, and decimal VND values for VND and CNY views", () => {
@@ -127,6 +133,33 @@ describe("currency view", () => {
     expect(input.dataset.raw).toBe("1234");
     expect(state.appState.entries["1_1_dining"]).toBe("1234");
     expect(state.pendingUpdates.entries["1_1_dining"]).toBe("1234");
+  });
+
+  it("defers CNY direct-cell persistence until blur so delayed cloud saves cannot send rounded VND", async () => {
+    vi.useFakeTimers();
+    state.currentCurrency = "CNY";
+    state.fxRateAuto = 3500;
+    state.appState.entries = { "1_1_dining": "1234" };
+    state.pendingUpdates.entries = { "1_1_dining": "1234" };
+    document.body.innerHTML += '<input id="entry-1-1-dining" class="cell-input" data-type="entry" data-key="1_1_dining" data-raw="1234" value="0.35">';
+
+    const input = document.getElementById("entry-1-1-dining");
+    input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    input.value = "0.35";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    await vi.advanceTimersByTimeAsync(900);
+
+    expect(state.appState.entries["1_1_dining"]).toBe("1234");
+    expect(state.pendingUpdates.entries["1_1_dining"]).toBe("1234");
+    expect(triggerCloudSave).not.toHaveBeenCalled();
+
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+
+    expect(input.dataset.raw).toBe("1234");
+    expect(state.appState.entries["1_1_dining"]).toBe("1234");
+    expect(state.pendingUpdates.entries["1_1_dining"]).toBe("1234");
+    expect(triggerCloudSave).toHaveBeenCalledTimes(1);
   });
 
   it("does not change state or pending updates after 100 CNY/VND display switches", () => {

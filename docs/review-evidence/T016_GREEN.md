@@ -318,3 +318,154 @@ warning: in the working copy of '<file>', LF will be replaced by CRLF the next t
 - No T012 FX snapshot, exchange-rate provider, or CNY/VND persistence rule expansion.
 - No Quick Add behavior changes in this rework.
 - No streak, reward, or date-boundary behavior changes.
+
+## R2 Rework
+
+- Review file: `docs/task-reviews/T016-R2.md`
+- Review commit: `3628e80`
+- Rework implementation SHA: `pending`
+- Blocking finding addressed: CNY direct-cell input persisted a rounded interim VND value and queued cloud save before blur reconciliation.
+
+### R2 RED
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/currency-view.test.js
+```
+
+Exit code: `1`
+
+Key failure output:
+
+```text
+tests/unit/currency-view.test.js (6 tests | 1 failed)
+x defers CNY direct-cell persistence until blur so delayed cloud saves cannot send rounded VND
+
+AssertionError: expected '1225' to be '1234' // Object.is equality
+
+Expected: "1234"
+Received: "1225"
+
+tests/unit/currency-view.test.js:153:50
+expect(state.appState.entries["1_1_dining"]).toBe("1234");
+```
+
+Why this is a real RED:
+
+- The test uses the actual `main.js` focusin/input/focusout listeners.
+- It reproduces the R2 timing path: raw VND `1234`, automatic rate `3500`, displayed CNY `0.35`, input event, then a 900 ms hold before blur.
+- The failure is a business assertion: the VND accounting fact in `state.appState.entries` changed to the rounded interim value `1225` before blur.
+- Import, jsdom, mocks, fake timers, and syntax all completed; the other five tests in the same file passed.
+
+### R2 GREEN
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/currency-view.test.js
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+Test Files  1 passed (1)
+Tests  6 passed (6)
+Duration  7.23s
+```
+
+### R2 General Gates
+
+Command:
+
+```powershell
+npm test -- --run
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+Test Files  13 passed | 2 skipped (15)
+Tests  97 passed | 7 skipped (104)
+Duration  12.07s
+```
+
+Command:
+
+```powershell
+npm run typecheck
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+tsc -p tsconfig.json --noEmit
+```
+
+Command:
+
+```powershell
+npm run build
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+vite v6.4.3 building for production...
+41 modules transformed.
+dist/index.html                  26.35 kB | gzip:   5.91 kB
+dist/assets/index-luYmF_1P.css   59.78 kB | gzip:   9.30 kB
+dist/assets/index-DBVi3Wac.js   741.59 kB | gzip: 206.67 kB
+built in 2.50s
+```
+
+Known build warning:
+
+```text
+(!) Some chunks are larger than 500 kB after minification.
+```
+
+Command:
+
+```powershell
+git diff --check
+```
+
+Exit code: `0`
+
+Known warning:
+
+```text
+warning: in the working copy of '<file>', LF will be replaced by CRLF the next time Git touches it
+```
+
+### R2 Changed Files
+
+- `src/js/main.js`
+- `tests/unit/currency-view.test.js`
+- `docs/review-evidence/T016_GREEN.md`
+- `TASK_STATUS.md`
+
+### R2 Implementation Notes
+
+- Direct CNY cell input now marks the field dirty but does not update `state.appState`, `state.pendingUpdates`, `data-raw`, or cloud-save scheduling.
+- Focusout is the single authoritative CNY direct-cell persistence boundary: it computes the final VND value, writes the same state/pending target as the VND path, schedules calculation, and calls `triggerCloudSave()`.
+- The regression test holds the CNY field for 900 ms before blur and verifies the rounded interim value cannot be the pending or sent value.
+
+### R2 Explicitly Not Modified
+
+- No Firebase config, rules, auth accounts, deployment, or real data.
+- No T011/T012 changes.
+- No historical cloud amounts or migrations.
+- No multi-base-currency model.
+- No T012 FX snapshot, exchange-rate provider, or CNY/VND persistence rule expansion.
+- No Quick Add behavior changes in this rework.
+- No streak, reward, or date-boundary behavior changes.

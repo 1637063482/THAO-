@@ -58,6 +58,27 @@ function isMathOrCell(el) {
   return el.classList.contains("math-input") || el.classList.contains("cell-input");
 }
 
+function persistInputValue(target, vndValueToSave) {
+  var dataType = target.getAttribute("data-type");
+  var dataKey = target.getAttribute("data-key");
+  if (dataType === "balance" && target.id) {
+    state.appState.balances[target.id] = vndValueToSave;
+    if (!state.pendingUpdates.balances) state.pendingUpdates.balances = {};
+    state.pendingUpdates.balances[target.id] = vndValueToSave;
+  } else if (dataType === "entry" && dataKey) {
+    state.appState.entries[dataKey] = vndValueToSave;
+    if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
+    state.pendingUpdates.entries[dataKey] = vndValueToSave;
+    if (!dataKey.endsWith("_remark")) updateStreakAfterRecord();
+  }
+}
+
+function scheduleInputSave() {
+  clearTimeout(window._calcTimeout);
+  window._calcTimeout = setTimeout(function() { calculateAll(); }, 150);
+  triggerCloudSave();
+}
+
 document.body.addEventListener("input", function(e) {
   var target = e.target;
   if (target.tagName === "INPUT" && !target.id.startsWith("qa-") && target.id !== "monthly-budget-input") {
@@ -66,26 +87,13 @@ document.body.addEventListener("input", function(e) {
     var vndValueToSave = val;
     if (isMathOrCell(target)) {
       if (state.currentCurrency === "CNY") {
-        vndValueToSave = val === "" ? "" : (safeEval(val) * getActiveRate()).toString();
         target.dataset.currencyInputDirty = "1";
+        return;
       }
       target.dataset.raw = vndValueToSave;
     }
-    var dataType = target.getAttribute("data-type");
-    var dataKey = target.getAttribute("data-key");
-    if (dataType === "balance" && target.id) {
-      state.appState.balances[target.id] = vndValueToSave;
-      if (!state.pendingUpdates.balances) state.pendingUpdates.balances = {};
-      state.pendingUpdates.balances[target.id] = vndValueToSave;
-    } else if (dataType === "entry" && dataKey) {
-      state.appState.entries[dataKey] = vndValueToSave;
-      if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
-      state.pendingUpdates.entries[dataKey] = vndValueToSave;
-      if (!dataKey.endsWith("_remark")) updateStreakAfterRecord();
-    }
-    clearTimeout(window._calcTimeout);
-    window._calcTimeout = setTimeout(function() { calculateAll(); }, 150);
-    triggerCloudSave();
+    persistInputValue(target, vndValueToSave);
+    scheduleInputSave();
   }
 });
 
@@ -118,17 +126,8 @@ document.body.addEventListener("focusout", function(e) {
       e.target.dataset.raw = vndVal;
       e.target.value = rawInput ? formatDisplay(vndVal) : "";
       if (e.target.dataset.currencyInputDirty === "1") {
-        var dataType = e.target.getAttribute("data-type");
-        var dataKey = e.target.getAttribute("data-key");
-        if (dataType === "balance" && e.target.id) {
-          state.appState.balances[e.target.id] = vndVal;
-          if (!state.pendingUpdates.balances) state.pendingUpdates.balances = {};
-          state.pendingUpdates.balances[e.target.id] = vndVal;
-        } else if (dataType === "entry" && dataKey) {
-          state.appState.entries[dataKey] = vndVal;
-          if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
-          state.pendingUpdates.entries[dataKey] = vndVal;
-        }
+        persistInputValue(e.target, vndVal);
+        scheduleInputSave();
       }
     }
     delete e.target.dataset.currencyRawBefore;
