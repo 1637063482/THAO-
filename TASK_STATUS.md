@@ -8,13 +8,13 @@
 |---|---|
 | Task ID | T017 |
 | Title | Verify online Firebase access contract |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/t017-rules-contract |
 | Base SHA | c2a726e9f8d68d7f80a523ff8d79fd3ac76ecb5f |
-| Implementation Head | pending |
+| Implementation Head | 73b02e470354707bade80e6fc56fa8cc42849ce2 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T017.md` |
-| Latest Review | pending |
+| Latest Review | pending Terra R1 review |
 | Next Task | T018 |
 
 ## Reviewer Attention
