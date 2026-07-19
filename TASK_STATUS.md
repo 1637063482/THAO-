@@ -6,22 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | T016 |
-| Title | Lock VND fact with CNY read-only view |
-| State | APPROVED |
-| Branch | task/t016-vnd-currency-view |
-| Base SHA | f363b2b454924926fbb98240670c0487e967737a |
-| Implementation Head | ed734572fb2fa16892617d07185ebb4060073bb8 |
-| Review Round | 3 |
-| Evidence | `docs/review-evidence/T016_GREEN.md` |
-| Latest Review | `docs/task-reviews/T016-R3.md` - APPROVED |
-| Next Task | T017 |
+| Task ID | T017 |
+| Title | Verify online Firebase access contract |
+| State | PLANNED |
+| Branch | task/t017-rules-contract |
+| Base SHA | c2a726e9f8d68d7f80a523ff8d79fd3ac76ecb5f |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/T017.md` |
+| Latest Review | pending |
+| Next Task | T018 |
 
 ## Reviewer Attention
 
-- Verify VND remains the only persisted accounting fact; CNY switching may only change DOM/ViewModel and must not rewrite `state.appState` or `state.pendingUpdates`.
-- Cover 100 repeated switches without drift, auto/manual exchange rates, and large/zero/decimal display cases.
-- Verify Quick Add CNY input converts exactly once at submit boundary and writes VND.
+- Verify repository Rules tests match the owner-confirmed online Firebase Rules semantics, not historical assumptions.
+- Confirm girlfriend and project owner account permissions by role description only; do not write real UID values to the repository.
+- Verify third UID and anonymous access are denied.
 
 ## History
 
@@ -30,3 +30,4 @@
 | T013 | APPROVED | `1d4903c` | T013 Review PASS; legacy workflow did not generate a repository review file |
 | T014 | APPROVED | `c1eadec` | `docs/task-reviews/T014-R2.md` |
 | T015 | APPROVED | `a926da7` | `docs/task-reviews/T015-R2.md` |
+| T016 | APPROVED | `ed73457` | `docs/task-reviews/T016-R3.md` |
