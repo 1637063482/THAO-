@@ -1,40 +1,40 @@
-# Firebase 固定双人访问契约
+# Firebase Access Contract
 
-## 已确认产品事实
+## Owner-Confirmed Online Rules
 
-- 应用只供项目所有者和女朋友两个既有 Firebase Auth 账号使用。
-- 女朋友是唯一日常记账者，项目所有者主要查看/维护；两账号是否写权限相同需以线上 Rules 为准。
-- 应用不提供注册、邀请、成员管理、角色管理或新建账本。
-- 账号和线上登录/授权规则已由项目所有者在 Firebase 中配置。
+For T017, the project owner provided the current online Firestore Rules semantics:
 
-## 客户端契约
+- The application is still a private two-account ledger.
+- The girlfriend account and the project owner account have identical ledger permissions.
+- Authorization is based on `request.auth.token.email`, compared case-insensitively.
+- The two real email addresses are intentionally not stored in this repository.
+- Authorized accounts may `read`, `create`, and `update` documents under `artifacts/{appId}/public/data/ledgers/{ledgerId}`.
+- Ledger `delete` is always denied.
+- Every other Firestore path is denied.
 
-- 登录只调用 `signInWithEmailAndPassword`，不调用 Firebase 账号创建 API。
-- 当前年度账本路径保持为 `artifacts/{projectId}/public/data/ledgers/shared_ledger_{year}`，本任务不迁移线上数据。
-- 客户端不能把“登录成功”当作账本授权成功；Firestore 拒绝时必须显示无权限/同步失败。
-- 真实邮箱、UID、密码或 token 不得写入源码、测试 fixture、日志或文档。
+## Repository Candidate Rules
 
-## Rules 契约
+`firestore.rules` mirrors the online rule shape for Emulator verification, but uses fixture emails:
 
-仓库中的 `firestore.rules` 是供 Emulator 验证的候选规则，不自动代表 Firebase 控制台中的线上规则。它目前通过服务端维护的授权文档确认 UID，而不是在客户端硬编码 UID。
+- `girlfriend.fixture@example.invalid`
+- `owner.fixture@example.invalid`
 
-最低行为：
+These fixture emails are test-only placeholders. They must not be deployed as production access rules. If deployment is ever authorized separately, the private Firebase console values must be applied outside repository commits, or replaced through a secure deployment process that does not commit real emails, UIDs, passwords, or tokens.
 
-| 身份 | 固定共享账本读写 |
-|---|---|
-| 未登录 | 拒绝 |
-| 女朋友账号 | 按线上规则允许日常记账读写 |
-| 项目所有者账号 | 至少允许查看；真实写权限按线上规则核对 |
-| 任意第三 UID | 拒绝 |
+## Permission Matrix
 
-删除整个年度账本、写入未知顶层字段和访问未匹配路径必须拒绝。
+| Principal | Ledger read | Ledger create | Ledger update | Ledger delete | Other paths |
+|---|---:|---:|---:|---:|---:|
+| Girlfriend account | allow | allow | allow | deny | deny |
+| Project owner account | allow | allow | allow | deny | deny |
+| Anonymous user | deny | deny | deny | deny | deny |
+| Missing email token | deny | deny | deny | deny | deny |
+| Any third email/UID | deny | deny | deny | deny | deny |
 
-## 上线核对门禁
+## Boundaries
 
-在项目所有者提供 Firebase 控制台当前 Rules 的导出内容，并明确授权部署前：
-
-1. 不运行 `firebase deploy`。
-2. 不修改 Firebase Auth 中的两个真实账号。
-3. 不声称 Emulator 测试已经证明线上安全。
-4. 若线上规则使用 UID 直白名单，只核对两个 UID 且不把真实值提交到仓库。
-5. 若线上规则使用授权文档，确认只有两个目标 UID 的文档存在，且客户端不能自行创建或修改这些文档。
+- This task does not deploy Firebase Rules.
+- This task does not modify Firebase Auth accounts.
+- This task does not write, migrate, or inspect production data.
+- This task does not add client-side role UI or account management.
+- Repository tests prove that the checked-in candidate rules match the owner-confirmed online semantics; they do not prove the live Firebase project has changed.

@@ -1,64 +1,21 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() {
-      return request.auth != null;
+    function signedInWithEmail() {
+      return request.auth != null && request.auth.token.email != null;
     }
 
-    function isLegacyMember(projectId) {
-      return signedIn() && exists(/databases/$(database)/documents/artifacts/$(projectId)/public/data/members/$(request.auth.uid));
+    function isAuthorizedLedgerEmail() {
+      return signedInWithEmail()
+        && (
+          request.auth.token.email.lower() == "girlfriend.fixture@example.invalid"
+          || request.auth.token.email.lower() == "owner.fixture@example.invalid"
+        );
     }
 
-    function validLegacyLedger() {
-      return request.resource.data.keys().hasOnly(['balances', 'entries', 'settings'])
-        && request.resource.data.balances is map
-        && request.resource.data.entries is map
-        && request.resource.data.settings is map;
-    }
-
-    function validAccount(accountId) {
-      return request.resource.data.keys().hasOnly([
-          'id', 'name', 'type', 'currency', 'openingBalanceMinor', 'openingDate',
-          'version', 'archivedAt', 'createdAt', 'updatedAt'
-        ])
-        && request.resource.data.id == accountId
-        && request.resource.data.name is string
-        && request.resource.data.name.size() > 0
-        && request.resource.data.name.size() <= 80
-        && request.resource.data.type in ['cash', 'bank', 'ewallet', 'other']
-        && request.resource.data.currency in ['VND', 'CNY', 'JPY']
-        && request.resource.data.openingBalanceMinor is int
-        && request.resource.data.openingDate is string
-        && request.resource.data.version is int
-        && request.resource.data.version >= 1
-        && (request.resource.data.archivedAt == null || request.resource.data.archivedAt is string)
-        && request.resource.data.createdAt is string
-        && request.resource.data.updatedAt is string;
-    }
-
-    match /artifacts/{projectId}/public/data/members/{uid} {
-      allow read: if signedIn() && request.auth.uid == uid;
-      allow write: if false;
-    }
-
-    match /artifacts/{projectId}/public/data/ledgers/{ledgerId} {
-      allow read: if isLegacyMember(projectId);
-      allow create, update: if isLegacyMember(projectId) && validLegacyLedger();
+    match /artifacts/{appId}/public/data/ledgers/{ledgerId} {
+      allow read, create, update: if isAuthorizedLedgerEmail();
       allow delete: if false;
-
-      match /accounts/{accountId} {
-        allow read: if ledgerId == 'shared_ledger' && isLegacyMember(projectId);
-        allow create: if ledgerId == 'shared_ledger' && isLegacyMember(projectId) && validAccount(accountId);
-        allow update: if ledgerId == 'shared_ledger' && isLegacyMember(projectId)
-          && validAccount(accountId)
-          && request.resource.data.version == resource.data.version + 1
-          && request.resource.data.id == resource.data.id
-          && request.resource.data.currency == resource.data.currency
-          && request.resource.data.openingBalanceMinor == resource.data.openingBalanceMinor
-          && request.resource.data.openingDate == resource.data.openingDate
-          && request.resource.data.createdAt == resource.data.createdAt;
-        allow delete: if false;
-      }
     }
 
     match /{document=**} {
