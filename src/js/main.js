@@ -67,6 +67,7 @@ document.body.addEventListener("input", function(e) {
     if (isMathOrCell(target)) {
       if (state.currentCurrency === "CNY") {
         vndValueToSave = val === "" ? "" : (safeEval(val) * getActiveRate()).toString();
+        target.dataset.currencyInputDirty = "1";
       }
       target.dataset.raw = vndValueToSave;
     }
@@ -116,9 +117,23 @@ document.body.addEventListener("focusout", function(e) {
       });
       e.target.dataset.raw = vndVal;
       e.target.value = rawInput ? formatDisplay(vndVal) : "";
+      if (e.target.dataset.currencyInputDirty === "1") {
+        var dataType = e.target.getAttribute("data-type");
+        var dataKey = e.target.getAttribute("data-key");
+        if (dataType === "balance" && e.target.id) {
+          state.appState.balances[e.target.id] = vndVal;
+          if (!state.pendingUpdates.balances) state.pendingUpdates.balances = {};
+          state.pendingUpdates.balances[e.target.id] = vndVal;
+        } else if (dataType === "entry" && dataKey) {
+          state.appState.entries[dataKey] = vndVal;
+          if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
+          state.pendingUpdates.entries[dataKey] = vndVal;
+        }
+      }
     }
     delete e.target.dataset.currencyRawBefore;
     delete e.target.dataset.currencyViewBefore;
+    delete e.target.dataset.currencyInputDirty;
   }
 });
 

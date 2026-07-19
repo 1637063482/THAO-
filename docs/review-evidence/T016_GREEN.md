@@ -168,3 +168,153 @@ warning: in the working copy of '<file>', LF will be replaced by CRLF the next t
 ## Notes
 
 - During all-suite verification, the 100-switch test initially hit Vitest's default 5000 ms timeout under full-suite load. The test already represents a required T016 stress case, so it now has a per-test `15000` ms timeout. The final targeted and full-suite runs both passed.
+
+## R1 Rework
+
+- Review file: `docs/task-reviews/T016-R1.md`
+- Review commit: `edafffa`
+- Rework implementation SHA: `pending`
+- Blocking finding addressed: CNY direct-cell no-op-equivalent input could restore only DOM raw while leaving `state.appState` and `state.pendingUpdates` at a drifted VND value.
+
+### R1 RED
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/currency-view.test.js
+```
+
+Exit code: `1`
+
+Key failure output:
+
+```text
+tests/unit/currency-view.test.js (5 tests | 1 failed)
+× reconciles state and pending when a CNY no-op-equivalent input restores the original VND fact
+
+AssertionError: expected '1225' to be '1234'
+
+Expected: "1234"
+Received: "1225"
+
+tests/unit/currency-view.test.js:128:50
+expect(state.appState.entries["1_1_dining"]).toBe("1234");
+```
+
+Why this is a real RED:
+
+- The test uses the actual `main.js` focusin, input, and focusout listeners.
+- It reproduces the reviewer sequence: raw VND `1234`, automatic rate `3500`, CNY display text `0.35`, input event with the same displayed value, then blur.
+- The failure is a business assertion: `dataset.raw` is restored to `1234`, but persisted `state.appState.entries` remains the rounded conversion `1225`.
+
+### R1 GREEN
+
+Command:
+
+```powershell
+npm test -- --run tests/unit/currency-view.test.js
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+Test Files  1 passed (1)
+Tests  5 passed (5)
+Duration  10.83s
+```
+
+### R1 General Gates
+
+Command:
+
+```powershell
+npm test -- --run
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+Test Files  13 passed | 2 skipped (15)
+Tests  96 passed | 7 skipped (103)
+Duration  12.31s
+```
+
+Command:
+
+```powershell
+npm run typecheck
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+tsc -p tsconfig.json --noEmit
+```
+
+Command:
+
+```powershell
+npm run build
+```
+
+Exit code: `0`
+
+Output summary:
+
+```text
+vite v6.4.3 building for production...
+✓ 41 modules transformed.
+dist/index.html                  26.35 kB │ gzip:   5.91 kB
+dist/assets/index-luYmF_1P.css   59.78 kB │ gzip:   9.30 kB
+dist/assets/index-Fcm3lgDh.js   741.92 kB │ gzip: 206.69 kB
+✓ built in 4.06s
+```
+
+Known build warning:
+
+```text
+(!) Some chunks are larger than 500 kB after minification.
+```
+
+Command:
+
+```powershell
+git diff --check
+```
+
+Exit code: `0`
+
+Known warning:
+
+```text
+warning: in the working copy of '<file>', LF will be replaced by CRLF the next time Git touches it
+```
+
+### R1 Changed Files
+
+- `src/js/main.js`
+- `tests/unit/currency-view.test.js`
+- `docs/review-evidence/T016_GREEN.md`
+- `TASK_STATUS.md`
+
+### R1 Implementation Notes
+
+- CNY direct-cell input now marks the field as dirty for the current edit cycle.
+- On focusout, the final authoritative VND raw is synchronized back to the same `state.appState` and `state.pendingUpdates` key when the field was edited.
+- This keeps queued cloud-save state aligned with the DOM raw after no-op-equivalent CNY round-trips, while preserving the no-input display-only path.
+
+### R1 Explicitly Not Modified
+
+- No Firebase config, rules, auth accounts, deployment, or real data.
+- No T011/T012 changes.
+- No historical cloud amounts or migrations.
+- No multi-base-currency model.
+- No T012 FX snapshot, exchange-rate provider, or CNY/VND persistence rule expansion.
+- No Quick Add behavior changes in this rework.
+- No streak, reward, or date-boundary behavior changes.

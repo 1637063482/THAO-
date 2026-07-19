@@ -111,6 +111,24 @@ describe("currency view", () => {
     expect(snapshotPersistence()).toBe(before);
   });
 
+  it("reconciles state and pending when a CNY no-op-equivalent input restores the original VND fact", () => {
+    state.currentCurrency = "CNY";
+    state.fxRateAuto = 3500;
+    state.appState.entries = { "1_1_dining": "1234" };
+    state.pendingUpdates.entries = { "1_1_dining": "1234" };
+    document.body.innerHTML += '<input id="entry-1-1-dining" class="cell-input" data-type="entry" data-key="1_1_dining" data-raw="1234" value="0.35">';
+
+    const input = document.getElementById("entry-1-1-dining");
+    input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    input.value = "0.35";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+
+    expect(input.dataset.raw).toBe("1234");
+    expect(state.appState.entries["1_1_dining"]).toBe("1234");
+    expect(state.pendingUpdates.entries["1_1_dining"]).toBe("1234");
+  });
+
   it("does not change state or pending updates after 100 CNY/VND display switches", () => {
     state.appState.entries = {
       "1_1_dining": "123456789",
