@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | T017 |
 | Title | Verify online Firebase access contract |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/t017-rules-contract |
-| Base SHA | c2a726e9f8d68d7f80a523ff8d79fd3ac76ecb5f |
+| Base SHA | c2a726ed6a1a3f335c1f4ca55ed9edb035bf0f48 |
 | Implementation Head | 73b02e470354707bade80e6fc56fa8cc42849ce2 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T017.md` |
-| Latest Review | pending Terra R1 review |
+| Latest Review | `docs/task-reviews/T017-R1.md` - CHANGES_REQUESTED |
 | Next Task | T018 |
 
 ## Reviewer Attention
 
-- Verify repository Rules tests match the owner-confirmed online Firebase Rules semantics, not historical assumptions.
-- Confirm girlfriend and project owner account permissions by role description only; do not write real UID values to the repository.
-- Verify third UID and anonymous access are denied.
+- Scrub real-account-identifying email patterns from T017 evidence and record secret-scan evidence without values.
+- Correct the T017 evidence base SHA to `c2a726ed6a1a3f335c1f4ca55ed9edb035bf0f48`.
+- Preserve the verified Rules scope: no deploy, Firebase Auth change, production-data operation, client role UI, or T011/T012 expansion.
 
 ## History
 
