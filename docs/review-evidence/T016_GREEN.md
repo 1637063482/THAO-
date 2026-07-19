@@ -323,7 +323,7 @@ warning: in the working copy of '<file>', LF will be replaced by CRLF the next t
 
 - Review file: `docs/task-reviews/T016-R2.md`
 - Review commit: `3628e80`
-- Rework implementation SHA: `pending`
+- Rework implementation SHA: `ed734572fb2fa16892617d07185ebb4060073bb8`
 - Blocking finding addressed: CNY direct-cell input persisted a rounded interim VND value and queued cloud save before blur reconciliation.
 
 ### R2 RED
