@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | T017 |
 | Title | Verify online Firebase access contract |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t017-rules-contract |
 | Base SHA | c2a726ed6a1a3f335c1f4ca55ed9edb035bf0f48 |
 | Implementation Head | 1a2bf9e9e91b22265bc3292f1ebf2bdaabe1c4a5 |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/T017.md` |
-| Latest Review | `docs/task-reviews/T017-R1.md` - R1 changes addressed; ready for Terra R2 review |
+| Latest Review | `docs/task-reviews/T017-R2.md` - APPROVED |
 | Next Task | T018 |
 
 ## Reviewer Attention
 
-- Scrub real-account-identifying email patterns from T017 evidence and record secret-scan evidence without values.
-- Correct the T017 evidence base SHA to `c2a726ed6a1a3f335c1f4ca55ed9edb035bf0f48`.
-- Preserve the verified Rules scope: no deploy, Firebase Auth change, production-data operation, client role UI, or T011/T012 expansion.
+- T017 R2 approved at `1a2bf9e9e91b22265bc3292f1ebf2bdaabe1c4a5`.
+- Any later Firebase deployment, Firebase Auth change, online Rules change, or production-data operation still requires separate user authorization.
+- The next Coder session may start only T018, following the approved-task transition in `AGENT_WORKFLOW.md`.
 
 ## History
 
