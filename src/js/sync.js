@@ -1,7 +1,7 @@
-import { doc, setDoc, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db, projectId } from "./firebase.js";
 import { state, copyPending, clearPending, mergeBackPending, hasPending } from "./state.js";
-import { LEGACY_IMPORT_MAX_BYTES, validateLegacyImport } from "./import-schema.js";
+import { LEGACY_IMPORT_MAX_BYTES, serializeLegacyImport, validateLegacyImport } from "./import-schema.js";
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
@@ -153,6 +153,109 @@ export function teardownListener() {
   if (unsubscribePreviousYearSnapshot) { unsubscribePreviousYearSnapshot(); unsubscribePreviousYearSnapshot = null; }
 }
 
+function normalizeLegacyLedger(data) {
+  return {
+    balances: data?.balances || {},
+    entries: data?.entries || {},
+    settings: data?.settings || {},
+  };
+}
+
+function recoveryTimestamp(value) {
+  return value.replace(/[-:]/g, "").replace(".", "");
+}
+
+export async function sha256Hex(serialized, cryptoImpl = globalThis.crypto) {
+  const digest = await cryptoImpl.subtle.digest("SHA-256", new TextEncoder().encode(serialized));
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+export async function downloadRecoveryFile(recovery) {
+  const blob = new Blob([recovery.serialized], { type: "application/json;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  try {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = recovery.fileName;
+    link.click();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+export async function importLegacyLedgerWithRecovery({
+  year,
+  importedText,
+  confirmOverwrite,
+  readCurrentLedger,
+  downloadRecovery,
+  writeLedger,
+  now = () => new Date().toISOString(),
+  makeHash = sha256Hex,
+}) {
+  const importedData = JSON.parse(importedText);
+  const validation = validateLegacyImport(importedData, { serializedBytes: new TextEncoder().encode(importedText).length });
+  if (!validation.ok) {
+    const error = new Error("Legacy import data is invalid");
+    error.code = validation.code;
+    error.path = validation.path;
+    throw error;
+  }
+  if (!confirmOverwrite()) return { ok: false, reason: "cancelled" };
+
+  const currentLedger = normalizeLegacyLedger(await readCurrentLedger());
+  const serialized = serializeLegacyImport(currentLedger);
+  const hash = await makeHash(serialized);
+  const recovery = {
+    year,
+    data: currentLedger,
+    serialized,
+    hash,
+    fileName: "my-expense-app-recovery-" + year + "-" + recoveryTimestamp(now()) + "-" + hash + ".json",
+  };
+
+  try {
+    await downloadRecovery(recovery);
+  } catch (error) {
+    const backupError = new Error("Import recovery point failed");
+    backupError.code = "BACKUP_FAILED";
+    backupError.cause = error;
+    throw backupError;
+  }
+
+  await writeLedger(validation.data);
+  return { ok: true, recovery };
+}
+
+function readImportFileText(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target.result);
+    reader.onerror = () => reject(reader.error || new Error("文件读取失败"));
+    reader.readAsText(file);
+  });
+}
+
+async function importDataWithRecovery(file) {
+  const importedText = await readImportFileText(file);
+  const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
+  const result = await importLegacyLedgerWithRecovery({
+    year: state.activeYear,
+    importedText,
+    confirmOverwrite: () => confirm("警告：导入将覆盖当前云端的所有数据，确定要继续吗？"),
+    async readCurrentLedger() {
+      const snapshot = await getDoc(docRef);
+      return snapshot.exists() ? snapshot.data() : { balances: {}, entries: {}, settings: {} };
+    },
+    downloadRecovery: downloadRecoveryFile,
+    writeLedger: (data) => setDoc(docRef, data, { merge: false }),
+  });
+  if (!result.ok) return false;
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
+  return true;
+}
+
 export async function importData(file) {
   if (!file || !state.currentUser) return false;
   if (file.size > LEGACY_IMPORT_MAX_BYTES) {
@@ -160,27 +263,5 @@ export async function importData(file) {
     error.code = "FILE_TOO_LARGE";
     throw error;
   }
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async function (e) {
-      try {
-        const importedData = JSON.parse(e.target.result);
-        const validation = validateLegacyImport(importedData, { serializedBytes: new TextEncoder().encode(e.target.result).length });
-        if (!validation.ok) {
-          const error = new Error("导入数据格式不受支持");
-          error.code = validation.code;
-          error.path = validation.path;
-          throw error;
-        }
-        if (!confirm("警告：导入将覆盖当前云端的所有数据，确定要继续吗？")) return resolve(false);
-        const loadingOverlay = document.getElementById("loading-overlay");
-        if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
-        const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
-        await setDoc(docRef, validation.data, { merge: false });
-        resolve(true);
-      } catch (err) { reject(err); }
-    };
-    reader.onerror = () => reject(reader.error || new Error("文件读取失败"));
-    reader.readAsText(file);
-  });
+  return importDataWithRecovery(file);
 }

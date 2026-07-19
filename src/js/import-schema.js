@@ -59,4 +59,8 @@ export function validateLegacyImport(input, { serializedBytes } = {}) {
   return { ok: true, data: input };
 }
 
+export function serializeLegacyImport(data) {
+  return JSON.stringify(data);
+}
+
 export const LEGACY_IMPORT_MAX_BYTES = MAX_FILE_BYTES;
