@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T017 |
 | Title | Verify online Firebase access contract |
-| State | CHANGES_REQUESTED |
+| State | IMPLEMENTING |
 | Branch | task/t017-rules-contract |
 | Base SHA | c2a726ed6a1a3f335c1f4ca55ed9edb035bf0f48 |
 | Implementation Head | 73b02e470354707bade80e6fc56fa8cc42849ce2 |
