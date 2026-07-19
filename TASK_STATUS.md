@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T018 |
 | Title | Add recovery point before overwrite import |
-| State | PLANNED |
+| State | IMPLEMENTING |
 | Branch | task/t018-import-recovery |
 | Base SHA | 470c430be75eb92b893dd5ef2b55da4db5fb6bc4 |
 | Implementation Head | pending |
