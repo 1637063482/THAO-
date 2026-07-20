@@ -241,43 +241,43 @@ danger:           #C84941
 
 ## 8. 可调整储蓄目标
 
-### 8.1 月度目标
+### 8.1 月度目标（逻辑表示 → 持久化映射）
 
-每个月拥有独立目标：
+每个月拥有独立目标。以下为 **UI ViewModel 表示**，与第 11 节持久化 schema 的映射关系如下：
 
-```text
-period: YYYY-MM
-targetVnd: VND integer
-updatedAt
-updatedBy
-version
-```
+| ViewModel 字段 | 持久化 settings key | 说明 |
+|---|---|---|
+| `period`: YYYY-MM | 由所属年度文档确定，不单设 key | 月份隐含在 key 下标 `savings_goal_month_1…12` |
+| `targetVnd`: VND integer | `savings_goal_month_N`（N=1–12） | 直接存储，无封装对象 |
+| `updatedAt` | 文档级 `settings.updatedAt` | 不按月份独立存储，修改任一月目标更新文档级时间戳 |
+| `updatedBy` | 文档级 `settings.updatedBy` | 同上，文档级 |
+| `version` | 文档级 `settings.version` | 同上，文档级 |
 
 业务规则：
 
 - 可设置、修改、清空；
 - 修改只影响该月份，不批量覆盖其他月份；
-- 查看历史月份时使用该历史月份保存的目标；
-- 未设置的新月份可在 UI 中提供“沿用上月目标”显式操作，但不得静默复制；
+- 查看历史月份时使用该历史月份文档保存的目标；
+- 未设置的新月份可在 UI 中提供”沿用上月目标”显式操作，但不得静默复制；
 - 修改目标后立即重算进度，不修改收入或支出事实。
 
-### 8.2 年度目标
+### 8.2 年度目标（逻辑表示 → 持久化映射）
 
-每年拥有独立目标：
+每年拥有独立目标。ViewModel 表示与持久化映射：
 
-```text
-year: YYYY
-targetVnd: VND integer
-updatedAt
-updatedBy
-version
-```
+| ViewModel 字段 | 持久化 settings key | 说明 |
+|---|---|---|
+| `year`: YYYY | 由所属年度文档确定 | `savings_goal_annual` 在该文档的 `settings` 内 |
+| `targetVnd`: VND integer | `savings_goal_annual` | 直接存储 |
+| `updatedAt` | 文档级 `settings.updatedAt` | 不按年单独存储 |
+| `updatedBy` | 文档级 `settings.updatedBy` | 同上 |
+| `version` | 文档级 `settings.version` | 同上 |
 
 业务规则：
 
 - 可设置、修改、清空；
 - 年度目标不是 12 个月目标的自动总和；
-- UI 可显示“月度目标合计”和“年度目标”的差异，但不能静默替用户修改；
+- UI 可显示”月度目标合计”和”年度目标”的差异，但不能静默替用户修改；
 - 跨年时不自动把上一年度目标写入新年度，可提供显式沿用操作。
 
 ### 8.3 校验
@@ -309,19 +309,26 @@ version
 
 ### 9.2 状态
 
+**持久化状态**（写入 Firestore `status` 字段）：
+
 ```text
 ACTIVE       进行中
-MATURING     已进入最近提醒窗口
-MATURED      已到期、待处理
 REDEEMED     已赎回
 ROLLED_OVER  已续存并关联新存款
 ```
 
+**派生状态**（读取时根据当前越南日期和 `maturesOn` 计算，不持久化）：
+
+```text
+MATURING     已进入最近提醒窗口（到期前指定天数内）
+MATURED      已到期、待处理（当前日期 ≥ maturesOn，且持久状态为 ACTIVE）
+```
+
 状态规则：
 
-- `MATURING` 和 `MATURED` 可由当前越南日期派生，不把它们作为不可恢复事实；
+- `MATURING` 和 `MATURED` 由当前越南日期从 `maturesOn` 和持久 `status` 派生，**不写入 `status` 字段**；
 - `REDEEMED` 和 `ROLLED_OVER` 必须由用户确认；
-- 删除采用软删除或归档，不能使历史汇总不可解释；
+- 删除采用软删除或归档（`archivedAt`），不使历史汇总不可解释；
 - 已赎回本金不计入当前存款总额。
 
 ### 9.3 金额汇总
@@ -344,16 +351,15 @@ ROLLED_OVER  已续存并关联新存款
 
 ```text
 calculatedInterestVnd =
-  round(principalVnd × annualRate × depositDays ÷ 365)
+  round(principalVnd × annualRatePpm ÷ 1_000_000 × depositDays ÷ 365)
 ```
 
-由于银行可能使用不同计息天数或报价规则：
+业务规则：
 
-- 系统计算值只作参考；
-- `expectedInterestVnd` 允许用户修改；
-- 保存时保留 calculated 与 expected 两个值；
-- 总预计收益使用 expected 值；
-- 年利率采用定点比例或规范十进制字符串，不使用二进制浮点作为持久事实；
+- 系统计算值 `calculatedInterestVnd` 为 **派生值（read-time computed）**，不在持久 schema 中存储；
+- `expectedInterestVnd` 是用户可覆盖的持久字段，总预计收益使用 `expectedInterestVnd`；
+- 年利率以 **ppm scaled integer** 唯一表示（如 5% = 50000），禁止持久化浮点利率或十进制字符串；
+- 如果用户不设 `expectedInterestVnd`，UI 默认显示 `calculatedInterestVnd`，但写数据库时该字段为 null 或由用户确认后写入；
 - 到期日必须晚于存入日；
 - 越南本地日用于天数和提醒计算。
 
@@ -486,6 +492,7 @@ artifacts/{projectId}/public/data/ledgers/shared_ledger_savings
 
 - 目标和存款使用 VND 整数；
 - rate 采用 ppm scaled integer，禁止持久化浮点利率；
+- `calculatedInterestVnd` 为读取时派生值，不持久化；仅 `expectedInterestVnd` 和 `actualInterestVnd` 写入 schema；
 - 日期为 `YYYY-MM-DD` 越南业务日，审计时间使用服务端 timestamp；
 - UI 不直接拼 Firestore 路径；
 - 储蓄目标留在对应年度文档的 `settings`，不建立第二套年度目标集合；

@@ -41,8 +41,6 @@
 > **当前实施范围：** UXS 阶段以 legacy `entries` 矩阵为事实源，不引入独立 Account/Transaction 领域模型。以下第 2.1 节中关于 Account/Transaction 领域的描述属于远期目标，当前不实施。
 
 - 客户端：保留 Vite，逐步迁移为 TypeScript；先不强制引入大型 UI 框架，避免在数据迁移期同时重写全部页面。
-
-- 客户端：保留 Vite，逐步迁移为 TypeScript；先不强制引入大型 UI 框架，避免在数据迁移期同时重写全部页面。
 - 领域层：纯 TypeScript，定义 Money、Transaction、Account、Budget 等，不依赖 DOM/Firebase；不建立 Household/Membership/角色模型。
 - 应用层：用例/命令处理器，统一验证、权限前置、幂等、同步状态。
 - 基础设施层：Firestore repositories、Auth adapter、IndexedDB outbox、FX provider、telemetry。

@@ -70,7 +70,7 @@ shared_ledger_savings
       actualInterestVnd: VND integer | null
       reminderDays: number[] (default [30, 7, 1])
       remindersEnabled: boolean
-      status: ACTIVE | MATURED | REDEEMED | ROLLED_OVER
+      status: ACTIVE | REDEEMED | ROLLED_OVER
       redeemedOn: YYYY-MM-DD | null
       rolledOverToDepositId: string | null
       note: string
@@ -86,10 +86,11 @@ shared_ledger_savings
       acknowledgedBy: uid
 ```
 
-Rule:
+Note:
 
-- `MATURING` and `MATURED` are derived states computed at read time from `maturesOn` and `status`. They are never persisted as the `status` field — the stored status is always one of `ACTIVE`, `MATURED`, `REDEEMED`, or `ROLLED_OVER`.
-- Rates use ppm (parts per million) scaled integer. Binary floating point is never persisted for rates or amounts.
+- `calculatedInterestVnd` is a read-time derived value (computed from `principalVnd × annualRatePpm ÷ 1_000_000 × depositDays ÷ 365`). It is **never persisted** — only `expectedInterestVnd` and `actualInterestVnd` are stored in the schema.
+- `MATURING` and `MATURED` are derived states computed at read time from `maturesOn` and the current Vietnam date. They are **never persisted** as the `status` field. The stored status is always one of: `ACTIVE`, `REDEEMED`, or `ROLLED_OVER`.
+- Rates use ppm (parts per million) scaled integer **exclusively**. Binary floating point, decimal strings, and fixed-point strings are never persisted for rates or amounts.
 - No deposit data is mixed into `shared_ledger_<year>`.
 - The document path is a fixed Firestore path; UI code does not construct paths directly.
 
