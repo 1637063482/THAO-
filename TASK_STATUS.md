@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | READY_FOR_REVIEW |
+| State | BLOCKED |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
 | Implementation Head | 942006bd6526e7883b138b108564a65377ad874f |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-002-R1.md` - BLOCKED |
 | Next Task | UXS-003 |
 
 ## Reviewer Attention
 
-- UXS-002 R1 is ready for Terra review. The Coder has implemented Vietnamese-first i18n with 16 unit tests and replaced all reachable hardcoded UI strings.
-- Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
+- UXS-002 R1 is BLOCKED. The Task Plan requires every reachable user-visible string to be localized but its exact allowed-file list excludes confirmed reachable paths (`src/js/fireworks.js`, `src/js/currency-view.js`, and `src/js/fx-display.js`) that still contain such strings. A user-approved Task Plan scope decision is required before Coder work resumes.
+- The R1 review also identifies remaining direct strings in allowed paths, a Vietnamese chart-label regression, and incomplete real-dictionary/state-invariance tests. Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
 
