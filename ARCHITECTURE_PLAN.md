@@ -3,6 +3,8 @@
 > 目标是优先修好女朋友实际使用的 VND 私人账本，而不是建设通用财务平台。项目所有者的第二账号和 CNY 切换服务于查看/维护。账号、登录规则和数据已在 Firebase；任何线上 Rules 修改或迁移仍需单独授权。
 
 > T019 决策更新：项目所有者已选择 ADR-003 的方案 A。当前路线稳定现有 legacy 年度矩阵；T011/T012 Account/Transaction 模型不进入交付主线，不得默认迁移、接入 UI、扩展 Firestore schema 或写生产数据。
+>
+> **⚠ UXS 阶段范围（ADR-004）：** 本架构文档包含部分面向通用 Account/Transaction 模型的远期设计，这些内容属于被 ADR-003 拒绝或延期至新 ADR 的范围。当前施工以 `UI_SAVINGS_REDESIGN_PLAN.md`、`TASK_PLAN.md`、ADR-003 和 ADR-004 为唯一依据。以下标注为 **Superseded** 的章节仅作为历史参考保留。
 
 ## 1. 当前架构问题
 
@@ -36,6 +38,10 @@
 
 采用 **Firebase 上的模块化单体前端 + 受控 Serverless 能力**，不立即建设传统常驻后端。
 
+> **当前实施范围：** UXS 阶段以 legacy `entries` 矩阵为事实源，不引入独立 Account/Transaction 领域模型。以下第 2.1 节中关于 Account/Transaction 领域的描述属于远期目标，当前不实施。
+
+- 客户端：保留 Vite，逐步迁移为 TypeScript；先不强制引入大型 UI 框架，避免在数据迁移期同时重写全部页面。
+
 - 客户端：保留 Vite，逐步迁移为 TypeScript；先不强制引入大型 UI 框架，避免在数据迁移期同时重写全部页面。
 - 领域层：纯 TypeScript，定义 Money、Transaction、Account、Budget 等，不依赖 DOM/Firebase；不建立 Household/Membership/角色模型。
 - 应用层：用例/命令处理器，统一验证、权限前置、幂等、同步状态。
@@ -63,6 +69,8 @@ flowchart TB
 依赖规则：`ui → application → domain`；`infrastructure → application/domain ports`。Domain 不得 import Firebase、DOM、Chart.js 或 localStorage。
 
 ## 3. 模块重新划分
+
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 本节描述的完整模块目录（含 transactions/、accounts/）属于被拒绝的迁移方案。UXS 阶段不建立独立 transaction/account 应用层或 repository。目录结构作为历史参考保留。
 
 建议目标目录：
 
@@ -126,6 +134,8 @@ tests/
 
 ### 4.1 建议 Firestore 模型
 
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 以下 Firestore 模型（accounts/、transactions/、categories/、reconciliations/ 等集合）属于被拒绝的迁移方案。当前事实源为 legacy `shared_ledger_<year>` 文档。仅保留为未来参考。
+
 ```text
 artifacts/{projectId}/private/data/sharedLedger/config
   baseCurrency, timezone, schemaVersion, createdAt, updatedAt
@@ -169,6 +179,8 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
 
 ### 4.3 索引与查询
 
+> **当前实施：** UXS 阶段不建立 transactions 集合，不创建对应索引。以下索引仅适用于未来迁移场景。
+
 首批复合索引按实际页面建立：
 
 - shared-ledger transactions：`deletedAt + occurredAt desc`；
@@ -185,6 +197,8 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
 - 不把 projection 当事实源；投影错误不允许修改原交易。
 
 ### 4.5 迁移策略
+
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 本节描述的从 legacy 矩阵到新交易模型的迁移策略已被 ADR-003 拒绝。当前不移入独立 Transaction 模型，不执行迁移。
 
 1. 冻结并备份每个 `shared_ledger_<year>` 原文档，记录哈希与大小。
 2. 实现 legacy parser，把 `<month>_<day>_<category>` 公式解析成迁移交易。由于旧数据把多笔金额合在公式中且只有整日备注，无法可靠恢复每笔真实交易；迁移规则必须向用户展示。

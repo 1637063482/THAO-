@@ -2,6 +2,7 @@
 
 > 文档状态：已纳入 `TASK_PLAN.md` 的正式产品与技术基线
 > 形成日期：2026-07-20
+> 架构契约：ADR-003（legacy 矩阵稳定化）、ADR-004（UI/储蓄/存款架构边界）
 > 适用产品：通过 Cloudflare 部署、使用网址访问并可安装的 PWA 个人记账应用
 > 架构基线：T019/ADR-003 已选择继续使用 legacy 年度矩阵；UXS 不引入 Account/Transaction 迁移。
 
