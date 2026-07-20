@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-001 |
 | Title | Define UI, savings, and deposit architecture boundary |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-001-ui-savings-adr |
 | Base SHA | 0103f0884a1062ae176d43143327edad8d2f60cc |
-| Implementation Head | 10194eddc1522aec49c07d9c2389c3dad97a31cf |
-| Review Round | 2 |
+| Implementation Head | af775caa4197304bdfc2dd14dc9a98f76e2efe67 |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-001.md` |
 | Latest Review | `docs/task-reviews/UXS-001-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-002 |
 
 ## Reviewer Attention
 
-- UXS-001 R2 requested changes. The Coder must read `docs/task-reviews/UXS-001-R2.md`, reconcile `expectedInterestVnd` nullability, and correctly record the final R2+ implementation head in evidence and status before requesting R3.
+- UXS-001 R3 is ready for review. The Coder has reconciled all R1 and R2 findings and updated evidence and status with the final R3 implementation head.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
