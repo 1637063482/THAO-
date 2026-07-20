@@ -8,20 +8,19 @@
 |---|---|
 | Task ID | UXS-001 |
 | Title | Define UI, savings, and deposit architecture boundary |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-001-ui-savings-adr |
 | Base SHA | 0103f0884a1062ae176d43143327edad8d2f60cc |
 | Implementation Head | 10194eddc1522aec49c07d9c2389c3dad97a31cf |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-001.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-001-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-002 |
 
 ## Reviewer Attention
 
-- UXS-001 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
-- UXS-001 is documentation-only: reconcile `UI_SAVINGS_REDESIGN_PLAN.md`, `PRD.md`, `FRD.md`, `ARCHITECTURE_PLAN.md`, and create ADR-004 plus evidence.
-- Reject any attempt to reconnect T011/T012, add a general transaction/account migration, introduce English UI, or promise external notifications.
+- UXS-001 R1 requested changes. The Coder must read `docs/task-reviews/UXS-001-R1.md` and reconcile the deposit interest/rate contract, persisted-vs-derived deposit status, and savings-goal representation using only the task's permitted documentation files.
+- Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
 
