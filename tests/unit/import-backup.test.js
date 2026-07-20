@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { importLegacyLedgerWithRecovery, sha256Hex } from "../../src/js/sync.js";
+import { downloadRecoveryFile, importLegacyLedgerWithRecovery, sha256Hex } from "../../src/js/sync.js";
 import { validateLegacyImport } from "../../src/js/import-schema.js";
 
 const currentLedger = () => ({
@@ -66,6 +66,22 @@ describe("import recovery backup", () => {
     expect(h.written).toEqual([]);
   });
 
+  it("stops before overwrite when the current ledger cannot become a valid recovery file", async () => {
+    const h = harness({
+      readCurrentLedger: vi.fn(async () => ({
+        balances: {},
+        entries: [],
+        settings: {},
+      })),
+    });
+
+    await expect(importLegacyLedgerWithRecovery(h.options)).rejects.toMatchObject({ code: "BACKUP_FAILED" });
+
+    expect(h.options.downloadRecovery).not.toHaveBeenCalled();
+    expect(h.options.writeLedger).not.toHaveBeenCalled();
+    expect(h.written).toEqual([]);
+  });
+
   it("does not mutate the imported ledger or log financial data when overwrite write fails", async () => {
     const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
     const h = harness({ writeLedger: vi.fn(async () => { throw new Error("write failed"); }) });
@@ -108,5 +124,63 @@ describe("import recovery backup", () => {
       "my-expense-app-recovery-2026-20260719T100001000Z-hash-116.json",
     ]);
     expect(h.written).toEqual([importedLedger(), importedLedger()]);
+  });
+
+  it("persists and verifies the recovery locally before dispatching the download", async () => {
+    const stored = new Map();
+    const storage = {
+      setItem: vi.fn((key, value) => stored.set(key, value)),
+      getItem: vi.fn((key) => stored.get(key)),
+    };
+    const link = { click: vi.fn() };
+    const documentRef = { createElement: vi.fn(() => link) };
+    const urlApi = {
+      createObjectURL: vi.fn(() => "blob:recovery"),
+      revokeObjectURL: vi.fn(),
+    };
+    const recovery = {
+      fileName: "my-expense-app-recovery-2026-test-hash.json",
+      hash: "hash",
+      serialized: textOf(currentLedger()),
+    };
+
+    await expect(downloadRecoveryFile(recovery, { storage, documentRef, urlApi })).resolves.toMatchObject({
+      fileName: recovery.fileName,
+      hash: recovery.hash,
+      storageKey: "myExpenseApp.importRecovery.latest",
+    });
+
+    expect(storage.setItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.latest", JSON.stringify({
+      fileName: recovery.fileName,
+      hash: recovery.hash,
+      serialized: recovery.serialized,
+    }));
+    expect(storage.getItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.latest");
+    expect(documentRef.createElement).toHaveBeenCalledWith("a");
+    expect(link.click).toHaveBeenCalledTimes(1);
+    expect(urlApi.revokeObjectURL).toHaveBeenCalledWith("blob:recovery");
+  });
+
+  it("refuses the recovery download when local persistence cannot be verified", async () => {
+    const storage = {
+      setItem: vi.fn(),
+      getItem: vi.fn(() => null),
+    };
+    const link = { click: vi.fn() };
+    const documentRef = { createElement: vi.fn(() => link) };
+    const urlApi = {
+      createObjectURL: vi.fn(() => "blob:recovery"),
+      revokeObjectURL: vi.fn(),
+    };
+    const recovery = {
+      fileName: "my-expense-app-recovery-2026-test-hash.json",
+      hash: "hash",
+      serialized: textOf(currentLedger()),
+    };
+
+    await expect(downloadRecoveryFile(recovery, { storage, documentRef, urlApi })).rejects.toMatchObject({ code: "BACKUP_FAILED" });
+
+    expect(link.click).not.toHaveBeenCalled();
+    expect(urlApi.createObjectURL).not.toHaveBeenCalled();
   });
 });

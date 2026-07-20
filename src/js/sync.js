@@ -5,6 +5,7 @@ import { LEGACY_IMPORT_MAX_BYTES, serializeLegacyImport, validateLegacyImport } 
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
+const IMPORT_RECOVERY_STORAGE_KEY = "myExpenseApp.importRecovery.latest";
 
 function refreshStreakFromSnapshot() {
   if (window.updateStreakAfterRecord) window.updateStreakAfterRecord({ launchDefaultFireworks: false });
@@ -170,16 +171,54 @@ export async function sha256Hex(serialized, cryptoImpl = globalThis.crypto) {
   return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
-export async function downloadRecoveryFile(recovery) {
-  const blob = new Blob([recovery.serialized], { type: "application/json;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+function backupFailure(message, cause) {
+  const error = new Error(message);
+  error.code = "BACKUP_FAILED";
+  if (cause) error.cause = cause;
+  return error;
+}
+
+function recoveryStoragePayload(recovery) {
+  return JSON.stringify({
+    fileName: recovery.fileName,
+    hash: recovery.hash,
+    serialized: recovery.serialized,
+  });
+}
+
+export async function downloadRecoveryFile(recovery, {
+  storage = globalThis.localStorage,
+  documentRef = document,
+  urlApi = URL,
+} = {}) {
+  const storagePayload = recoveryStoragePayload(recovery);
   try {
-    const link = document.createElement("a");
+    if (!storage) throw new Error("local recovery storage is unavailable");
+    storage.setItem(IMPORT_RECOVERY_STORAGE_KEY, storagePayload);
+    if (storage.getItem(IMPORT_RECOVERY_STORAGE_KEY) !== storagePayload) {
+      throw new Error("local recovery storage verification failed");
+    }
+  } catch (error) {
+    throw backupFailure("Import recovery point failed", error);
+  }
+
+  let url = null;
+  try {
+    const blob = new Blob([recovery.serialized], { type: "application/json;charset=utf-8" });
+    url = urlApi.createObjectURL(blob);
+    const link = documentRef.createElement("a");
     link.href = url;
     link.download = recovery.fileName;
     link.click();
+    return {
+      storageKey: IMPORT_RECOVERY_STORAGE_KEY,
+      fileName: recovery.fileName,
+      hash: recovery.hash,
+    };
+  } catch (error) {
+    throw backupFailure("Import recovery point failed", error);
   } finally {
-    URL.revokeObjectURL(url);
+    if (url) urlApi.revokeObjectURL(url);
   }
 }
 
@@ -205,6 +244,13 @@ export async function importLegacyLedgerWithRecovery({
 
   const currentLedger = normalizeLegacyLedger(await readCurrentLedger());
   const serialized = serializeLegacyImport(currentLedger);
+  const recoveryValidation = validateLegacyImport(currentLedger, { serializedBytes: new TextEncoder().encode(serialized).length });
+  if (!recoveryValidation.ok) {
+    const error = backupFailure("Import recovery point failed");
+    error.validationCode = recoveryValidation.code;
+    error.path = recoveryValidation.path;
+    throw error;
+  }
   const hash = await makeHash(serialized);
   const recovery = {
     year,
@@ -217,10 +263,8 @@ export async function importLegacyLedgerWithRecovery({
   try {
     await downloadRecovery(recovery);
   } catch (error) {
-    const backupError = new Error("Import recovery point failed");
-    backupError.code = "BACKUP_FAILED";
-    backupError.cause = error;
-    throw backupError;
+    if (error?.code === "BACKUP_FAILED") throw error;
+    throw backupFailure("Import recovery point failed", error);
   }
 
   await writeLedger(validation.data);
