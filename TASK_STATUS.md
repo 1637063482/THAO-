@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
-| Implementation Head | 1e2c596432eee33c083d87728a8b4353877989bb |
-| Review Round | 4 |
+| Implementation Head | 73e3311e9b21eb4b860c0ec8b2b6d0f7ffceb76a |
+| Review Round | 5 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
 | Latest Review | `docs/task-reviews/UXS-002-R4.md` - CHANGES_REQUESTED |
 | Next Task | UXS-003 |
 
 ## Reviewer Attention
 
-- UXS-002 R4 has CHANGES_REQUESTED in `docs/task-reviews/UXS-002-R4.md`. The R3 test-scope amendment and table-footer translation are correct, but the R4 budget-heading change now omits the localized budget label entirely; add a focused rendered-heading test with the minimal allowed fix.
+- UXS-002 R5 is ready for Terra review. R4 findings fixed: budget label restored with `t("budget")`, new `tests/unit/budget-heading-i18n.test.js` verifies budget heading renders correctly in both locales and on switch (19 test files, 137 tests).
 - User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded. Preserve this boundary; no UXS-003 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
