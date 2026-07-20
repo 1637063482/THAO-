@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T021 |
 | Title | Establish CI gates |
-| State | PLANNED |
+| State | IMPLEMENTING |
 | Branch | task/t021-ci-gates |
 | Base SHA | d0eead5fae3132361cda8fb50eebc5747c5c9037 |
 | Implementation Head | pending |
