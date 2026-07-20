@@ -6,20 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | T021 |
-| Title | Establish CI gates |
-| State | APPROVED |
-| Branch | task/t021-ci-gates |
-| Base SHA | d0eead5fae3132361cda8fb50eebc5747c5c9037 |
-| Implementation Head | 311dd41b8b7b7fc4a265dcd6897c0e838c523dee |
+| Task ID | UXS-001 |
+| Title | Define UI, savings, and deposit architecture boundary |
+| State | PLANNED |
+| Branch | task/uxs-001-ui-savings-adr |
+| Base SHA | 0103f0884a1062ae176d43143327edad8d2f60cc |
+| Implementation Head | pending |
 | Review Round | 1 |
-| Evidence | `docs/review-evidence/T021.md` |
-| Latest Review | `docs/task-reviews/T021-R1.md` - APPROVED |
-| Next Task | none |
+| Evidence | `docs/review-evidence/UXS-001.md` |
+| Latest Review | pending |
+| Next Task | UXS-002 |
 
 ## Reviewer Attention
 
-- T021 R1 is approved. The planned task sequence is complete; this Reviewer stops here.
+- UXS-001 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
+- UXS-001 is documentation-only: reconcile `UI_SAVINGS_REDESIGN_PLAN.md`, `PRD.md`, `FRD.md`, `ARCHITECTURE_PLAN.md`, and create ADR-004 plus evidence.
+- Reject any attempt to reconnect T011/T012, add a general transaction/account migration, introduce English UI, or promise external notifications.
 
 ## History
 
@@ -33,3 +35,4 @@
 | T018 | APPROVED | `9c404c2` | `docs/task-reviews/T018-R3.md` |
 | T019 | APPROVED | `99b62db` | `docs/task-reviews/T019-R1.md` |
 | T020 | APPROVED | `a4d853e` | `docs/task-reviews/T020-R2.md` |
+| T021 | APPROVED | `311dd41` | `docs/task-reviews/T021-R1.md` |
