@@ -6,20 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | T018 |
-| Title | Add recovery point before overwrite import |
-| State | APPROVED |
-| Branch | task/t018-import-recovery |
-| Base SHA | 470c43066906cb4b0856da6f22910d1f46f84f14 |
-| Implementation Head | 9c404c282b64ccd95fc347ba434ac7095a9952bc |
-| Review Round | 3 |
-| Evidence | `docs/review-evidence/T018.md` |
-| Latest Review | `docs/task-reviews/T018-R3.md` - APPROVED |
-| Next Task | T019 |
+| Task ID | T019 |
+| Title | Decide T011/T012 account and transaction scope ADR |
+| State | PLANNED |
+| Branch | task/t019-account-transaction-adr |
+| Base SHA | ea94b388cd6c5b7ffae178abe879ef76335c3987 |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/T019.md` |
+| Latest Review | pending |
+| Next Task | T020 |
 
 ## Reviewer Attention
 
-- T018 R3 is approved. A later Coder invocation may transition to T019 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
+- T019 is an ADR-only product/architecture decision task.
+- Coder must compare stabilizing the existing legacy matrix versus migrating to standalone transactions.
+- Coder must not silently choose a migration path or modify business code, Firestore schema, or production data.
 
 ## History
 
@@ -30,3 +32,4 @@
 | T015 | APPROVED | `a926da7` | `docs/task-reviews/T015-R2.md` |
 | T016 | APPROVED | `ed73457` | `docs/task-reviews/T016-R3.md` |
 | T017 | APPROVED | `1a2bf9e` | `docs/task-reviews/T017-R2.md` |
+| T018 | APPROVED | `9c404c2` | `docs/task-reviews/T018-R3.md` |
