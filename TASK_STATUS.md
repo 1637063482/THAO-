@@ -6,20 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | T020 |
-| Title | Make FX display adapter reliable |
-| State | APPROVED |
-| Branch | task/t020-fx-display-reliability |
-| Base SHA | 27776b994d558faa2e3ccd13ac91e443932f6000 |
-| Implementation Head | a4d853e34f5a094f8528c7cad5f85325788cad57 |
-| Review Round | 2 |
-| Evidence | `docs/review-evidence/T020.md` |
-| Latest Review | `docs/task-reviews/T020-R2.md` - APPROVED |
-| Next Task | T021 |
+| Task ID | T021 |
+| Title | Establish CI gates |
+| State | PLANNED |
+| Branch | task/t021-ci-gates |
+| Base SHA | d0eead5fae3132361cda8fb50eebc5747c5c9037 |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/T021.md` |
+| Latest Review | pending |
+| Next Task | none |
 
 ## Reviewer Attention
 
-- T020 R2 is approved. A later Coder invocation may transition to T021 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
+- T021 must run ordinary tests, typecheck, Firestore Rules tests, and build in CI.
+- CI must not deploy Firebase or write production data.
+- Verify CI steps do not use `continue-on-error`, secrets, real UID/email values, or production credentials.
 
 ## History
 
@@ -32,3 +34,4 @@
 | T017 | APPROVED | `1a2bf9e` | `docs/task-reviews/T017-R2.md` |
 | T018 | APPROVED | `9c404c2` | `docs/task-reviews/T018-R3.md` |
 | T019 | APPROVED | `99b62db` | `docs/task-reviews/T019-R1.md` |
+| T020 | APPROVED | `a4d853e` | `docs/task-reviews/T020-R2.md` |
