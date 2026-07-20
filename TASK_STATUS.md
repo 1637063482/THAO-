@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | T018 |
 | Title | Add recovery point before overwrite import |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/t018-import-recovery |
-| Base SHA | 470c430be75eb92b893dd5ef2b55da4db5fb6bc4 |
+| Base SHA | 470c43066906cb4b0856da6f22910d1f46f84f14 |
 | Implementation Head | 9aa947b5277448fd30a9732e9b8d320834dfeaff |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T018.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/T018-R1.md` - CHANGES_REQUESTED |
 | Next Task | T019 |
 
 ## Reviewer Attention
 
-- Verify JSON import creates a local recovery point before any overwrite write.
-- Backup failure, user cancellation, and write failure must leave the current ledger unchanged.
-- Recovery artifacts and logs must not expose credentials or unnecessary financial details.
+- Require verifiable local recovery persistence before overwrite; browser download dispatch alone is insufficient.
+- Validate the recovery payload against the existing import schema; invalid recovery must block overwrite.
+- Correct T018 evidence base SHA to `470c43066906cb4b0856da6f22910d1f46f84f14`; preserve no-deploy/no-production-data boundaries.
 
 ## History
 
