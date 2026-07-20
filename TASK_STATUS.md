@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | T020 |
 | Title | Make FX display adapter reliable |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/t020-fx-display-reliability |
 | Base SHA | 27776b994d558faa2e3ccd13ac91e443932f6000 |
-| Implementation Head | pending |
+| Implementation Head | b986c24fcd509916c7e30d30887d1d4cf10b728c |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T020.md` |
 | Latest Review | pending |
