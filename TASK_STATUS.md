@@ -8,20 +8,18 @@
 |---|---|
 | Task ID | T021 |
 | Title | Establish CI gates |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t021-ci-gates |
 | Base SHA | d0eead5fae3132361cda8fb50eebc5747c5c9037 |
 | Implementation Head | 311dd41b8b7b7fc4a265dcd6897c0e838c523dee |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T021.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/T021-R1.md` - APPROVED |
 | Next Task | none |
 
 ## Reviewer Attention
 
-- T021 must run ordinary tests, typecheck, Firestore Rules tests, and build in CI.
-- CI must not deploy Firebase or write production data.
-- Verify CI steps do not use `continue-on-error`, secrets, real UID/email values, or production credentials.
+- T021 R1 is approved. The planned task sequence is complete; this Reviewer stops here.
 
 ## History
 
