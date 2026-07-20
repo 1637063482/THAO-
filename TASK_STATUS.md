@@ -8,20 +8,18 @@
 |---|---|
 | Task ID | T018 |
 | Title | Add recovery point before overwrite import |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t018-import-recovery |
 | Base SHA | 470c43066906cb4b0856da6f22910d1f46f84f14 |
 | Implementation Head | 9c404c282b64ccd95fc347ba434ac7095a9952bc |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/T018.md` |
-| Latest Review | `docs/task-reviews/T018-R2.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/T018-R3.md` - APPROVED |
 | Next Task | T019 |
 
 ## Reviewer Attention
 
-- Retain a distinct, read-back-verified recovery payload for every overwrite; do not overwrite a single `latest` key.
-- Add production-adapter repeated-recovery coverage and preserve no-overwrite behavior on persistence failure.
-- Preserve no-deploy, no-production-data, no-Auth/Rules-change, and no-T019 boundaries.
+- T018 R3 is approved. A later Coder invocation may transition to T019 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
 
 ## History
 
