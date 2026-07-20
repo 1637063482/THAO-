@@ -8,20 +8,18 @@
 |---|---|
 | Task ID | T020 |
 | Title | Make FX display adapter reliable |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t020-fx-display-reliability |
 | Base SHA | 27776b994d558faa2e3ccd13ac91e443932f6000 |
 | Implementation Head | a4d853e34f5a094f8528c7cad5f85325788cad57 |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/T020.md` |
-| Latest Review | `docs/task-reviews/T020-R1.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/T020-R2.md` - APPROVED |
 | Next Task | T021 |
 
 ## Reviewer Attention
 
-- Automatic FX unavailability must not leave the default/unverified rate usable for CNY conversion.
-- Reject malformed cache timestamps rather than reporting them as fresh cache values.
-- Add production-path coverage for unavailable automatic FX, valid/stale cache and malformed cache timestamps; preserve no-deploy/no-T021 boundaries.
+- T020 R2 is approved. A later Coder invocation may transition to T021 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
 
 ## History
 
