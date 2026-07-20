@@ -91,7 +91,7 @@ export function renderMonthTable(monthId) {
     + '<div class="budget-inline-bar">'
     + '<div class="budget-inline-left">'
     + '<span data-icon="target" data-icon-class="w-4 h-4 text-amber-500"></span>'
-    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span></span>'
+    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span> ' + t("budget") + '</span>'
     + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" onchange="window.saveBudgetAndCalculate()">'
     + '<span class="text-xs text-slate-400 font-medium shrink-0" id="qa-currency-badge">VND</span>'
     + '</div>'
