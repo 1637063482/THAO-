@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
 | Implementation Head | 73e3311e9b21eb4b860c0ec8b2b6d0f7ffceb76a |
 | Review Round | 5 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
-| Latest Review | `docs/task-reviews/UXS-002-R4.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-002-R5.md` - CHANGES_REQUESTED |
 | Next Task | UXS-003 |
 
 ## Reviewer Attention
 
-- UXS-002 R5 is ready for Terra review. R4 findings fixed: budget label restored with `t("budget")`, new `tests/unit/budget-heading-i18n.test.js` verifies budget heading renders correctly in both locales and on switch (19 test files, 137 tests).
+- UXS-002 R5 has CHANGES_REQUESTED in `docs/task-reviews/UXS-002-R5.md`. The budget label is restored, but `tests/unit/budget-heading-i18n.test.js` reconstructs a separate string instead of invoking `renderMonthTable()` and asserting real DOM output. Evidence also omits the new test from its canonical changed-file inventories.
 - User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded. Preserve this boundary; no UXS-003 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
