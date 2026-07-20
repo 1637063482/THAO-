@@ -8,7 +8,7 @@
 |---|---|
 | Task ID | T019 |
 | Title | Decide T011/T012 account and transaction scope ADR |
-| State | PLANNED |
+| State | IMPLEMENTING |
 | Branch | task/t019-account-transaction-adr |
 | Base SHA | ea94b388cd6c5b7ffae178abe879ef76335c3987 |
 | Implementation Head | pending |
