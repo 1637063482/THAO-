@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | READY_FOR_REVIEW |
+| State | BLOCKED |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
 | Implementation Head | 17ff0a6684c671f1288104430b5c1d770e14972c |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
-| Latest Review | `docs/task-reviews/UXS-002-R2.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-002-R3.md` - BLOCKED |
 | Next Task | UXS-003 |
 
 ## Reviewer Attention
 
-- UXS-002 R3 is ready for Terra review. All R2 findings have been reconciled: remaining hardcoded strings in render.js/budget.js/auth.js replaced; export.js properly reverted; CSV export scope restored; state invariance test uses actual state/pendingUpdates; legacy-streak/local-date tests updated for i18n; evidence corrected to R3 facts.
-- User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded.
+- UXS-002 R3 is BLOCKED in `docs/task-reviews/UXS-002-R3.md`. A table-footer label remains hard-coded and the budget title duplicates its month. More importantly, language-compatibility edits in `tests/unit/legacy-streak.test.js`, `tests/unit/local-date.test.js`, and the remaining changed `tests/unit/currency-view.test.js` are outside UXS-002's exact allowed-file list; a user-approved Task Plan scope decision is required before Coder work resumes.
+- User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded. Preserve this boundary; no UXS-003 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
