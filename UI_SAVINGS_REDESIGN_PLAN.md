@@ -336,7 +336,8 @@ MATURED      已到期、待处理（当前日期 ≥ maturesOn，且持久状�
 ```text
 当前存款总额 = ACTIVE + MATURING 的本金合计
 待处理到期本金 = MATURED 且未赎回/续存的本金合计
-预计总收益 = ACTIVE + MATURING 的 expectedInterestVnd 合计
+预计总收益 = ACTIVE + MATURING 存款的 COALESCE(expectedInterestVnd, calculatedInterestVnd) 合计
+   当 expectedInterestVnd 为 null 时使用 calculatedInterestVnd
 预计到期总额 = 当前存款总额 + 预计总收益
 已实现利息 = 用户确认的 actualInterestVnd 合计
 ```

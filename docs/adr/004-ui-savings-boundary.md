@@ -89,7 +89,8 @@ shared_ledger_savings
 Note:
 
 - `calculatedInterestVnd` is a read-time derived value (computed from `principalVnd × annualRatePpm ÷ 1_000_000 × depositDays ÷ 365`). It is **never persisted** — only `expectedInterestVnd` and `actualInterestVnd` are stored in the schema.
-- `expectedInterestVnd` is nullable: when `null`, the UI displays `calculatedInterestVnd` as the reference. When the user explicitly overrides the reference, `expectedInterestVnd` is written as a VND integer.
+- `expectedInterestVnd` is nullable: when `null`, the UI displays `calculatedInterestVnd` as the individual reference. When the user explicitly overrides the reference, `expectedInterestVnd` is written as a VND integer.
+- Total expected interest is computed with a null-safe aggregate: `SUM(COALESCE(expectedInterestVnd, calculatedInterestVnd))` over ACTIVE and MATURING deposits, where `calculatedInterestVnd` substitutes when `expectedInterestVnd` is null.
 - `MATURING` and `MATURED` are derived states computed at read time from `maturesOn` and the current Vietnam date. They are **never persisted** as the `status` field. The stored status is always one of: `ACTIVE`, `REDEEMED`, or `ROLLED_OVER`.
 - Rates use ppm (parts per million) scaled integer **exclusively**. Binary floating point, decimal strings, and fixed-point strings are never persisted for rates or amounts.
 - No deposit data is mixed into `shared_ledger_<year>`.
