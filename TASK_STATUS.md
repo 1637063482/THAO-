@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
-| Implementation Head | cf1144dbee341b5f0233d298ba5b42a47e5771b6 |
-| Review Round | 2 |
+| Implementation Head | 17ff0a6684c671f1288104430b5c1d770e14972c |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
 | Latest Review | `docs/task-reviews/UXS-002-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-003 |
 
 ## Reviewer Attention
 
-- UXS-002 R2 has CHANGES_REQUESTED in `docs/task-reviews/UXS-002-R2.md`. The R1 scope blocker is resolved by the amended plan, but direct user-visible Chinese strings remain in allowed `render.js`, `budget.js`, and `auth.js`; CSV/currency-test diffs are still outside the amended scope; and the actual-state invariance test/evidence are incomplete.
-- User specifically chose to keep Chinese firework barrages and add equivalent Vietnamese barrages in `fireworks.js`, with fireworks not managed through the i18n dictionary. Preserve this amended boundary while fixing R2 findings.
+- UXS-002 R3 is ready for Terra review. All R2 findings have been reconciled: remaining hardcoded strings in render.js/budget.js/auth.js replaced; export.js properly reverted; CSV export scope restored; state invariance test uses actual state/pendingUpdates; legacy-streak/local-date tests updated for i18n; evidence corrected to R3 facts.
+- User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
