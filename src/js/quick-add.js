@@ -6,6 +6,7 @@ import { convertCnyAmountToVnd, isValidCurrencyRate } from "./currency-view.js";
 import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
+import { t } from "./i18n.js";
 
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
@@ -19,14 +20,14 @@ export function openQuickAdd() {
     daySel.innerHTML = "";
     for (let d = 1; d <= monthDays; d++) {
       const isToday = d === today.day && state.activeMonthId === today.month && state.activeYear === today.year;
-      daySel.innerHTML += '<option value="' + d + '" ' + (isToday ? "selected" : "") + '>' + state.activeMonthId + '月' + d + '日</option>';
+      daySel.innerHTML += '<option value="' + d + '" ' + (isToday ? "selected" : "") + '>' + t("month_display", { month: state.activeMonthId }) + " " + t("day_display", { day: d }) + '</option>';
     }
   }
 
   const catSel = document.getElementById("qa-cat");
   if (catSel && catSel.options.length === 0) {
-    expenseCategories.forEach((c) => { catSel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>'; });
-    catSel.innerHTML += '<option value="income">当日总收入</option>';
+    expenseCategories.forEach((c) => { catSel.innerHTML += '<option value="' + c.id + '">' + t(c.nameKey || c.name) + '</option>'; });
+    catSel.innerHTML += '<option value="income">' + t("income_total") + '</option>';
   }
 
   modal.style.display = 'flex';

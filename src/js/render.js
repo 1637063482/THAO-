@@ -6,6 +6,7 @@ import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
 import { Fireworks } from "./fireworks.js";
 import { buildLegacyStreak } from "./streak.js";
+import { t } from "./i18n.js";
 
 export function fullRebuildDOM() {
   ["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"].forEach(function(id) {
@@ -52,7 +53,7 @@ export function renderMonthTable(monthId) {
   // Category column headers — emoji icon + abbreviated name
   var catHeaders = "";
   expenseCategories.forEach(function(c) {
-    catHeaders += '<th>' + c.emoji + ' ' + c.name + '</th>';
+    catHeaders += '<th>' + c.emoji + ' ' + t(c.nameKey) + '</th>';
   });
 
   // Build data rows
@@ -138,7 +139,7 @@ export function renderMonthTable(monthId) {
   }
 
   var monthlyChartTitle = document.getElementById("monthly-chart-title");
-  if (monthlyChartTitle) monthlyChartTitle.innerText = monthId + "月";
+  if (monthlyChartTitle) monthlyChartTitle.innerText = t("monthly", { month: monthId });
 
   // Auto-scroll to today's row (只对当前月份生效)
   if (isCurrentMonth) {
@@ -203,7 +204,7 @@ export function updateStreakAfterRecord(options) {
 
   if ((s.streak === 7 || s.streak === 30) && !hasRewardFired(s.streak, s.todayStr)) {
     markRewardFired(s.streak, s.todayStr);
-    showToast("恭喜！连续记账" + s.streak + "天成就达成！");
+    showToast(t("streak_achieved", { days: s.streak }));
     Fireworks.launch({ duration: 12000 });
   } else if (launchDefaultFireworks) {
     Fireworks.launch({ duration: 6000 });

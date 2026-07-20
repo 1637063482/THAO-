@@ -2,6 +2,7 @@ import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
 import { db, projectId } from "./firebase.js";
 import { state, copyPending, clearPending, mergeBackPending, hasPending } from "./state.js";
 import { LEGACY_IMPORT_MAX_BYTES, serializeLegacyImport, validateLegacyImport } from "./import-schema.js";
+import { t } from "./i18n.js";
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
@@ -291,7 +292,7 @@ async function importDataWithRecovery(file) {
   const result = await importLegacyLedgerWithRecovery({
     year: state.activeYear,
     importedText,
-    confirmOverwrite: () => confirm("警告：导入将覆盖当前云端的所有数据，确定要继续吗？"),
+    confirmOverwrite: () => confirm(t("confirm_import")),
     async readCurrentLedger() {
       const snapshot = await getDoc(docRef);
       return snapshot.exists() ? snapshot.data() : { balances: {}, entries: {}, settings: {} };

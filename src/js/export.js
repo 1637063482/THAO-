@@ -1,3 +1,5 @@
+import { t } from "./i18n.js";
+
 const FORMULA_PREFIX_RE = /^[=+\-@\t\r]/;
 
 export function escapeCsvCell(value) {
@@ -20,8 +22,8 @@ export function buildLegacyCsv({ year, balances, entries, categories, daysInMont
   lines.push("");
 
   for (let month = 1; month <= 12; month++) {
-    lines.push(row([`--- ${year}年${month}月 ---`]));
-    lines.push(row(["日期", ...categories.map((category) => category.name), "当日总支出", "当日收入", "备注"]));
+    lines.push(row([t("year_display", { year: year }) + " " + t("month_display", { month: month })]));
+    lines.push(row([t("date"), ...categories.map((category) => t(category.nameKey)), t("daily_total_expense"), t("income_total"), t("remark")]));
     for (let day = 1; day <= daysInMonth(year, month); day++) {
       const categoryValues = categories.map((category) => evaluate(entries[`${month}_${day}_${category.id}`]));
       const dailyExpense = categoryValues.reduce((sum, value) => sum + value, 0);

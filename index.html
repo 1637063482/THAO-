@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN" class="scroll-smooth">
+<html lang="vi" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2026年Thao的账本</title>
+    <title data-i18n="app_name">Thao的账本</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#d97706">
     <meta name="color-scheme" content="light dark">
@@ -21,38 +21,38 @@
             <div class="card p-8 text-center space-y-6 animate-slide-up">
                 <span data-icon="wallet" data-icon-class="w-16 h-16 text-amber-500"></span>
                 <div>
-                    <h2 class="text-2xl font-black text-slate-800 font-heading">Thao的家庭账本</h2>
-                    <p class="text-slate-500 mt-2 text-sm">云端协同 · 家人共享 · 数据安全</p>
+                    <h2 class="text-2xl font-black text-slate-800 font-heading" data-i18n="app_name"></h2>
+                    <p class="text-slate-500 mt-2 text-sm" data-i18n="app_subtitle"></p>
                 </div>
                 <div class="space-y-3 text-left">
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">
-                            <span data-icon="user" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>邮箱
+                            <span data-icon="user" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="email"></span>
                         </label>
-                        <input type="email" id="auth-email" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="your@email.com" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
+                        <input type="email" id="auth-email" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">
-                            <span data-icon="lock" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>密码
+                            <span data-icon="lock" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="password"></span>
                         </label>
-                        <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="请输入密码" onkeydown="if(event.key==='Enter')window.handleLogin()">
+                        <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="" onkeydown="if(event.key==='Enter')window.handleLogin()">
                     </div>
                     <div id="auth-error" class="hidden text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
                 </div>
                 <div class="flex flex-col gap-2">
-                    <button onclick="window.handleLogin()" class="btn-primary w-full text-base py-3">登录</button>
-                    <p class="text-center text-xs text-slate-400">仅限已配置的两个账号登录</p>
+                    <button onclick="window.handleLogin()" class="btn-primary w-full text-base py-3" data-i18n="login"></button>
+                    <p class="text-center text-xs text-slate-400" data-i18n="login_hint"></p>
                 </div>
             </div>
         </div>
-        <div id="timeout-msg" style="display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:14px;padding:8px 16px;border-radius:12px;">长时间未操作，已自动退出登录</div>
+        <div id="timeout-msg" style="display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:14px;padding:8px 16px;border-radius:12px;" data-i18n="timeout_message"></div>
     </div>
 
     <!-- Loading overlay -->
     <div id="loading-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(254,251,246,0.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity 0.3s;">
         <div class="text-center space-y-4 animate-slide-up">
             <div class="loading-spinner mx-auto"></div>
-            <p class="text-slate-500 text-sm font-medium">正在加载云端数据...</p>
+            <p class="text-slate-500 text-sm font-medium" data-i18n="loading_data"></p>
         </div>
     </div>
 
@@ -69,14 +69,19 @@
                 <span data-icon="wallet" data-icon-class="w-8 h-8 text-amber-500 animate-float"></span>
                 <h1 class="text-xl font-black text-slate-800 font-heading flex items-center gap-2">
                     <div class="relative inline-flex items-center bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors cursor-pointer group shadow-sm">
-                        <select id="year-selector" onchange="window.changeYear(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="切换年份"></select>
+                        <select id="year-selector" onchange="window.changeYear(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="" data-i18n="switch_year"></select>
                         <span id="display-year-text" class="text-amber-700 font-black text-lg pointer-events-none px-1 tracking-tight"></span>
                         <svg class="w-4 h-4 text-amber-500 pointer-events-none group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
-                    <span class="hidden sm:inline text-slate-700">年开支记录</span>
+                    <span class="hidden sm:inline text-slate-700" data-i18n="yearly_expense_record"></span>
                 </h1>
             </div>
             <div class="flex items-center gap-2 flex-wrap">
+                <!-- Language switcher -->
+                <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
+                    <button id="btn-lang-vi" onclick="window.switchLanguage('vi')" class="month-tab active min-w-[40px] text-xs">VI</button>
+                    <button id="btn-lang-zh" onclick="window.switchLanguage('zh-CN')" class="month-tab min-w-[40px] text-xs">中文</button>
+                </div>
                 <!-- Currency switcher -->
                 <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
                     <button id="btn-curr-vnd" onclick="window.switchCurrency('VND')" class="month-tab active min-w-[52px] text-xs">VND</button>
@@ -84,25 +89,25 @@
                 </div>
                 <!-- FX Panel -->
                 <div id="fx-panel" class="hidden items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 border border-slate-200/60">
-                    <span class="text-xs text-slate-500 font-medium">1 CNY =</span>
-                    <span id="auto-rate-display" class="text-xs font-bold text-amber-600">(加载中...)</span>
+                    <span class="text-xs text-slate-500 font-medium" data-i18n="fx_label"></span>
+                    <span id="auto-rate-display" class="text-xs font-bold text-amber-600" data-i18n="fx_loading"></span>
                     <div class="flex items-center gap-1 ml-2">
-                        <button onclick="window.changeFxMode('auto')" class="text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-semibold">自动</button>
-                        <button onclick="window.changeFxMode('manual')" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium">手动</button>
+                        <button onclick="window.changeFxMode('auto')" class="text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-semibold" data-i18n="auto"></button>
+                        <button onclick="window.changeFxMode('manual')" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-i18n="manual"></button>
                         <input type="number" id="manual-rate-input" class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1" placeholder="3500" disabled>
-                        <button id="btn-apply-rate" onclick="window.applyManualRate()" class="hidden text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600">应用</button>
+                        <button id="btn-apply-rate" onclick="window.applyManualRate()" class="hidden text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600" data-i18n="apply"></button>
                     </div>
                 </div>
                 <!-- Theme toggle -->
-                <button onclick="window.toggleDarkMode()" class="btn-icon" title="切换深色/浅色模式" id="btn-theme">
+                <button onclick="window.toggleDarkMode()" class="btn-icon" title="" data-i18n="toggle_theme" id="btn-theme">
                     <span data-icon="moon" data-icon-class="w-5 h-5"></span>
                 </button>
                 <!-- Privacy toggle -->
-                <button onclick="window.togglePrivacy()" class="btn-icon" title="隐藏/显示金额" id="btn-privacy">
+                <button onclick="window.togglePrivacy()" class="btn-icon" title="" data-i18n="toggle_privacy" id="btn-privacy">
                     <span data-icon="eye" data-icon-class="w-5 h-5"></span>
                 </button>
                 <!-- More button (mobile only) -->
-                <button onclick="window.toggleNavMore(event)" class="sm:hidden btn-icon relative" id="nav-more-btn" title="更多">
+                <button onclick="window.toggleNavMore(event)" class="sm:hidden btn-icon relative" id="nav-more-btn" title="" data-i18n="more">
                     <span data-icon="dotsHorizontal" data-icon-class="w-5 h-5"></span>
                 </button>
                 <!-- Secondary actions group -->
@@ -110,21 +115,21 @@
                     <!-- Sync status -->
                     <div id="sync-status" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-medium">
                         <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span></span>
-                        <span id="sync-status-text">加载中...</span>
+                        <span id="sync-status-text" data-i18n="loading"></span>
                     </div>
                     <!-- Actions -->
-                    <label class="btn-ghost cursor-pointer text-xs py-2" title="导入数据">
+                    <label class="btn-ghost cursor-pointer text-xs py-2" title="" data-i18n="import_label">
                         <span data-icon="download" data-icon-class="w-4 h-4"></span>
-                        <span id="import-label-text">导入</span>
+                        <span id="import-label-text" data-i18n="import_label"></span>
                         <input type="file" id="import-file" class="hidden" accept=".json" onchange="window.importData(event)">
                     </label>
-                    <button onclick="window.shareApp()" class="btn-ghost text-xs py-2" title="分享应用链接">
+                    <button onclick="window.shareApp()" class="btn-ghost text-xs py-2" title="" data-i18n="share">
                         <span data-icon="link" data-icon-class="w-4 h-4"></span>
-                        <span id="invite-label-text">分享</span>
+                        <span id="invite-label-text" data-i18n="share"></span>
                     </button>
                     <button onclick="window.exportToCSV()" class="btn-primary text-xs py-2">
                         <span data-icon="download" data-icon-class="w-4 h-4"></span>
-                        <span id="export-label-text">导出CSV</span>
+                        <span id="export-label-text" data-i18n="export_csv"></span>
                     </button>
                 </div>
             </div>
@@ -142,30 +147,30 @@
                 <div class="card p-4 animate-slide-up">
                     <div class="flex items-center gap-2 mb-4">
                         <span data-icon="bank" data-icon-class="w-5 h-5 text-amber-500"></span>
-                        <h2 class="text-lg font-bold text-slate-800 font-heading"><span id="ui-year-start"></span>年 年初资产</h2>
+                        <h2 class="text-lg font-bold text-slate-800 font-heading" id="ui-year-start-label" data-i18n="year_start_assets"></h2>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="text-center">
                             <label class="block text-sm font-semibold text-slate-600 mb-1.5">
-                                <span data-icon="creditCard" data-icon-class="w-4 h-4 inline mr-1"></span>银行卡
+                                <span data-icon="creditCard" data-icon-class="w-4 h-4 inline mr-1"></span><span data-i18n="bank_card"></span>
                             </label>
                             <input type="text" id="bal-bank" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0">
                         </div>
                         <div class="text-center">
                             <label class="block text-sm font-semibold text-slate-600 mb-1.5">
-                                <span class="app-icon-alipay align-middle mr-1">支</span>支付宝
+                                <span class="app-icon-alipay align-middle mr-1">支</span><span data-i18n="alipay"></span>
                             </label>
                             <input type="text" id="bal-alipay" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0">
                         </div>
                         <div class="text-center">
                             <label class="block text-sm font-semibold text-slate-600 mb-1.5">
-                                <span class="app-icon-wechat align-middle mr-1">微</span>微信钱包
+                                <span class="app-icon-wechat align-middle mr-1">微</span><span data-i18n="wechat"></span>
                             </label>
                             <input type="text" id="bal-wechat" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0">
                         </div>
                         <div class="text-center">
                             <label class="block text-sm font-semibold text-slate-600 mb-1.5">
-                                <span data-icon="wallet" data-icon-class="w-4 h-4 inline mr-1"></span>现金及其他
+                                <span data-icon="wallet" data-icon-class="w-4 h-4 inline mr-1"></span><span data-i18n="cash_other"></span>
                             </label>
                             <input type="text" id="bal-other" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0">
                         </div>
@@ -182,14 +187,14 @@
                 <div class="card p-4 animate-slide-up">
                     <div class="flex items-center justify-center gap-2 mb-4">
                         <span data-icon="checkCircle" data-icon-class="w-5 h-5 text-emerald-500"></span>
-                        <h2 class="text-lg font-bold text-slate-800 font-heading"><span id="ui-year-end"></span>年 年末资产盘点</h2>
-                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold">双重验证</span>
+                        <h2 class="text-lg font-bold text-slate-800 font-heading" id="ui-year-end-label" data-i18n="year_end_assets"></h2>
+                        <span class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-semibold" data-i18n="double_verify"></span>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span data-icon="creditCard" data-icon-class="w-4 h-4 inline mr-1"></span>年末银行卡</label><input type="text" id="end-bal-bank" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
-                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span class="app-icon-alipay align-middle mr-1">支</span>年末支付宝</label><input type="text" id="end-bal-alipay" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
-                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span class="app-icon-wechat align-middle mr-1">微</span>年末微信</label><input type="text" id="end-bal-wechat" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
-                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span data-icon="wallet" data-icon-class="w-4 h-4 inline mr-1"></span>年末现金及其他</label><input type="text" id="end-bal-other" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
+                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span data-icon="creditCard" data-icon-class="w-4 h-4 inline mr-1"></span><span data-i18n="year_end_bank"></span></label><input type="text" id="end-bal-bank" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
+                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span class="app-icon-alipay align-middle mr-1">支</span><span data-i18n="year_end_alipay"></span></label><input type="text" id="end-bal-alipay" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
+                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span class="app-icon-wechat align-middle mr-1">微</span><span data-i18n="year_end_wechat"></span></label><input type="text" id="end-bal-wechat" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
+                        <div class="text-center"><label class="block text-sm font-semibold text-slate-600 mb-1.5"><span data-icon="wallet" data-icon-class="w-4 h-4 inline mr-1"></span><span data-i18n="year_end_cash"></span></label><input type="text" id="end-bal-other" data-type="balance" class="math-input input-glass text-xl font-bold text-slate-800" placeholder="0"></div>
                     </div>
                 </div>
 
@@ -197,23 +202,23 @@
                 <div class="card p-4 animate-slide-up">
                     <div class="flex items-center justify-center gap-2 mb-4">
                         <span data-icon="wallet" data-icon-class="w-5 h-5 text-indigo-500"></span>
-                        <h2 class="text-lg font-bold text-slate-800 font-heading">资产对账</h2>
+                        <h2 class="text-lg font-bold text-slate-800 font-heading" data-i18n="asset_reconciliation"></h2>
                     </div>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="text-center">
-                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">① 期初总资产</label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5" data-i18n="initial_assets"></label>
                             <span class="text-xl font-bold text-slate-700 blur-sensitive" id="global-initial-assets">0</span>
                         </div>
                         <div class="text-center">
-                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">② 理论应有</label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5" data-i18n="theoretical_balance"></label>
                             <span class="text-xl font-bold text-slate-700 blur-sensitive" id="global-current-assets">0</span>
                         </div>
                         <div class="text-center">
-                            <label class="block text-sm font-semibold text-slate-500 mb-1.5">③ 实际盘点</label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5" data-i18n="actual_balance"></label>
                             <span class="text-xl font-bold text-amber-600 blur-sensitive" id="global-actual-assets">0</span>
                         </div>
                         <div class="text-center">
-                            <label class="block text-sm font-semibold text-slate-500 mb-1.5" id="global-recon-label">对账差异 (③-②)</label>
+                            <label class="block text-sm font-semibold text-slate-500 mb-1.5" data-i18n="reconciliation_diff"></label>
                             <span class="text-xl font-bold blur-sensitive" id="global-recon-diff">0</span>
                         </div>
                     </div>
@@ -226,13 +231,13 @@
                 <div class="card overflow-hidden animate-slide-up">
                     <div class="bg-gradient-to-r from-amber-500 to-amber-600 px-5 py-4">
                         <h2 class="text-lg font-bold text-white font-heading flex items-center gap-2">
-                            <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>年度收支分析
+                            <span data-icon="chartBar" data-icon-class="w-5 h-5"></span><span data-i18n="yearly_analysis"></span>
                         </h2>
                     </div>
                     <div class="p-5 space-y-4">
-                        <div class="stat-card"><span class="stat-label">年度总收入</span><span class="stat-value expense blur-sensitive" id="global-income">0</span></div>
-                        <div class="stat-card"><span class="stat-label">年度总支出</span><span class="stat-value income blur-sensitive" id="global-expense">0</span></div>
-                        <div class="stat-card border-t border-slate-100 pt-3"><span class="stat-label">系统结余</span><span class="stat-value balance blur-sensitive" id="global-balance">0</span></div>
+                        <div class="stat-card"><span class="stat-label" data-i18n="yearly_income"></span><span class="stat-value expense blur-sensitive" id="global-income">0</span></div>
+                        <div class="stat-card"><span class="stat-label" data-i18n="yearly_expense"></span><span class="stat-value income blur-sensitive" id="global-expense">0</span></div>
+                        <div class="stat-card border-t border-slate-100 pt-3"><span class="stat-label" data-i18n="system_balance"></span><span class="stat-value balance blur-sensitive" id="global-balance">0</span></div>
                         <div class="pt-3 border-t border-slate-100">
                             <div style="position:relative;width:100%;min-height:240px;"><canvas id="yearlyChart"></canvas></div>
                             <div id="yearly-legend" class="mt-3"></div>
@@ -244,13 +249,13 @@
                 <div class="card overflow-hidden animate-slide-up">
                     <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 px-5 py-4">
                         <h2 class="text-lg font-bold text-white font-heading flex items-center gap-2">
-                            <span data-icon="chartBar" data-icon-class="w-5 h-5"></span><span id="monthly-chart-title">月度</span>分析
+                            <span data-icon="chartBar" data-icon-class="w-5 h-5"></span><span id="monthly-chart-title" data-i18n="monthly"></span>
                         </h2>
                     </div>
                     <div class="p-5 space-y-4">
-                        <div class="stat-card"><span class="stat-label">当月收入</span><span class="stat-value expense blur-sensitive" id="sidebar-monthly-inc">0</span></div>
-                        <div class="stat-card"><span class="stat-label">当月支出</span><span class="stat-value income blur-sensitive" id="sidebar-monthly-exp">0</span></div>
-                        <div class="stat-card border-t border-slate-100 pt-3"><span class="stat-label">当月结余</span><span class="stat-value balance blur-sensitive" id="sidebar-monthly-bal">0</span></div>
+                        <div class="stat-card"><span class="stat-label" data-i18n="monthly_income"></span><span class="stat-value expense blur-sensitive" id="sidebar-monthly-inc">0</span></div>
+                        <div class="stat-card"><span class="stat-label" data-i18n="monthly_expense"></span><span class="stat-value income blur-sensitive" id="sidebar-monthly-exp">0</span></div>
+                        <div class="stat-card border-t border-slate-100 pt-3"><span class="stat-label" data-i18n="monthly_balance"></span><span class="stat-value balance blur-sensitive" id="sidebar-monthly-bal">0</span></div>
                         <div class="pt-3 border-t border-slate-100">
                             <div style="position:relative;width:100%;min-height:240px;"><canvas id="monthlyChart"></canvas></div>
                             <div id="monthly-legend" class="mt-3"></div>
@@ -263,7 +268,7 @@
     </main>
 
     <!-- FAB button -->
-    <button id="fab-btn" onclick="window.openQuickAdd()" title="快速记账">
+    <button id="fab-btn" onclick="window.openQuickAdd()" title="" data-i18n="quick_add">
         <span data-icon="plus" data-icon-class="w-7 h-7"></span>
     </button>
 
@@ -272,7 +277,7 @@
         <div id="quick-add-panel" class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md mx-4 scale-95 transition-transform duration-300">
             <div class="flex items-center justify-between mb-5">
                 <h3 class="text-lg font-black text-slate-800 font-heading">
-                    <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-amber-500"></span>快速记账
+                    <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-amber-500"></span><span data-i18n="quick_add_title"></span>
                 </h3>
                 <button onclick="window.closeQuickAdd()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
                     <span data-icon="xMark" data-icon-class="w-4 h-4 text-slate-500"></span>
@@ -280,12 +285,12 @@
             </div>
             <div class="space-y-4">
                 <div class="flex gap-3">
-                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="calendar" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>日期</label><select id="qa-day" class="w-full input-glass"></select></div>
-                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="tag" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>分类</label><select id="qa-cat" class="w-full input-glass"></select></div>
+                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="calendar" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="date"></span></label><select id="qa-day" class="w-full input-glass"></select></div>
+                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="tag" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="category"></span></label><select id="qa-cat" class="w-full input-glass"></select></div>
                 </div>
-                <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="wallet" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>金额</label><input type="number" id="qa-amount" class="w-full input-glass text-lg font-bold" placeholder="输入金额" onkeydown="if(event.key==='Enter')window.submitQuickAdd()" inputmode="decimal"></div>
-                <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="pencil" data-icon-class="w-3.5 h-3.5 inline mr-1"></span>备注 (可选)</label><input type="text" id="qa-remark" class="w-full input-glass" placeholder="" onkeydown="if(event.key==='Enter')window.submitQuickAdd()"></div>
-                <button onclick="window.submitQuickAdd()" class="btn-primary w-full py-3 text-base">确认记账</button>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="wallet" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="amount"></span></label><input type="number" id="qa-amount" class="w-full input-glass text-lg font-bold" placeholder="" data-i18n="amount_placeholder" onkeydown="if(event.key==='Enter')window.submitQuickAdd()" inputmode="decimal"></div>
+                <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="pencil" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="remark_optional"></span></label><input type="text" id="qa-remark" class="w-full input-glass" placeholder="" onkeydown="if(event.key==='Enter')window.submitQuickAdd()"></div>
+                <button onclick="window.submitQuickAdd()" class="btn-primary w-full py-3 text-base" data-i18n="confirm"></button>
             </div>
         </div>
     </div>
@@ -294,15 +299,15 @@
     <nav id="bottom-nav" class="sm:hidden">
         <button class="bottom-nav-item active" data-nav="overview" onclick="window.switchMobileView('overview')">
             <span data-icon="home" data-icon-class="w-5 h-5"></span>
-            <span>总览</span>
+            <span data-i18n="overview"></span>
         </button>
         <button class="bottom-nav-item" data-nav="add" onclick="window.openQuickAdd()">
             <span data-icon="plus" data-icon-class="w-5 h-5"></span>
-            <span>记账</span>
+            <span data-i18n="quick_add"></span>
         </button>
         <button class="bottom-nav-item" data-nav="stats" onclick="window.switchMobileView('stats')">
             <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>
-            <span>分析</span>
+            <span data-i18n="stats"></span>
         </button>
     </nav>
 
@@ -311,9 +316,9 @@
         <div style="display:flex;align-items:flex-start;gap:12px;">
             <span data-icon="info" data-icon-class="w-6 h-6 text-amber-500"></span>
             <div style="flex:1;">
-                <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;">发现新版本</p>
+                <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;" data-i18n="update_available"></p>
                 <p id="update-log" style="display:none;font-size:12px;color:#64748b;margin-top:4px;white-space:pre-line;"></p>
-                <button id="btn-update-refresh" class="mt-2 btn-primary text-xs py-1.5 px-3">立即更新</button>
+                <button id="btn-update-refresh" class="mt-2 btn-primary text-xs py-1.5 px-3" data-i18n="update_now"></button>
             </div>
         </div>
     </div>

@@ -12,6 +12,7 @@ import { getLedgerToday } from "./clock.js";
 import { loadCnyVndRate } from "./fx-display.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
+import { t } from "./i18n.js";
 
 const auth = getAuth(app);
 
@@ -94,11 +95,11 @@ export async function handleLogin() {
   if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
   try {
     await signInWithEmailAndPassword(auth, email, pwd);
-    showToast("登录成功");
+    showToast(t("login_success"));
   } catch (e) {
     if (loadingOverlay) loadingOverlay.style.display = "none";
     const errEl = document.getElementById("auth-error");
-    if (errEl) { errEl.innerText = "登录失败: 账号或密码错误"; errEl.classList.remove("hidden"); }
+    if (errEl) { errEl.innerText = t("login_failed"); errEl.classList.remove("hidden"); }
   }
 }
 
@@ -108,11 +109,11 @@ export async function performLogout(isTimeout = false) {
     const el = document.getElementById("timeout-msg");
     if (el) el.classList.remove("hidden");
   } else {
-    showToast("已安全退出");
+    showToast(t("logout_success"));
     setTimeout(() => window.location.reload(), 1000);
   }
 }
 
 export function logoutApp() {
-  if (confirm("确定要退出账号吗？")) performLogout(false);
+  if (confirm(t("confirm_logout"))) performLogout(false);
 }

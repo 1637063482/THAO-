@@ -12,9 +12,11 @@ import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.j
 import { openQuickAdd, closeQuickAdd, submitQuickAdd } from "./quick-add.js";
 import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
+import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
+window.switchLanguage = switchLanguage;
 window.changeFxMode = changeFxMode;
 window.applyManualRate = applyManualRate;
 window.togglePrivacy = togglePrivacy;
@@ -49,9 +51,9 @@ if (yearSelector) {
 }
 var displayYearText = document.getElementById("display-year-text");
 if (displayYearText) displayYearText.innerText = state.activeYear;
-document.title = state.activeYear + "年Thao的账本";
-document.getElementById("ui-year-start").innerText = state.activeYear;
-document.getElementById("ui-year-end").innerText = state.activeYear;
+document.title = state.activeYear + " " + t("app_name");
+updateYearLabels();
+applyI18n();
 
 function isMathOrCell(el) {
   if (el.classList.contains("remark-input")) return false;
@@ -120,7 +122,7 @@ document.body.addEventListener("focusout", function(e) {
       if (!isValidCurrencyRate(activeRate)) {
         e.target.dataset.raw = e.target.dataset.currencyRawBefore || "";
         e.target.value = e.target.dataset.currencyViewBefore || "";
-        showToast("汇率不可用，无法换算CNY", true);
+        showToast(t("fx_unavailable"), true);
         delete e.target.dataset.currencyRawBefore;
         delete e.target.dataset.currencyViewBefore;
         delete e.target.dataset.currencyInputDirty;
@@ -161,7 +163,7 @@ document.body.addEventListener("focusout", function(e) {
 })();
 
 window.addEventListener("beforeunload", function(e) {
-  if (state.isSaving && navigator.onLine) { e.preventDefault(); e.returnValue = "数据尚未同步，确定离开吗？"; }
+  if (state.isSaving && navigator.onLine) { e.preventDefault(); e.returnValue = t("unsaved_warning"); }
 });
 
 document.getElementById("quick-add-modal")?.addEventListener("click", function(e) {
@@ -174,10 +176,38 @@ function switchMonthTab(monthId) {
   var activeBtn = document.getElementById("btn-tab-" + monthId);
   if (activeBtn) activeBtn.className = "month-tab active";
   fullRebuildDOM();
-  var t = document.getElementById("monthly-chart-title");
-  if (t) t.innerText = monthId + "月";
+  var chartTitle = document.getElementById("monthly-chart-title");
+  if (chartTitle) chartTitle.innerText = t("monthly", { month: monthId });
   var b = document.getElementById("budget-label-month");
   if (b) b.innerText = monthId;
+}
+
+function updateYearLabels() {
+  var startLabel = document.getElementById("ui-year-start-label");
+  var endLabel = document.getElementById("ui-year-end-label");
+  if (startLabel) startLabel.textContent = t("year_start_assets", { year: state.activeYear });
+  if (endLabel) endLabel.textContent = t("year_end_assets", { year: state.activeYear });
+}
+
+function switchLanguage(locale) {
+  if (setLocale(locale)) {
+    var btnVi = document.getElementById("btn-lang-vi");
+    var btnZh = document.getElementById("btn-lang-zh");
+    if (btnVi) btnVi.className = locale === "vi" ? "month-tab active" : "month-tab";
+    if (btnZh) btnZh.className = locale === "zh-CN" ? "month-tab active" : "month-tab";
+    var emailInput = document.getElementById("auth-email");
+    var pwdInput = document.getElementById("auth-password");
+    if (emailInput) emailInput.placeholder = t("email");
+    if (pwdInput) pwdInput.placeholder = t("password_placeholder");
+    applyI18n();
+    updateYearLabels();
+    var chartTitle = document.getElementById("monthly-chart-title");
+    if (chartTitle && state.activeMonthId) chartTitle.textContent = t("monthly", { month: state.activeMonthId });
+    document.title = state.activeYear + " " + t("app_name");
+    var budgetMonth = document.getElementById("budget-label-month");
+    if (budgetMonth) budgetMonth.textContent = t("month_display", { month: state.activeMonthId });
+    fullRebuildDOM();
+  }
 }
 
 var lastLedgerDate = getLedgerToday();
@@ -186,11 +216,8 @@ var ledgerDateTimer = null;
 function syncYearLabels() {
   var displayYearText = document.getElementById("display-year-text");
   if (displayYearText) displayYearText.innerText = state.activeYear;
-  document.title = state.activeYear + "年Thao的账本";
-  var startEl = document.getElementById("ui-year-start");
-  var endEl = document.getElementById("ui-year-end");
-  if (startEl) startEl.innerText = state.activeYear;
-  if (endEl) endEl.innerText = state.activeYear;
+  document.title = state.activeYear + " " + t("app_name");
+  updateYearLabels();
   var selector = document.getElementById("year-selector");
   if (selector) selector.value = String(state.activeYear);
 }
@@ -247,9 +274,9 @@ function changeFxMode(mode) {
 function applyManualRate() {
   var input = document.getElementById("manual-rate-input");
   var val = parseFloat(input ? input.value : "");
-  if (!val || val <= 0) { showToast("请先输入有效的手动汇率数值！", true); return; }
+  if (!val || val <= 0) { showToast(t("manual_rate_prompt"), true); return; }
   state.fxRateManual = val;
-  showToast("手动汇率已应用");
+  showToast(t("manual_rate_applied"));
   fullRebuildDOM();
 }
 
@@ -337,7 +364,7 @@ function togglePrivacy() {
 function changeYear(newYear) {
   newYear = parseInt(newYear);
   if (newYear === state.activeYear) return;
-  if (state.isSaving && navigator.onLine) { showToast("数据正在同步中，请稍后切换年份", true); document.getElementById("year-selector").value = state.activeYear; return; }
+  if (state.isSaving && navigator.onLine) { showToast(t("syncing_year_switch"), true); document.getElementById("year-selector").value = state.activeYear; return; }
   state.activeYear = newYear;
   syncYearLabels();
   var monthsContainer = document.getElementById("months-container");
@@ -359,8 +386,8 @@ function changeYear(newYear) {
 
 function shareApp() {
   navigator.clipboard.writeText(window.location.href).then(
-    function() { showToast("链接已复制！"); },
-    function() { showToast("链接复制失败请手动复制浏览器地址"); }
+    function() { showToast(t("link_copied")); },
+    function() { showToast(t("link_copy_failed")); }
   );
 }
 
@@ -369,13 +396,13 @@ async function importDataHandler(event) {
   if (!file || !state.currentUser) return;
   try {
     var result = await importData(file);
-    if (result) { showToast("数据导入成功"); setTimeout(function() { window.location.reload(); }, 1000); }
+    if (result) { showToast(t("import_success")); setTimeout(function() { window.location.reload(); }, 1000); }
   } catch (err) {
     const messages = {
-      FILE_TOO_LARGE: "导入文件过大",
-      DANGEROUS_TEXT: "导入内容包含不安全文本",
+      FILE_TOO_LARGE: t("import_file_too_large"),
+      DANGEROUS_TEXT: t("import_dangerous_text"),
     };
-    showToast(messages[err.code] || "导入文件格式不受支持", true);
+    showToast(messages[err.code] || t("import_format_error"), true);
   }
 }
 
@@ -391,7 +418,7 @@ function exportToCSV() {
   var blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
   var link = document.createElement("a");
   link.href = URL.createObjectURL(blob);
-  link.download = state.activeYear + "年Thao的云端开支账本.csv";
+  link.download = state.activeYear + "_" + t("app_name") + ".csv";
   link.click();
 }
 
