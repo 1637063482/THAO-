@@ -6,20 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | T019 |
-| Title | Decide T011/T012 account and transaction scope ADR |
-| State | APPROVED |
-| Branch | task/t019-account-transaction-adr |
-| Base SHA | ea94b388cd6c5b7ffae178abe879ef76335c3987 |
-| Implementation Head | 99b62dbd1943108199374102537a09242207cead |
+| Task ID | T020 |
+| Title | Make FX display adapter reliable |
+| State | PLANNED |
+| Branch | task/t020-fx-display-reliability |
+| Base SHA | 27776b994d558faa2e3ccd13ac91e443932f6000 |
+| Implementation Head | pending |
 | Review Round | 1 |
-| Evidence | `docs/review-evidence/T019.md` |
-| Latest Review | `docs/task-reviews/T019-R1.md` - APPROVED |
-| Next Task | T020 |
+| Evidence | `docs/review-evidence/T020.md` |
+| Latest Review | pending |
+| Next Task | T021 |
 
 ## Reviewer Attention
 
-- T019 R1 is approved. A later Coder invocation may transition to T020 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
+- T020 must keep VND accounting usable when FX is slow, invalid, or unavailable.
+- Verify FX failures do not write zero rates or mutate historical/pending VND entries.
+- Verify no Firebase deployment, Rules/Auth change, production data operation, transaction migration, or T021 work.
 
 ## History
 
@@ -31,3 +33,4 @@
 | T016 | APPROVED | `ed73457` | `docs/task-reviews/T016-R3.md` |
 | T017 | APPROVED | `1a2bf9e` | `docs/task-reviews/T017-R2.md` |
 | T018 | APPROVED | `9c404c2` | `docs/task-reviews/T018-R3.md` |
+| T019 | APPROVED | `99b62db` | `docs/task-reviews/T019-R1.md` |
