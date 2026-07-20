@@ -2,6 +2,8 @@
 
 > 目标是优先修好女朋友实际使用的 VND 私人账本，而不是建设通用财务平台。项目所有者的第二账号和 CNY 切换服务于查看/维护。账号、登录规则和数据已在 Firebase；任何线上 Rules 修改或迁移仍需单独授权。
 
+> T019 决策更新：项目所有者已选择 ADR-003 的方案 A。当前路线稳定现有 legacy 年度矩阵；T011/T012 Account/Transaction 模型不进入交付主线，不得默认迁移、接入 UI、扩展 Firestore schema 或写生产数据。
+
 ## 1. 当前架构问题
 
 ### 1.1 边界问题
@@ -156,14 +158,14 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
   rebuildable aggregates, sourceWatermark, schemaVersion
 ```
 
-上述是迁移目标命名空间草案；正式采用前必须以实际 Firebase 路径限制和 Rules 可维护性做 emulator 验证。现有 `shared_ledger_<year>` 在迁移完成前仍是事实源。
+上述仅保留为被拒绝迁移方案的历史草案和未来参考。ADR-003 选择继续稳定现有 legacy 年度矩阵；现有 `shared_ledger_<year>` 继续作为事实源，不因 T011/T012 存在而默认迁移。
 
 ### 4.2 金额与汇率
 
 - 当前事实金额固定为 VND 整数；预算、余额、entries 和报表都以 VND 为准。
 - CNY 是 ViewModel 的辅助显示，可按当前汇率重算，不持久化为交易事实。
 - 展示切换不得写入 raw state、pendingUpdates 或 Firestore。
-- T011/T012 中的多币字段属于冻结探索；若 T019 决定继续，必须先改为符合 VND-only 产品边界。
+- T011/T012 中的多币字段属于冻结探索；ADR-003 已决定不继续迁移。若未来重新考虑，必须先新建 owner-approved ADR，并删除非 VND 事实字段。
 
 ### 4.3 索引与查询
 
@@ -278,9 +280,9 @@ UI 只展示稳定本地化文案；原始第三方错误进入脱敏日志。
 
 从现有年度 `entries` 派生连续天数，统一直接录入/快速录入/云端快照刷新，修复 7/30 天奖励；验证 VND 保存与 CNY 仅展示；核对线上 Firebase Rules。T011/T012 新模型保持未接线状态。
 
-### Phase 2：决定是否需要新模型
+### Phase 2：T019 已决定不迁移新模型
 
-基于真实使用痛点评估独立 Account/Transaction 是否值得迁移。只有项目所有者再次批准，才进行备份、dry-run、双读校验和 UI 切换。
+ADR-003 已选择稳定 legacy 年度矩阵。独立 Account/Transaction 不再是默认后续路线；T011/T012 保持未接线，并应在后续单独 cleanup 任务中删除或隔离。只有新的项目所有者批准 ADR 才能重新评估备份、dry-run、双读校验和 UI 切换。
 
 ### Phase 3：可靠离线与恢复
 
