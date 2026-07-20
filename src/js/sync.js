@@ -5,7 +5,7 @@ import { LEGACY_IMPORT_MAX_BYTES, serializeLegacyImport, validateLegacyImport } 
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
-const IMPORT_RECOVERY_STORAGE_KEY = "myExpenseApp.importRecovery.latest";
+const IMPORT_RECOVERY_STORAGE_PREFIX = "myExpenseApp.importRecovery.";
 
 function refreshStreakFromSnapshot() {
   if (window.updateStreakAfterRecord) window.updateStreakAfterRecord({ launchDefaultFireworks: false });
@@ -186,16 +186,21 @@ function recoveryStoragePayload(recovery) {
   });
 }
 
+function recoveryStorageKey(recovery) {
+  return IMPORT_RECOVERY_STORAGE_PREFIX + recovery.fileName;
+}
+
 export async function downloadRecoveryFile(recovery, {
   storage = globalThis.localStorage,
   documentRef = document,
   urlApi = URL,
 } = {}) {
+  const storageKey = recoveryStorageKey(recovery);
   const storagePayload = recoveryStoragePayload(recovery);
   try {
     if (!storage) throw new Error("local recovery storage is unavailable");
-    storage.setItem(IMPORT_RECOVERY_STORAGE_KEY, storagePayload);
-    if (storage.getItem(IMPORT_RECOVERY_STORAGE_KEY) !== storagePayload) {
+    storage.setItem(storageKey, storagePayload);
+    if (storage.getItem(storageKey) !== storagePayload) {
       throw new Error("local recovery storage verification failed");
     }
   } catch (error) {
@@ -211,7 +216,7 @@ export async function downloadRecoveryFile(recovery, {
     link.download = recovery.fileName;
     link.click();
     return {
-      storageKey: IMPORT_RECOVERY_STORAGE_KEY,
+      storageKey,
       fileName: recovery.fileName,
       hash: recovery.hash,
     };

@@ -10,7 +10,7 @@ Before an overwrite JSON import, MyExpenseApp creates a local recovery point for
 
 The recovery file is intentionally a normal legacy import file. It can be checked with the existing import schema before being imported back into the app.
 
-The app also writes the same serialized recovery content into browser local storage at `myExpenseApp.importRecovery.latest` and reads it back before any overwrite write. If the local recovery payload cannot be verified, the import is blocked.
+The app also writes the same serialized recovery content into browser local storage at `myExpenseApp.importRecovery.<fileName>` and reads it back before any overwrite write. Each overwrite gets its own key, so later imports do not replace earlier verified recovery payloads. If the local recovery payload cannot be verified, the import is blocked.
 
 ## Restore Steps
 
@@ -19,7 +19,7 @@ The app also writes the same serialized recovery content into browser local stor
 3. Use the existing JSON import control and choose the recovery file.
 4. Confirm the overwrite only after checking the file name, year, and hash.
 
-If the downloaded file is missing but the import was blocked or a write failed after local verification, the browser local storage item `myExpenseApp.importRecovery.latest` contains a JSON object whose `serialized` field is the same legacy ledger JSON. Save that `serialized` value as a `.json` file before using the import control.
+If the downloaded file is missing but the import was blocked or a write failed after local verification, open browser local storage for this app and find keys that start with `myExpenseApp.importRecovery.`. Each value is a JSON object whose `serialized` field is the same legacy ledger JSON. Pick the item whose key/file name matches the intended year, timestamp, and hash, then save that `serialized` value as a `.json` file before using the import control.
 
 ## Safety Rules
 

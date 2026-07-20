@@ -147,18 +147,61 @@ describe("import recovery backup", () => {
     await expect(downloadRecoveryFile(recovery, { storage, documentRef, urlApi })).resolves.toMatchObject({
       fileName: recovery.fileName,
       hash: recovery.hash,
-      storageKey: "myExpenseApp.importRecovery.latest",
+      storageKey: "myExpenseApp.importRecovery.my-expense-app-recovery-2026-test-hash.json",
     });
 
-    expect(storage.setItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.latest", JSON.stringify({
+    expect(storage.setItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.my-expense-app-recovery-2026-test-hash.json", JSON.stringify({
       fileName: recovery.fileName,
       hash: recovery.hash,
       serialized: recovery.serialized,
     }));
-    expect(storage.getItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.latest");
+    expect(storage.getItem).toHaveBeenCalledWith("myExpenseApp.importRecovery.my-expense-app-recovery-2026-test-hash.json");
     expect(documentRef.createElement).toHaveBeenCalledWith("a");
     expect(link.click).toHaveBeenCalledTimes(1);
     expect(urlApi.revokeObjectURL).toHaveBeenCalledWith("blob:recovery");
+  });
+
+  it("retains each production recovery under a distinct verified local key", async () => {
+    const stored = new Map();
+    const storage = {
+      setItem: vi.fn((key, value) => stored.set(key, value)),
+      getItem: vi.fn((key) => stored.get(key)),
+    };
+    const link = { click: vi.fn() };
+    const documentRef = { createElement: vi.fn(() => link) };
+    const urlApi = {
+      createObjectURL: vi.fn((blob) => `blob:${blob.size}:${urlApi.createObjectURL.mock.calls.length}`),
+      revokeObjectURL: vi.fn(),
+    };
+    const firstRecovery = {
+      fileName: "my-expense-app-recovery-2026-first-hash.json",
+      hash: "first-hash",
+      serialized: textOf(currentLedger()),
+    };
+    const secondRecovery = {
+      fileName: "my-expense-app-recovery-2026-second-hash.json",
+      hash: "second-hash",
+      serialized: textOf({ ...currentLedger(), settings: { budget_1: 4000 } }),
+    };
+
+    await expect(downloadRecoveryFile(firstRecovery, { storage, documentRef, urlApi })).resolves.toMatchObject({
+      storageKey: "myExpenseApp.importRecovery.my-expense-app-recovery-2026-first-hash.json",
+    });
+    await expect(downloadRecoveryFile(secondRecovery, { storage, documentRef, urlApi })).resolves.toMatchObject({
+      storageKey: "myExpenseApp.importRecovery.my-expense-app-recovery-2026-second-hash.json",
+    });
+
+    expect(stored.get("myExpenseApp.importRecovery.my-expense-app-recovery-2026-first-hash.json")).toBe(JSON.stringify({
+      fileName: firstRecovery.fileName,
+      hash: firstRecovery.hash,
+      serialized: firstRecovery.serialized,
+    }));
+    expect(stored.get("myExpenseApp.importRecovery.my-expense-app-recovery-2026-second-hash.json")).toBe(JSON.stringify({
+      fileName: secondRecovery.fileName,
+      hash: secondRecovery.hash,
+      serialized: secondRecovery.serialized,
+    }));
+    expect(link.click).toHaveBeenCalledTimes(2);
   });
 
   it("refuses the recovery download when local persistence cannot be verified", async () => {
