@@ -8,20 +8,18 @@
 |---|---|
 | Task ID | T019 |
 | Title | Decide T011/T012 account and transaction scope ADR |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/t019-account-transaction-adr |
 | Base SHA | ea94b388cd6c5b7ffae178abe879ef76335c3987 |
 | Implementation Head | 99b62dbd1943108199374102537a09242207cead |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T019.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/T019-R1.md` - APPROVED |
 | Next Task | T020 |
 
 ## Reviewer Attention
 
-- Verify ADR-003 records owner-selected Option A and does not silently continue Account/Transaction migration.
-- Verify ARCHITECTURE_PLAN.md and TASK_PLAN.md no longer describe T019 as undecided.
-- Verify no business code, Firestore schema, Rules, Auth, deployment, production data, or T020 implementation changed.
+- T019 R1 is approved. A later Coder invocation may transition to T020 following `AGENT_WORKFLOW.md`; this Reviewer stops here.
 
 ## History
 
