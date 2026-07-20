@@ -58,7 +58,7 @@ function initDOM() {
   const tabsContainer = document.getElementById("month-tabs");
   if (!tabsContainer) return;
   for (let i = 1; i <= 12; i++) {
-    tabsContainer.innerHTML += '<button id="btn-tab-' + i + '" onclick="window.switchMonthTab(' + i + ')" class="month-tab">' + i + '月</button>';
+    tabsContainer.innerHTML += '<button id="btn-tab-' + i + '" onclick="window.switchMonthTab(' + i + ')" class="month-tab">' + t("month_tab", { month: i }) + '</button>';
   }
   setTimeout(() => {
     if (window.switchMonthTab) {

@@ -142,6 +142,26 @@ export default {
   // Unsaved warning
   unsaved_warning: "Dữ liệu chưa được đồng bộ, bạn có chắc muốn rời đi?",
 
+  // Budget / table headers
+  monthly_budget: "Ngân sách T{month}",
+  used: "Đã dùng",
+  remaining_days: "còn {days} ngày",
+  daily_available: "TB mỗi ngày {amount}",
+  year_month_title: "{year} T{month}",
+  balance: "Số dư",
+  expense: "Chi tiêu",
+  income: "Thu nhập",
+
+  // Streak
+  streak_days: "Số ngày ghi chép liên tục",
+  streak_unit: "ngày",
+  checked_in_today: "Hôm nay đã điểm danh",
+  not_recorded_yet: "THAO, hôm nay chưa ghi chép nhé~",
+  streak_encouragement: "Quá tuyệt! THAO! Bạn đã duy trì {days} ngày, hãy tiếp tục nhé!",
+
+  // Month tab
+  month_tab: "T{month}",
+
   // Formats
   month_display: "Tháng {month}",
   day_display: "Ngày {day}",

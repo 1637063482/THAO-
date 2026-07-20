@@ -91,29 +91,29 @@ export function renderMonthTable(monthId) {
     + '<div class="budget-inline-bar">'
     + '<div class="budget-inline-left">'
     + '<span data-icon="target" data-icon-class="w-4 h-4 text-amber-500"></span>'
-    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span>月预算</span>'
+    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span>' + t("monthly_budget", { month: monthId }) + '</span>'
     + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" onchange="window.saveBudgetAndCalculate()">'
     + '<span class="text-xs text-slate-400 font-medium shrink-0" id="qa-currency-badge">VND</span>'
     + '</div>'
     + '<div class="budget-inline-right">'
     + '<div class="bg-slate-100 rounded-full h-2.5 overflow-hidden flex-1" style="min-width:80px;"><div id="budget-progress-bar" class="progress-bar h-full" style="width:0%"></div></div>'
-    + '<div id="budget-text" class="text-xs text-slate-500 font-medium whitespace-nowrap">已用 0%</div>'
+    + '<div id="budget-text" class="text-xs text-slate-500 font-medium whitespace-nowrap">' + t("used") + ' 0%</div>'
     + '</div>'
     + '</div>'
     // Table header bar
     + '<div class="table-header-bar">'
-    + '<h2 class="table-title">' + state.activeYear + '年' + monthId + '月</h2>'
-    + '<div class="table-balance-badge">结余 <span id="summary-balance-' + monthId + '" class="blur-sensitive">0</span></div>'
+    + '<h2 class="table-title">' + t("year_month_title", { year: state.activeYear, month: monthId }) + '</h2>'
+    + '<div class="table-balance-badge">' + t("balance") + ' <span id="summary-balance-' + monthId + '" class="blur-sensitive">0</span></div>'
     + '</div>'
     // Scrollable table body
     + '<div class="table-scroll" id="table-scroll-container-' + monthId + '">'
     + '<table>'
     + '<thead><tr>'
-    + '<th class="sticky-col date-col">日期</th>'
+    + '<th class="sticky-col date-col">' + t("date") + '</th>'
     + catHeaders
-    + '<th class="total-th">支出</th>'
-    + '<th class="income-th">收入</th>'
-    + '<th class="remark-th">备注</th>'
+    + '<th class="total-th">' + t("expense") + '</th>'
+    + '<th class="income-th">' + t("income") + '</th>'
+    + '<th class="remark-th">' + t("remark") + '</th>'
     + '</tr></thead>'
     + '<tbody>' + rowsHtml + '</tbody>'
     + '<tfoot><tr>'
@@ -182,12 +182,12 @@ export function renderStreakPanel() {
     + '<div class="flex items-center justify-between">'
     + '<div class="flex items-center gap-3">'
     + '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-200/60">' + Icons.flame('w-7 h-7 text-white') + '</div>'
-    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">记账连续天数</div>'
-    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">天</span></div></div></div>'
+    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">' + t("streak_days") + '</div>'
+    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">' + t("streak_unit") + '</span></div></div></div>'
     + '<div class="text-right">'
-    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + '今日已打卡</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">THAO，今天还没记账哦~</span>')
+    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + t("checked_in_today") + '</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">' + t("not_recorded_yet") + '</span>')
     + '</div></div>'
-    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + '太棒了！THAO！你已经坚持了 ' + s.streak + ' 天，继续保持！</p></div>' : '')
+    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + t("streak_encouragement", { days: s.streak }) + '</p></div>' : '')
     + '</div>';
 
   state.currentStreak = s.streak;

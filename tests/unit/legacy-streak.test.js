@@ -78,7 +78,7 @@ function setLegacyStreak({ cloudLastDate = TODAY, cloudStreak = 1, localLastDate
 
 function getDisplayedStreak() {
   const text = document.getElementById("streak-panel")?.textContent || "";
-  const match = text.match(/(\d+)\s*天/);
+  const match = text.match(/(\d+)\s*(天|ngày)/);
   return match ? Number(match[1]) : NaN;
 }
 

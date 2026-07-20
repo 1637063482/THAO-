@@ -142,6 +142,26 @@ export default {
   // Unsaved warning
   unsaved_warning: "数据尚未同步，确定离开吗？",
 
+  // Budget / table headers
+  monthly_budget: "{month}月预算",
+  used: "已用",
+  remaining_days: "剩{days}天",
+  daily_available: "日均可用 {amount}",
+  year_month_title: "{year}年{month}月",
+  balance: "结余",
+  expense: "支出",
+  income: "收入",
+
+  // Streak
+  streak_days: "记账连续天数",
+  streak_unit: "天",
+  checked_in_today: "今日已打卡",
+  not_recorded_yet: "THAO，今天还没记账哦~",
+  streak_encouragement: "太棒了！THAO！你已经坚持了 {days} 天，继续保持！",
+
+  // Month tab
+  month_tab: "{month}月",
+
   // Formats
   month_display: "{month}月",
   day_display: "{day}日",

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { state } from "../../src/js/state.js";
 
 // We'll test with a fresh instance approach: mock locale modules
 vi.mock("../../src/locales/vi.js", () => ({
@@ -154,24 +155,20 @@ describe("i18n system", () => {
       expect(document.documentElement.lang).toBe("vi");
     });
 
-    it("preserves a representative appState snapshot after locale switch", async () => {
-      // Arrange: simulate app state on the module scope
-      var fakeState = { currentCurrency: "VND", activeYear: 2026 };
-      var fakePending = { balances: { "bal-bank": "1000000" }, entries: { "1_1_dining": "=50000" } };
+    it("does not modify the actual state.appState or state.pendingUpdates after multiple locale switches", async () => {
+      // Snapshots of the actual application state singleton
+      var appStateBefore = JSON.stringify(state.appState);
+      var pendingBefore = JSON.stringify(state.pendingUpdates);
 
-      // Take immutable snapshots (JSON parse/stringify strips functions/undefined)
-      var stateBefore = JSON.parse(JSON.stringify(fakeState));
-      var pendingBefore = JSON.parse(JSON.stringify(fakePending));
-
-      // Act: locale switch should not touch state-like objects
       const i18n = await getI18n();
+      // Perform multiple locale switches
       i18n.setLocale("zh-CN");
-      // Re-apply to prove our fake objects are untouched by setLocale
       i18n.setLocale("vi");
+      i18n.setLocale("zh-CN");
 
-      // Assert: our objects are still intact (setLocale does not reference them)
-      expect(JSON.stringify(fakeState)).toBe(JSON.stringify(stateBefore));
-      expect(JSON.stringify(fakePending)).toBe(JSON.stringify(pendingBefore));
+      // The actual state objects must be unchanged
+      expect(JSON.stringify(state.appState)).toBe(appStateBefore);
+      expect(JSON.stringify(state.pendingUpdates)).toBe(pendingBefore);
     });
   });
 });

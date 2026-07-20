@@ -8,33 +8,38 @@ export function escapeCsvCell(value) {
 }
 
 function row(values) {
-  const safe = values.map(escapeCsvCell);
-  return safe.join(",");
+  return values.map(escapeCsvCell).join(",");
 }
 
 export function buildLegacyCsv({ year, balances, entries, categories, daysInMonth, evaluate }) {
-  const lines = [];
+  const lines = [row([`--- ${year}年Thao的云端开支账本 ---`]), "", row(["--- 年初资产 ---"]), row(["账户类型", "金额"])];
+  const accountRows = [
+    ["银行卡", "bal-bank"], ["支付宝", "bal-alipay"], ["微信钱包", "bal-wechat"], ["现金及其他", "bal-other"],
+  ];
+  accountRows.forEach(([name, key]) => lines.push(row([name, evaluate(balances[key])])));
+  lines.push("");
 
   for (let month = 1; month <= 12; month++) {
     lines.push(row([`--- ${year}年${month}月 ---`]));
     lines.push(row(["日期", ...categories.map((category) => category.name), "当日总支出", "当日收入", "备注"]));
     for (let day = 1; day <= daysInMonth(year, month); day++) {
-      const col = [String(day)];
-      let totalExpense = 0;
-      categories.forEach((cat) => {
-        const raw = entries[`${month}_${day}_${cat.id}`];
-        const val = raw ? evaluate(raw) : 0;
-        col.push(val > 0 ? String(val) : "");
-        totalExpense += val;
-      });
-      const incomeRaw = entries[`${month}_${day}_income`];
-      const income = incomeRaw ? evaluate(incomeRaw) : 0;
-      col.push(totalExpense > 0 ? String(totalExpense) : "");
-      col.push(income > 0 ? String(income) : "");
-      col.push(entries[`${month}_${day}_remark`] || "");
-      lines.push(row(col));
+      const categoryValues = categories.map((category) => evaluate(entries[`${month}_${day}_${category.id}`]));
+      const dailyExpense = categoryValues.reduce((sum, value) => sum + value, 0);
+      lines.push(row([
+        `${month}月${day}日`,
+        ...categoryValues,
+        dailyExpense,
+        evaluate(entries[`${month}_${day}_income`]),
+        entries[`${month}_${day}_remark`] || "",
+      ]));
     }
+    lines.push("");
   }
-  lines.push("");
-  return lines.join("\n");
+
+  lines.push(row(["--- 年末资产 ---"]), row(["账户类型", "金额"]));
+  const endingRows = [
+    ["银行卡", "end-bal-bank"], ["支付宝", "end-bal-alipay"], ["微信钱包", "end-bal-wechat"], ["现金及其他", "end-bal-other"],
+  ];
+  endingRows.forEach(([name, key]) => lines.push(row([name, evaluate(balances[key])])));
+  return "﻿" + lines.join("\r\n") + "\r\n";
 }

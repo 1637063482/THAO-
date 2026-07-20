@@ -83,11 +83,11 @@ export function updateBudgetProgress() {
 
   var pctVal = pct.toFixed(1);
   var pctColor = pct >= 90 ? "#dc2626" : pct >= 75 ? "#d97706" : "#059669";
-  var tipHtml = '已用 <span class="budget-num" style="color:' + pctColor + '">' + pctVal + '%</span>';
+  var tipHtml = t("used") + ' <span class="budget-num" style="color:' + pctColor + '">' + pctVal + '%</span>';
   if (remainingDays > 0 && pct < 100) {
-    tipHtml += ' · 剩<span class="budget-num" style="color:#6366f1">' + remainingDays + '</span>天';
+    tipHtml += ' · ' + t("remaining_days", { days: remainingDays });
     if (dailyBudget > 0) {
-      tipHtml += ' · 日均可用 <span class="budget-num" style="color:#d97706">' + currencySymbol + dailyStr + '</span>';
+      tipHtml += ' · ' + t("daily_available", { amount: currencySymbol + dailyStr });
     }
   }
   txt.innerHTML = tipHtml;
