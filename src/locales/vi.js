@@ -115,6 +115,9 @@ export default {
   confirm_logout: "Bạn có chắc muốn đăng xuất?",
   confirm_import: "Cảnh báo: nhập dữ liệu sẽ ghi đè toàn bộ dữ liệu hiện tại trên đám mây. Bạn có chắc muốn tiếp tục?",
 
+  // Chart
+  no_data: "Không có dữ liệu",
+
   // Reconciliation
   surplus: "Dư · thực tế lớn hơn sổ sách",
   deficit: "Thiếu · có thể thiếu ghi chép",

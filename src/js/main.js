@@ -411,7 +411,7 @@ function exportToCSV() {
     year: state.activeYear,
     balances: state.appState.balances,
     entries: state.appState.entries,
-    categories: expenseCategories,
+    categories: expenseCategories.map(function(c) { return { id: c.id, name: t(c.nameKey), emoji: c.emoji, color: c.color }; }),
     daysInMonth: getDaysInMonth,
     evaluate: safeEval,
   });

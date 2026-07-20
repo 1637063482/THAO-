@@ -54,13 +54,13 @@ export function submitQuickAdd() {
   const rawAmt = document.getElementById("qa-amount")?.value;
   const remark = document.getElementById("qa-remark")?.value;
 
-  if (!rawAmt || isNaN(rawAmt)) { showToast("请输入有效纯数字金额", true); return; }
+  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); return; }
 
   let amtVND = rawAmt;
   if (state.currentCurrency === "CNY") {
     const activeRate = getActiveRate();
     if (!isValidCurrencyRate(activeRate)) {
-      showToast("汇率不可用，无法换算CNY", true);
+      showToast(t("fx_unavailable"), true);
       return;
     }
     amtVND = convertCnyAmountToVnd(rawAmt, activeRate);
@@ -91,7 +91,7 @@ export function submitQuickAdd() {
   const iEl = document.getElementById("entry-" + state.activeMonthId + "-" + d + "-" + cat);
   if (iEl) { iEl.dataset.raw = finalMath; iEl.value = formatDisplay(safeEval(finalMath)); }
 
-  showToast("记录已追加");
+  showToast(t("record_saved"));
   closeQuickAdd();
   const qaAmt = document.getElementById("qa-amount");
   const qaRemark = document.getElementById("qa-remark");

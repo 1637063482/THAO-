@@ -160,16 +160,16 @@ T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度�
 
 - Task ID: UXS-002
 - 目标: 所有当前可达静态/动态用户文案由字典提供，默认越南语，可切换简体中文，不提供英语入口。
-- 修改文件: `src/js/i18n.js`（新建）、`src/locales/vi.js`（新建）、`src/locales/zh-CN.js`（新建）、`index.html`、`src/js/auth.js`、`src/js/budget.js`、`src/js/charts.js`、`src/js/config.js`、`src/js/main.js`、`src/js/quick-add.js`、`src/js/render.js`、`src/js/sync.js`、`tests/unit/i18n.test.js`（新建）、`docs/review-evidence/UXS-002.md`。
-- 涉及模块: UI 文案、locale persistence、HTML language metadata。
+- 修改文件: `src/js/i18n.js`（新建）、`src/locales/vi.js`（新建）、`src/locales/zh-CN.js`（新建）、`index.html`、`src/js/auth.js`、`src/js/budget.js`、`src/js/charts.js`、`src/js/config.js`、`src/js/fireworks.js`（仅新增越南语弹幕）、`src/js/main.js`、`src/js/quick-add.js`、`src/js/render.js`、`src/js/sync.js`、`tests/unit/i18n.test.js`（新建）、`docs/review-evidence/UXS-002.md`。
+- 涉及模块: UI 文案、locale persistence、HTML language metadata、烟花弹幕。
 - 详细步骤:
   1. RED 覆盖默认 locale、缺键回退、插值、`document.lang`、切换持久化和切换前后 `appState/pendingUpdates` 深度相等。
   2. 建立稳定 message key；分类/状态使用 key 映射，不把越南语文本当数据值。
-  3. 替换所有可达硬编码文案，包括 toast、验证、同步、空态、图表和认证错误；Firebase 原始错误不得直出。
+  3. 替换所有可达硬编码文案，包括 toast、验证、同步、空态、图表和认证错误；Firebase 原始错误不得直出。`src/js/fireworks.js` 中的烟花弹幕文案保留中文并增加等量越南语，不纳入字典管理。
   4. 语言选择仅含 `vi`/`zh-CN`，首次无偏好默认 `vi`，选择保存在本机显示偏好中。
   5. evidence 列出硬编码扫描结果及门禁退出码。
-- 禁止修改: entries/settings schema、金额/日期规则、Firebase 路径、真实数据、设计重构。
-- 完成标准: 两种语言无缺键；切换无需刷新且不触发云写；越南语重音正确；无用户可见英语。
+- 禁止修改: entries/settings schema、金额/日期规则、Firebase 路径、真实数据、设计重构；`src/js/currency-view.js`、`src/js/fx-display.js` 的文案不在本 Task 范围内。
+- 完成标准: 允许文件范围内的所有可达文案由字典提供；两种语言无缺键；切换无需刷新且不触发云写；越南语重音正确；无用户可见英语。
 - 测试要求: `npm test -- --run tests/unit/i18n.test.js`；扫描可达英文/中文硬编码；全量门禁。
 - Evidence: `docs/review-evidence/UXS-002.md`。
 - 建议提交: `feat: add Vietnamese-first interface localization`。

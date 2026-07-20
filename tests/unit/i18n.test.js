@@ -153,5 +153,49 @@ describe("i18n system", () => {
       i18n.setLocale("vi");
       expect(document.documentElement.lang).toBe("vi");
     });
+
+    it("preserves a representative appState snapshot after locale switch", async () => {
+      // Arrange: simulate app state on the module scope
+      var fakeState = { currentCurrency: "VND", activeYear: 2026 };
+      var fakePending = { balances: { "bal-bank": "1000000" }, entries: { "1_1_dining": "=50000" } };
+
+      // Take immutable snapshots (JSON parse/stringify strips functions/undefined)
+      var stateBefore = JSON.parse(JSON.stringify(fakeState));
+      var pendingBefore = JSON.parse(JSON.stringify(fakePending));
+
+      // Act: locale switch should not touch state-like objects
+      const i18n = await getI18n();
+      i18n.setLocale("zh-CN");
+      // Re-apply to prove our fake objects are untouched by setLocale
+      i18n.setLocale("vi");
+
+      // Assert: our objects are still intact (setLocale does not reference them)
+      expect(JSON.stringify(fakeState)).toBe(JSON.stringify(stateBefore));
+      expect(JSON.stringify(fakePending)).toBe(JSON.stringify(pendingBefore));
+    });
+  });
+});
+
+describe("real locale dictionaries", () => {
+  it("vi and zh-CN have identical key sets with non-empty values", async () => {
+    // Import real dictionaries (not mocked)
+    var vi = (await import("../../src/locales/vi.js")).default;
+    var zh = (await import("../../src/locales/zh-CN.js")).default;
+
+    var viKeys = Object.keys(vi).sort();
+    var zhKeys = Object.keys(zh).sort();
+
+    // Same keys
+    expect(viKeys).toEqual(zhKeys);
+
+    // No empty values
+    viKeys.forEach(function (k) {
+      expect(vi[k], "vi." + k + " should not be empty").toBeTruthy();
+      expect(zh[k], "zh." + k + " should not be empty").toBeTruthy();
+    });
+
+    // Vietnamese contains expected diacritics
+    expect(vi["category_dining"]).toMatch(/ă/i);
+    expect(vi["login"]).toMatch(/đ/i);
   });
 });

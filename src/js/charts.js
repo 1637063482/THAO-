@@ -45,7 +45,7 @@ function makeOptions(title) {
         callbacks: {
           label: function (ctx) {
             var val = ctx.parsed.x;
-            if (!val || val <= 0) return "  暂无数据";
+            if (!val || val <= 0) return "  " + t("no_data");
             var total = 0;
             ctx.dataset.data.forEach(function (v) { total += v; });
             var p = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
@@ -106,7 +106,7 @@ function drawLegend(id) {
   if (!el) return;
   var h = '<div class="flex flex-wrap gap-1.5 justify-center">';
   expenseCategories.forEach(function (c, i) {
-    var name = t(c.nameKey).replace(/[^一-鿿]/g, "");
+    var name = t(c.nameKey);
     h += '<span class="inline-flex items-center gap-1 text-[11px] text-slate-600 font-medium">';
     h += '<span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[i] + ';flex-shrink:0;"></span>';
     h += name + "</span>";

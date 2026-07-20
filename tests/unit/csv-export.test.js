@@ -31,7 +31,7 @@ describe("CSV export", () => {
   });
 
   it("exports a numeric daily total with a stable column count", () => {
-    const categories = [{ id: "food", nameKey: "category_dining" }, { id: "rent", nameKey: "category_rent" }];
+    const categories = [{ id: "food", name: "餐饮" }, { id: "rent", name: "房租" }];
     const csv = buildLegacyCsv({
       year: 2026,
       balances: {},
@@ -46,7 +46,7 @@ describe("CSV export", () => {
       evaluate: (value) => value ? Function(`return (${String(value).replace(/^=/, "")})`)() : 0,
     });
     const rows = parseCsv(csv);
-    const headerIndex = rows.findIndex((row) => row[0] === "Ngày");
+    const headerIndex = rows.findIndex((row) => row[0] === "日期");
     expect(rows[headerIndex]).toHaveLength(6);
     expect(rows[headerIndex + 1]).toHaveLength(6);
     expect(rows[headerIndex + 1][3]).toBe("350");

@@ -115,6 +115,9 @@ export default {
   confirm_logout: "确定要退出账号吗？",
   confirm_import: "警告：导入将覆盖当前云端的所有数据，确定要继续吗？",
 
+  // Chart
+  no_data: "暂无数据",
+
   // Reconciliation
   surplus: "盘盈 · 实际多于账面",
   deficit: "盘亏 · 可能有漏记",

@@ -250,6 +250,6 @@ describe("currency view", () => {
 
     expect(snapshotPersistence()).toBe(before);
     expect(triggerCloudSave).not.toHaveBeenCalled();
-    expect(document.getElementById("toast-msg").innerText).toContain("汇率不可用");
+    expect(document.getElementById("toast-msg").innerText).toContain("khả dụng");
   });
 });
