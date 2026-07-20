@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | T018 |
 | Title | Add recovery point before overwrite import |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/t018-import-recovery |
 | Base SHA | 470c43066906cb4b0856da6f22910d1f46f84f14 |
 | Implementation Head | ccd5f40e1fd6f60197a275e3668b1196b6bf8bdc |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/T018.md` |
-| Latest Review | `docs/task-reviews/T018-R1.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/T018-R2.md` - CHANGES_REQUESTED |
 | Next Task | T019 |
 
 ## Reviewer Attention
 
-- Require verifiable local recovery persistence before overwrite; browser download dispatch alone is insufficient.
-- Validate the recovery payload against the existing import schema; invalid recovery must block overwrite.
-- Correct T018 evidence base SHA to `470c43066906cb4b0856da6f22910d1f46f84f14`; preserve no-deploy/no-production-data boundaries.
+- Retain a distinct, read-back-verified recovery payload for every overwrite; do not overwrite a single `latest` key.
+- Add production-adapter repeated-recovery coverage and preserve no-overwrite behavior on persistence failure.
+- Preserve no-deploy, no-production-data, no-Auth/Rules-change, and no-T019 boundaries.
 
 ## History
 
