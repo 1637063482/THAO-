@@ -109,6 +109,22 @@ describe("FX display adapter", () => {
     expect(storage.setItem).not.toHaveBeenCalled();
   });
 
+  it("rejects cached rates with malformed update timestamps", async () => {
+    const storage = memoryStorage({
+      [cacheKey]: JSON.stringify({ rate: 3500, updatedAt: "not-a-date" }),
+    });
+    const fetchImpl = vi.fn(async () => httpResponse(503));
+
+    await expect(loadCnyVndRate({ fetchImpl, storage, now })).resolves.toEqual({
+      ok: false,
+      rate: null,
+      source: "unavailable",
+      updatedAt: null,
+      stale: false,
+      message: "(汇率不可用)",
+    });
+  });
+
   it("does not mutate VND ledger state or pending entries when FX is unavailable", async () => {
     const appState = { entries: { "1_1_dining": "1234" } };
     const pendingUpdates = { entries: { "1_2_income": "=5000" } };

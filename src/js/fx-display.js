@@ -28,7 +28,10 @@ function readCache(storage, timestamp) {
     if (!raw) return null;
     const cached = JSON.parse(raw);
     if (!validRate(cached.rate) || typeof cached.updatedAt !== "string") return null;
-    const age = Date.parse(timestamp) - Date.parse(cached.updatedAt);
+    const timestampMs = Date.parse(timestamp);
+    const updatedAtMs = Date.parse(cached.updatedAt);
+    if (!Number.isFinite(updatedAtMs)) return null;
+    const age = timestampMs - updatedAtMs;
     return {
       rate: cached.rate,
       updatedAt: cached.updatedAt,

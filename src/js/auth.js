@@ -69,7 +69,7 @@ function initDOM() {
 
 async function fetchReliableAutoRate() {
   const result = await loadCnyVndRate();
-  if (result.ok) state.fxRateAuto = result.rate;
+  state.fxRateAuto = result.ok ? result.rate : null;
   const el = document.getElementById("auto-rate-display");
   if (el) el.innerText = result.message;
 }

@@ -3,7 +3,7 @@ import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
-import { formatVndForCurrencyInput, parseCurrencyInputToVnd } from "./currency-view.js";
+import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd } from "./currency-view.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
 import { initCharts } from "./charts.js";
@@ -116,9 +116,19 @@ document.body.addEventListener("focusout", function(e) {
       e.target.dataset.raw = rawInput;
       e.target.value = rawInput ? formatDisplay(safeEval(rawInput)) : "";
     } else {
+      var activeRate = getActiveRate();
+      if (!isValidCurrencyRate(activeRate)) {
+        e.target.dataset.raw = e.target.dataset.currencyRawBefore || "";
+        e.target.value = e.target.dataset.currencyViewBefore || "";
+        showToast("汇率不可用，无法换算CNY", true);
+        delete e.target.dataset.currencyRawBefore;
+        delete e.target.dataset.currencyViewBefore;
+        delete e.target.dataset.currencyInputDirty;
+        return;
+      }
       var vndVal = parseCurrencyInputToVnd(rawInput, {
         currency: state.currentCurrency,
-        rate: getActiveRate(),
+        rate: activeRate,
         previousRawVnd: e.target.dataset.currencyRawBefore,
         previousViewValue: e.target.dataset.currencyViewBefore,
         evaluate: safeEval,

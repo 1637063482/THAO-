@@ -162,6 +162,24 @@ describe("currency view", () => {
     expect(triggerCloudSave).toHaveBeenCalledTimes(1);
   });
 
+  it("does not convert direct CNY edits through an unavailable automatic FX rate", () => {
+    state.currentCurrency = "CNY";
+    state.fxMode = "auto";
+    state.fxRateAuto = null;
+    const before = snapshotPersistence();
+    document.body.innerHTML += '<input id="entry-1-1-dining" class="cell-input" data-type="entry" data-key="1_1_dining" data-raw="" value="">';
+
+    const input = document.getElementById("entry-1-1-dining");
+    input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    input.value = "1.25";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+
+    expect(input.dataset.raw).toBe("");
+    expect(snapshotPersistence()).toBe(before);
+    expect(triggerCloudSave).not.toHaveBeenCalled();
+  });
+
   it("does not change state or pending updates after 100 CNY/VND display switches", () => {
     state.appState.entries = {
       "1_1_dining": "123456789",
@@ -208,5 +226,30 @@ describe("currency view", () => {
     expect(state.appState.entries["1_1_income"]).toBe("=5000");
     expect(state.pendingUpdates.entries["1_1_income"]).toBe("=5000");
     expect(state.appState.entries["1_1_income"]).not.toBe("=20000000");
+  });
+
+  it("does not convert Quick Add CNY input through an unavailable automatic FX rate", () => {
+    state.currentCurrency = "CNY";
+    state.fxMode = "auto";
+    state.fxRateAuto = null;
+    mountShell([
+      '<div id="toast"></div>',
+      '<div id="toast-icon"></div>',
+      '<div id="toast-msg"></div>',
+      '<div id="quick-add-modal"></div>',
+      '<div id="quick-add-panel"></div>',
+      '<select id="qa-day"><option value="1" selected>1</option></select>',
+      '<select id="qa-cat"><option value="income" selected>income</option></select>',
+      '<input id="qa-amount" value="1.25">',
+      '<input id="qa-remark" value="">',
+      '<input id="entry-1-1-income">',
+    ].join(""));
+    const before = snapshotPersistence();
+
+    submitQuickAdd();
+
+    expect(snapshotPersistence()).toBe(before);
+    expect(triggerCloudSave).not.toHaveBeenCalled();
+    expect(document.getElementById("toast-msg").innerText).toContain("汇率不可用");
   });
 });

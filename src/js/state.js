@@ -14,7 +14,7 @@ export const state = {
   activeMonthId: initialLedgerDate.month,
   currentCurrency: "VND",
   fxMode: "auto",
-  fxRateAuto: 3500,
+  fxRateAuto: null,
   fxRateManual: 3500,
   isSaving: false,
   isFirstLoad: true,
