@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { app } from "./firebase.js";
 import { getLedgerToday } from "./clock.js";
+import { loadCnyVndRate } from "./fx-display.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
 
@@ -22,7 +23,7 @@ export { auth };
 
 export function initAuth(onLoginCallback, onLogoutCallback) {
   initDOM();
-  fetchAutoRate();
+  fetchReliableAutoRate();
   checkSessionTimeout();
   sessionCheckIntervalId = setInterval(checkSessionTimeout, 60000);
 
@@ -66,19 +67,11 @@ function initDOM() {
   }, 100);
 }
 
-async function fetchAutoRate() {
-  try {
-    const res = await fetch("https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/cny.json");
-    const data = await res.json();
-    if (data && data.cny && data.cny.vnd) {
-      state.fxRateAuto = data.cny.vnd;
-      const el = document.getElementById("auto-rate-display");
-      if (el) el.innerText = "(实时: " + Math.round(state.fxRateAuto) + ")";
-    }
-  } catch {
-    const el = document.getElementById("auto-rate-display");
-    if (el) el.innerText = "(API连接失败)";
-  }
+async function fetchReliableAutoRate() {
+  const result = await loadCnyVndRate();
+  if (result.ok) state.fxRateAuto = result.rate;
+  const el = document.getElementById("auto-rate-display");
+  if (el) el.innerText = result.message;
 }
 
 function checkSessionTimeout() {
