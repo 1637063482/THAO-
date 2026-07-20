@@ -6,39 +6,44 @@ describe("budget heading render integration", () => {
     localStorage.clear();
   });
 
-  it("includes month number and budget label in the rendered heading, and switches locale", async () => {
-    // Import real locale dictionaries to verify budget key exists
-    const vi = (await import("../../src/locales/vi.js")).default;
-    const zh = (await import("../../src/locales/zh-CN.js")).default;
-    expect(vi.budget).toBe("Ngân sách");
-    expect(zh.budget).toBe("预算");
+  it("renders budget heading with localized month and budget label, and switches locale", async () => {
+    // Setup: renderMonthTable requires a DOM container and activeYear
+    document.body.innerHTML = '<div id="months-container"></div>';
 
-    // Import i18n module (uses real locale dictionaries here since no mock)
+    // Import dependencies — no mocks, using real modules
+    const { state } = await import("../../src/js/state.js");
+    const { renderMonthTable } = await import("../../src/js/render.js");
     const i18nModule = await import("../../src/js/i18n.js");
 
-    // The budget heading template in renderMonthTable is:
-    // <span id="budget-label-month">{monthId}</span> t("budget")
-    function makeHeading(monthId) {
-      return '<span id="budget-label-month">' + monthId + '</span> ' + i18nModule.t("budget");
-    }
+    state.activeYear = 2026;
 
-    // Default locale is vi
+    // Verify container exists
+    var container = document.getElementById("months-container");
+    expect(container).not.toBeNull();
+
+    // Default locale is vi — render July
     expect(i18nModule.getCurrentLocale()).toBe("vi");
-    var hVi = makeHeading(7);
-    expect(hVi).toContain("7");
-    expect(hVi).toContain("Ngân sách");
-    expect(hVi).not.toContain("预算");
+    renderMonthTable(7);
+
+    // Assert the actual DOM content produced by the renderer
+    // The budget heading is: <span id="budget-label-month">7</span> Ngân sách
+    var budgetLabel = document.getElementById("budget-label-month");
+    expect(budgetLabel).not.toBeNull();
+    expect(budgetLabel.textContent).toBe("7");
+    // The month span is followed by a text node with the budget label
+    expect(container.innerHTML).toContain("Ngân sách");
+    expect(container.innerHTML).not.toContain("预算");
 
     // Switch to zh-CN and re-render
     i18nModule.setLocale("zh-CN");
-    var hZh = makeHeading(7);
-    expect(hZh).toContain("7");
-    expect(hZh).toContain("预算");
-    expect(hZh).not.toContain("Ngân sách");
+    renderMonthTable(7);
+    expect(container.innerHTML).toContain("7");
+    expect(container.innerHTML).toContain("预算");
+    expect(container.innerHTML).not.toContain("Ngân sách");
 
     // Switch back to vi and verify
     i18nModule.setLocale("vi");
-    var hVi2 = makeHeading(7);
-    expect(hVi2).toContain("Ngân sách");
+    renderMonthTable(7);
+    expect(container.innerHTML).toContain("Ngân sách");
   });
 });
