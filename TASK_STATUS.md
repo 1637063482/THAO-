@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | UXS-001 |
 | Title | Define UI, savings, and deposit architecture boundary |
-| State | PLANNED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-001-ui-savings-adr |
 | Base SHA | 0103f0884a1062ae176d43143327edad8d2f60cc |
-| Implementation Head | pending |
+| Implementation Head | 10194eddc1522aec49c07d9c2389c3dad97a31cf |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-001.md` |
 | Latest Review | pending |
