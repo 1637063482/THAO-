@@ -160,7 +160,7 @@ T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度�
 
 - Task ID: UXS-002
 - 目标: 所有当前可达静态/动态用户文案由字典提供，默认越南语，可切换简体中文，不提供英语入口。
-- 修改文件: `src/js/i18n.js`（新建）、`src/locales/vi.js`（新建）、`src/locales/zh-CN.js`（新建）、`index.html`、`src/js/auth.js`、`src/js/budget.js`、`src/js/charts.js`、`src/js/config.js`、`src/js/fireworks.js`（仅新增越南语弹幕）、`src/js/main.js`、`src/js/quick-add.js`、`src/js/render.js`、`src/js/sync.js`、`tests/unit/i18n.test.js`（新建）、`docs/review-evidence/UXS-002.md`。
+- 修改文件: `src/js/i18n.js`（新建）、`src/locales/vi.js`（新建）、`src/locales/zh-CN.js`（新建）、`index.html`、`src/js/auth.js`、`src/js/budget.js`、`src/js/charts.js`、`src/js/config.js`、`src/js/fireworks.js`（仅新增越南语弹幕）、`src/js/main.js`、`src/js/quick-add.js`、`src/js/render.js`、`src/js/sync.js`、`tests/unit/i18n.test.js`（新建）、`tests/unit/legacy-streak.test.js`（仅语言兼容性正则）、`tests/unit/local-date.test.js`（仅语言兼容性断言）、`tests/unit/currency-view.test.js`（仅预期 toast 文案适配）、`docs/review-evidence/UXS-002.md`。
 - 涉及模块: UI 文案、locale persistence、HTML language metadata、烟花弹幕。
 - 详细步骤:
   1. RED 覆盖默认 locale、缺键回退、插值、`document.lang`、切换持久化和切换前后 `appState/pendingUpdates` 深度相等。

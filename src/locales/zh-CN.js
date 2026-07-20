@@ -143,7 +143,8 @@ export default {
   unsaved_warning: "数据尚未同步，确定离开吗？",
 
   // Budget / table headers
-  monthly_budget: "{month}月预算",
+  total: "合计",
+  budget: "预算",
   used: "已用",
   remaining_days: "剩{days}天",
   daily_available: "日均可用 {amount}",

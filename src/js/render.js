@@ -91,7 +91,7 @@ export function renderMonthTable(monthId) {
     + '<div class="budget-inline-bar">'
     + '<div class="budget-inline-left">'
     + '<span data-icon="target" data-icon-class="w-4 h-4 text-amber-500"></span>'
-    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span>' + t("monthly_budget", { month: monthId }) + '</span>'
+    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span></span>'
     + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" onchange="window.saveBudgetAndCalculate()">'
     + '<span class="text-xs text-slate-400 font-medium shrink-0" id="qa-currency-badge">VND</span>'
     + '</div>'
@@ -117,7 +117,7 @@ export function renderMonthTable(monthId) {
     + '</tr></thead>'
     + '<tbody>' + rowsHtml + '</tbody>'
     + '<tfoot><tr>'
-    + '<td class="sticky-col">合计</td>'
+    + '<td class="sticky-col">' + t("total") + '</td>'
     + sumCellsHtml
     + '<td class="total-col"><span id="sum-' + monthId + '-exp" style="color:#10b981;font-weight:700;">0</span></td>'
     + '<td class="income-col"><span id="sum-' + monthId + '-inc" style="color:#ef4444;font-weight:700;">0</span></td>'

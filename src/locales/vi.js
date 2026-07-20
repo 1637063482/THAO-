@@ -143,7 +143,8 @@ export default {
   unsaved_warning: "Dữ liệu chưa được đồng bộ, bạn có chắc muốn rời đi?",
 
   // Budget / table headers
-  monthly_budget: "Ngân sách T{month}",
+  total: "Tổng",
+  budget: "Ngân sách",
   used: "Đã dùng",
   remaining_days: "còn {days} ngày",
   daily_available: "TB mỗi ngày {amount}",
