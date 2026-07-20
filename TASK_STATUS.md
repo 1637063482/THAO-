@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | UXS-002 |
 | Title | Establish Vietnamese-first complete i18n baseline |
-| State | PLANNED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
-| Implementation Head | pending |
+| Implementation Head | 942006bd6526e7883b138b108564a65377ad874f |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
 | Latest Review | pending |
@@ -19,9 +19,7 @@
 
 ## Reviewer Attention
 
-- UXS-002 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
-- UXS-002 establishes Vietnamese-first i18n: all reachable user-facing strings from message keys, default vi, switchable zh-CN, no English.
-- Prohibited: modifying entries/settings schema, amount/date rules, Firebase paths, real data, or design refactoring.
+- UXS-002 R1 is ready for Terra review. The Coder has implemented Vietnamese-first i18n with 16 unit tests and replaced all reachable hardcoded UI strings.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
