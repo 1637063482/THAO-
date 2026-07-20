@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | T020 |
 | Title | Make FX display adapter reliable |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/t020-fx-display-reliability |
 | Base SHA | 27776b994d558faa2e3ccd13ac91e443932f6000 |
 | Implementation Head | b986c24fcd509916c7e30d30887d1d4cf10b728c |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/T020.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/T020-R1.md` - CHANGES_REQUESTED |
 | Next Task | T021 |
 
 ## Reviewer Attention
 
-- T020 must keep VND accounting usable when FX is slow, invalid, or unavailable.
-- Verify FX failures do not write zero rates or mutate historical/pending VND entries.
-- Verify no Firebase deployment, Rules/Auth change, production data operation, transaction migration, or T021 work.
+- Automatic FX unavailability must not leave the default/unverified rate usable for CNY conversion.
+- Reject malformed cache timestamps rather than reporting them as fresh cache values.
+- Add production-path coverage for unavailable automatic FX, valid/stale cache and malformed cache timestamps; preserve no-deploy/no-T021 boundaries.
 
 ## History
 
