@@ -1,9 +1,9 @@
 # MyExpenseApp UI、储蓄目标与存款功能规划
 
-> 文档状态：产品与技术规划草案，等待纳入主施工计划  
-> 形成日期：2026-07-20  
-> 适用产品：通过 Cloudflare 部署、使用网址访问并可安装的 PWA 个人记账应用  
-> 当前执行隔离：本文件在 `plan/ui-savings-redesign` 独立 planning 分支形成，不改变正在实施的 T018 状态、实现范围或工作树。
+> 文档状态：已纳入 `TASK_PLAN.md` 的正式产品与技术基线
+> 形成日期：2026-07-20
+> 适用产品：通过 Cloudflare 部署、使用网址访问并可安装的 PWA 个人记账应用
+> 架构基线：T019/ADR-003 已选择继续使用 legacy 年度矩阵；UXS 不引入 Account/Transaction 迁移。
 
 ## 1. 产品背景与目标
 
@@ -439,59 +439,57 @@ depositId + maturesOn + reminderStage
 - 只显示当前最紧迫状态，例如 D0 或 OVERDUE；
 - 已逾期记录持续出现在储蓄页醒目区域，直到赎回、续存或明确处理。
 
-## 11. 数据模型草案
+## 11. 数据模型基线
 
-正式路径由 T019 ADR 与实际 Rules 约束决定。推荐逻辑模型：
+T019/ADR-003 已确认 legacy 年度矩阵继续作为日常账务事实源。UXS 采用最小增量模型，不重启 T011/T012，也不建立通用账户、交易或多币账体系。
 
 ```text
-savingsGoals/{periodKey}
-  kind: MONTHLY | YEARLY
-  periodKey: YYYY-MM | YYYY
-  targetVnd: integer
-  version
-  createdAt
-  updatedAt
-  updatedBy
+artifacts/{projectId}/public/data/ledgers/shared_ledger_<year>
+  balances
+  entries
+  settings
+    savings_goal_month_1 ... savings_goal_month_12: VND integer
+    savings_goal_annual: VND integer
 
-deposits/{depositId}
-  institutionName
-  productName
-  principalVnd
-  annualRateScaled
-  rateScale
-  openedOn
-  maturesOn
-  calculatedInterestVnd
-  expectedInterestVnd
-  actualInterestVnd
-  reminderDays[]
-  remindersEnabled
-  status
-  redeemedOn
-  rolledOverToDepositId
-  note
-  version
-  createdAt
-  updatedAt
-  createdBy
-  updatedBy
-  deletedAt
-
-depositReminderAcknowledgements/{ackId}
-  depositId
-  maturesOn
-  stage
-  acknowledgedAt
-  acknowledgedBy
+artifacts/{projectId}/public/data/ledgers/shared_ledger_savings
+  schemaVersion
+  depositsById
+    <depositId>
+      institutionName
+      productName
+      principalVnd
+      annualRatePpm
+      openedOn
+      maturesOn
+      expectedInterestVnd
+      actualInterestVnd
+      reminderDays[]
+      remindersEnabled
+      status
+      redeemedOn
+      rolledOverToDepositId
+      note
+      version
+      createdAt
+      updatedAt
+      createdBy
+      updatedBy
+      archivedAt
+  acknowledgementsByKey
+    <depositId|maturesOn|stage>
+      acknowledgedAt
+      acknowledgedBy
 ```
 
 约束：
 
 - 目标和存款使用 VND 整数；
-- rate 采用 scaled integer；
+- rate 采用 ppm scaled integer，禁止持久化浮点利率；
 - 日期为 `YYYY-MM-DD` 越南业务日，审计时间使用服务端 timestamp；
 - UI 不直接拼 Firestore 路径；
-- 不把存款数组塞入不断增长的年度 legacy 大文档；
+- 储蓄目标留在对应年度文档的 `settings`，不建立第二套年度目标集合；
+- 存款及 acknowledgement 放在固定的 `shared_ledger_savings` 文档，不塞入年度文档，也不改变 legacy `entries` schema；
+- 手机“逐日账本”只从 legacy 日/分类单元格派生，不得伪装成不存在的逐笔 transaction；
 - 不引入 householdId 或成员系统；
 - 第二账号真实写权限必须遵循 T017 已核对的线上契约。
 
@@ -598,9 +596,9 @@ depositReminderAcknowledgements/{ackId}
 - 触控目标和焦点状态可见；
 - reduced motion 下无强制长动画。
 
-## 16. 候选施工任务
+## 16. 正式施工任务摘要
 
-以下任务尚未激活到 `TASK_STATUS.md`。必须等待当前主线 Task 完成，并由 T019 ADR 确认数据模型后再纳入正式 `TASK_PLAN.md`。每个任务保持单一目标、独立 commit、预计不超过半天。
+UXS-001～UXS-015 已纳入 `TASK_PLAN.md`。本节仅保留产品摘要；文件范围、RED/GREEN、视觉矩阵、evidence 和禁止项以 `TASK_PLAN.md` 为唯一施工依据。每个任务保持单一目标、独立 commit、预计不超过半天。
 
 ### UXS-001：固化 UI 与储蓄产品 ADR
 
@@ -658,13 +656,13 @@ depositReminderAcknowledgements/{ackId}
 - 完成标准：月/年独立，VND 整数，负结余和 0 目标清晰。
 - 测试：所有第 15.1 节目标边界。
 
-### UXS-008：储蓄目标 repository 与 Rules
+### UXS-008：储蓄目标年度 settings 持久化
 
-- 目标：两个账号按实际权限安全同步目标。
-- 修改文件：repository、converter、runtime schema、Rules、emulator tests。
-- 禁止修改：线上 Rules、真实数据、角色 UI。
-- 完成标准：round-trip、版本冲突和 deny 对称测试通过。
-- 测试：unit/integration/rules/full gates。
+- 目标：复用当前年度文档 `settings` 安全同步目标。
+- 修改文件：settings adapter、runtime import schema、同步测试。
+- 禁止修改：Rules、线上配置、真实数据、角色 UI。
+- 完成标准：12 个按月 key 和 1 个年度 key round-trip；切年隔离；旧文档兼容。
+- 测试：unit/integration/full gates。
 
 ### UXS-009：储蓄目标 UI
 
@@ -725,8 +723,7 @@ depositReminderAcknowledgements/{ackId}
 ## 17. 推荐依赖顺序
 
 ```text
-完成当前 T018
-  -> T019 数据模型 ADR
+T001-T021 全部完成
   -> UXS-001
   -> UXS-002
   -> UXS-003
@@ -744,7 +741,7 @@ depositReminderAcknowledgements/{ackId}
 
 说明：
 
-- UI Shell 可先建立，但储蓄与存款持久化必须等待 T019 确认目标命名空间。
+- T019/ADR-003 已完成；任何 UXS Task 都不得借机接回 T011/T012。
 - UXS-007 和 UXS-010 是纯领域任务，可在不接 Firebase/UI 的前提下独立审查。
 - UXS-013 不依赖外部服务，只依赖存款读取、越南 clock 和 PWA 生命周期。
 - 每个任务遵循 `AGENT_WORKFLOW.md`：Coder evidence → Terra review → APPROVED 后进入下一任务。

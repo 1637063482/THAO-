@@ -8,7 +8,7 @@
 
 | 角色 | 默认模型 | 默认思考强度 | 提升条件 |
 |---|---|---|---|
-| Coder | GPT-5.5 | High | 跨时区、同步、权限、迁移或多模块状态机使用 Extra High |
+| Coder | DeepSeek V4 Flash | 使用产品提供的最高可用思考档；若没有思考档则按默认 | 不得在 evidence 中虚构不存在的推理档位；复杂任务依靠更细 Task 和门禁控制 |
 | Reviewer | GPT-5.6 Terra | High | P0、跨年/并发/安全或第二轮仍有争议时使用 Extra High |
 
 使用 Standard speed。每个 Task 使用独立或清理过的线程；无论线程是否延续，都必须重新读取仓库状态。
@@ -103,6 +103,14 @@ Coder 每次启动只执行以下算法：
 9. 提交代码和 evidence；更新 `TASK_STATUS.md` 为 `READY_FOR_REVIEW`，记录精确 head SHA 和 review round，然后提交状态更新。
 10. 停止。不得自动进入下一 Task。
 
+DeepSeek V4 Flash 额外约束：
+
+- 不得重新规划整个 UI 或把多个 UXS Task 合并实施；
+- 不得因为模型认为“顺手更合理”而修改当前 Task 之外的文件；
+- 视觉 Task 必须保存规定尺寸的合成数据截图或明确记录无法截图的环境限制，不能使用真实账务数据；
+- 若 `TASK_PLAN.md`、`UI_SAVINGS_REDESIGN_PLAN.md` 与当前代码存在实质冲突，先写 evidence 的 `Plan conflict` 并停止，不得自行选择解释；
+- 完成摘要只写入 evidence 和状态文件，聊天输出不是交接依据。
+
 返修时必须保留旧 review 文件，新增 evidence 或在原 evidence 的 Rework 小节追加证据；不得改写 Reviewer 的历史结论。
 
 ## 5. Terra 审查循环
@@ -141,19 +149,19 @@ Terra 每次启动只执行以下算法：
 
 ## 7. 分支与提交
 
-- 一个 Task 一个分支：`task/t015-vietnam-clock`。
+- 一个 Task 一个分支，例如 `task/uxs-004-mobile-dashboard`。
 - 一个 Task 可以有多个实现/返修 commit，但不得夹带其他 Task。
 - Reviewer 的审查记录 commit 位于同一 Task 分支，作为下一轮的正式输入。
 - `CHANGES_REQUESTED` 后 Coder 在同一分支追加修复，不改写历史、不 force push。
 - `APPROVED` 后才合并或以该 approved head 作为下一 Task 基线。
-- 当前 T013/T014 位于共用修复分支 `fix/streak-t013-t014`；Terra 批准后才能合并。从 T015 起每个 Task 使用独立分支。
+- UXS-001～UXS-015 每个 Task 必须使用独立分支；不得把 UI、储蓄目标和存款功能堆进一个长分支。
 
 ## 8. 固定启动语句
 
 ### 启动 Coder
 
 ```text
-你是本仓库的 GPT-5.5 Coder。不要依赖聊天历史，也不要等待我复制 Reviewer 结论。请从工作区实际文件开始，完整遵循 AGENTS.md 和 AGENT_WORKFLOW.md 的 Coder 状态机，读取 TASK_STATUS.md 决定是开始下一 Task、执行当前 Task、处理 CHANGES_REQUESTED，还是停止等待审查。一次只处理一个 Task；完成后提交代码、evidence 和状态，停在 READY_FOR_REVIEW，不得自动进入下一 Task。
+你是本仓库的 DeepSeek V4 Flash Coder。不要依赖聊天历史，也不要等待我复制 Reviewer 结论。请从工作区实际文件开始，完整遵循 AGENTS.md 和 AGENT_WORKFLOW.md 的 Coder 状态机，读取 TASK_STATUS.md 决定是开始下一 Task、执行当前 Task、处理 CHANGES_REQUESTED，还是停止等待审查。严格按 TASK_PLAN.md 当前 Task 的精确文件、步骤、禁止修改和测试要求施工，不得合并 Task 或自行扩展范围。完成后提交代码、evidence 和状态，停在 READY_FOR_REVIEW，不得自动进入下一 Task。
 ```
 
 ### 启动 Terra
