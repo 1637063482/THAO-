@@ -173,6 +173,33 @@ describe("i18n system", () => {
   });
 });
 
+describe("applyI18n()", () => {
+  beforeEach(() => {
+    vi.resetModules();
+    localStorage.clear();
+    document.documentElement.lang = "";
+  });
+
+  it("sets textContent on leaf elements and title on elements with children", async () => {
+    document.body.innerHTML = [
+      '<span id="leaf-el" data-i18n="app_name"></span>',
+      '<button id="parent-el" data-i18n="login"><span data-icon="user"></span></button>',
+    ].join("");
+    const i18n = await import("../../src/js/i18n.js");
+
+    i18n.applyI18n();
+
+    // Leaf element (no children) gets textContent
+    var leaf = document.getElementById("leaf-el");
+    expect(leaf.textContent).toBe("Sổ thu chi của Thao");
+
+    // Element with children gets title, preserving child icon
+    var parent = document.getElementById("parent-el");
+    expect(parent.title).toBe("Đăng nhập");
+    expect(parent.children.length).toBe(1);
+    expect(parent.querySelector("[data-icon]")).not.toBeNull();
+  });
+});
 
 describe("real locale dictionaries", () => {
   it("vi and zh-CN have identical key sets with non-empty values", async () => {

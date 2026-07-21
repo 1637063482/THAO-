@@ -72,7 +72,14 @@ export function applyI18n() {
     if (paramsRaw) {
       try { params = JSON.parse(paramsRaw); } catch (_) { /* ignore */ }
     }
-    el.textContent = t(key, params || undefined);
+    // If the element has child elements (e.g. icon <span> inside a button),
+    // setting textContent would destroy them. Instead set the title attribute
+    // so the tooltip is localized while preserving the icon children.
+    if (el.children.length > 0) {
+      el.title = t(key, params || undefined);
+    } else {
+      el.textContent = t(key, params || undefined);
+    }
   });
 }
 
