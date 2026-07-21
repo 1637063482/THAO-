@@ -11,7 +11,7 @@
 | State | READY_FOR_REVIEW |
 | Branch | task/uxs-002-i18n |
 | Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
-| Implementation Head | 8c4f79f41d03d81f6657156cad2cac5116ad7f6b |
+| Implementation Head | 784745f80c909f8f419a1ebc7f5ce3a6178ee1a8 |
 | Review Round | 6 |
 | Evidence | `docs/review-evidence/UXS-002.md` |
 | Latest Review | `docs/task-reviews/UXS-002-R5.md` - CHANGES_REQUESTED |
