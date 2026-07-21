@@ -92,8 +92,8 @@
                     <span class="text-xs text-slate-500 font-medium" data-i18n="fx_label"></span>
                     <span id="auto-rate-display" class="text-xs font-bold text-amber-600" data-i18n="fx_loading"></span>
                     <div class="flex items-center gap-1 ml-2">
-                        <button onclick="window.changeFxMode('auto')" class="text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-semibold" data-i18n="auto"></button>
-                        <button onclick="window.changeFxMode('manual')" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-i18n="manual"></button>
+                        <button id="btn-fx-auto" onclick="window.changeFxMode('auto')" class="text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-semibold" data-i18n="auto"></button>
+                        <button id="btn-fx-manual" onclick="window.changeFxMode('manual')" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-i18n="manual"></button>
                         <input type="number" id="manual-rate-input" class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1" placeholder="3500" disabled>
                         <button id="btn-apply-rate" onclick="window.applyManualRate()" class="hidden text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600" data-i18n="apply"></button>
                     </div>
