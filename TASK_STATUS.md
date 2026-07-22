@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-011 |
 | Title | Implement validated fixed-document deposit storage |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/uxs-011-deposit-storage |
 | Base SHA | 06b235f |
 | Implementation Head | 14b615a90a7f0ce012ad8472c114c2e6ae359fb0 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-011.md` |
-| Latest Review | - |
+| Latest Review | `docs/task-reviews/UXS-011-R1.md` - APPROVED |
 | Next Task | UXS-012 |
 
 ## Reviewer Attention
 
-- Review `06b235f..14b615a90a7f0ce012ad8472c114c2e6ae359fb0`.
-- Confirm runtime validation, one-key Rules enforcement, conflict handling, backup exclusion of `lastMutation`, and unchanged legacy-ledger behavior.
+- UXS-011 is APPROVED at `14b615a90a7f0ce012ad8472c114c2e6ae359fb0`.
+- Next Task is UXS-012.
 
 ## History
 
