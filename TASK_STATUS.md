@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-010 |
 | Title | Implement deposit and interest domain model |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-010-deposit-domain |
 | Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
-| Implementation Head | bb5ab6d80f1344fb19af63841b09c847af5ebcd3 |
-| Review Round | 1 |
+| Implementation Head | d97eb2c94440e3749f60d423961e52f0e1bd5137 |
+| Review Round | 2 |
 | Evidence | `docs/review-evidence/UXS-010.md` |
 | Latest Review | `docs/task-reviews/UXS-010-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-011 |
