@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-010 |
 | Title | Implement deposit and interest domain model |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/uxs-010-deposit-domain |
 | Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
 | Implementation Head | df5d0e62fd673f29eb80c756526fecd1b7413e35 |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-010.md` |
-| Latest Review | `docs/task-reviews/UXS-010-R2.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-010-R3.md` - APPROVED |
 | Next Task | UXS-011 |
 
 ## Reviewer Attention
 
-- R3 repairs all three R2 ADR-004 blockers and the final maturity-summary issue at implementation head `df5d0e62fd673f29eb80c756526fecd1b7413e35`.
-- Review persisted/derived status separation, reminder-window boundaries, eligible aggregates, pending matured principal, fixed-365 calculation and runtime status validation.
+- UXS-010 R3 is APPROVED at implementation head `df5d0e62fd673f29eb80c756526fecd1b7413e35`.
+- Before UXS-011, initialize the separately requested login-loading Bug Task; do not mix it into deposit persistence.
 
 ## History
 
