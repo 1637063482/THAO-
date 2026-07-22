@@ -6,21 +6,20 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-008 |
-| Title | Persist annual savings goal settings |
-| State | APPROVED |
-| Branch | task/uxs-008-savings-goal-store |
-| Base SHA | be23e87b4cf2b4afe84b808fa5087a4cac76e25b |
-| Implementation Head | 0467d102c6d8bac509f4e3ae10f49094d0562cee |
+| Task ID | UXS-009 |
+| Title | Implement savings goal UI |
+| State | READY_FOR_REVIEW |
+| Branch | task/uxs-009-savings-ui |
+| Base SHA | 0467d102c6d8bac509f4e3ae10f49094d0562cee |
+| Implementation Head | 945e19dc50edbab5035c9e0d0561bce9d325d0ab |
 | Review Round | 1 |
-| Evidence | `docs/review-evidence/UXS-008.md` |
-| Latest Review | `docs/task-reviews/UXS-008-R1.md` - APPROVED |
-| Next Task | UXS-009 |
+| Evidence | `docs/review-evidence/UXS-009.md` |
+| Latest Review | pending |
+| Next Task | UXS-010 |
 
 ## Reviewer Attention
 
-- UXS-008 R1 is APPROVED at implementation head `0467d102c6d8bac509f4e3ae10f49094d0562cee`.
-- The next Coder may initialize UXS-009 in a new Task branch; do not continue UXS-008 implementation.
+- UXS-009 implementation is complete; awaiting independent review.
 
 ## History
 
