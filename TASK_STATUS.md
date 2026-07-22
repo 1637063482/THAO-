@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-006 |
 | Title | Implement derived daily ledger view |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-006-day-ledger |
 | Base SHA | 118278304078429a5874e1effc9a8359659226d5 |
-| Implementation Head | e383903c33b147ca7d75342f88a90ca1a2fea112 |
-| Review Round | 2 |
+| Implementation Head | d68e8cd |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-006.md` |
 | Latest Review | `docs/task-reviews/UXS-006-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-007 |
