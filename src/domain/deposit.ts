@@ -92,7 +92,7 @@ export function summarizeDeposits(deposits: readonly Deposit[], asOfDate: string
         pendingMatured += BigInt(deposit.principalVnd);
       } else {
         principal += BigInt(deposit.principalVnd);
-        expected += BigInt(expectedInterestVnd(deposit, asOfDate));
+        expected += BigInt(expectedInterestVnd(deposit));
       }
     }
     if (deposit.actualInterestVnd !== null) actual += BigInt(deposit.actualInterestVnd);

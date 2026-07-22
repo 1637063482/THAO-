@@ -45,6 +45,12 @@ describe("deposit domain", () => {
     expect(summarizeDeposits([d], "2026-01-01").expectedMaturityTotalVnd).toBe(0);
     expect(summarizeDeposits([d], "2026-01-01").pendingMaturedPrincipalVnd).toBe(1_000_000);
   });
+  it("uses full-term expected interest in summaries before and during the term", () => {
+    const d = deposit();
+    expect(summarizeDeposits([d], "2023-12-31").expectedInterestVnd).toBe(50_137);
+    expect(summarizeDeposits([d], "2024-06-01").expectedInterestVnd).toBe(50_137);
+    expect(summarizeDeposits([d], "2024-06-01").expectedMaturityTotalVnd).toBe(1_050_137);
+  });
   it("rejects invalid ranges, rates and unsafe values", () => {
     expect(() => deposit({ maturityDate: "2023-12-31" })).toThrowError(/precede/);
     expect(() => deposit({ annualRatePpm: 1_000_001 })).toThrowError(/100%/);
