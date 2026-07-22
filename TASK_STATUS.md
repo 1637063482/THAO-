@@ -6,20 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-003 |
-| Title | Establish Apple Warm Design Tokens and responsive App Shell |
-| State | CHANGES_REQUESTED |
-| Branch | task/uxs-003-apple-warm-tokens |
-| Base SHA | a9fc9fcf67e04b15f2ffc99347896f55dbc55bed |
-| Implementation Head | 5db02b7fbde137f4cb653a7e6b2961fd4e99c192 |
-| Review Round | 3 |
-| Evidence | `docs/review-evidence/UXS-003.md` |
-| Latest Review | `docs/task-reviews/UXS-003-R3.md` - CHANGES_REQUESTED |
-| Next Task | UXS-004 |
+| Task ID | UXS-004 |
+| Title | Redesign dashboard spending awareness zone |
+| State | PLANNED |
+| Branch | task/uxs-004-dashboard |
+| Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/UXS-004.md` |
+| Latest Review | pending |
+| Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-003 R3 review is CHANGES_REQUESTED. R2 active-state repair and six viewport screenshots are verified, but R3 adds unapproved `puppeteer` dependency/lock-file churn and duplicate `scripts/capture-screenshots.{cjs,mjs}` outside UXS-003's explicit allowed file set. Remove only those scope-expanding files/dependency; retain the required evidence images. Do not start UXS-004.
+- UXS-004 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
+- UXS-004 redesigns the home page: hero (budget remaining), spending breakdown, categories, streak, recent entries. ViewModel reads from existing balances/entries/settings without duplicating business rules.
+- Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
@@ -27,6 +29,7 @@
 
 | Task | Final State | Approved Head | Review |
 |---|---|---|---|
+| UXS-003 | APPROVED | `c252742` | `docs/task-reviews/UXS-003-R4.md` |
 | UXS-002 | APPROVED | `a9fc9fc` | `docs/task-reviews/UXS-002-R7.md` |
 | UXS-001 | APPROVED | `460d337` | `docs/task-reviews/UXS-001-R4.md` |
 | T021 | APPROVED | `311dd41` | `docs/task-reviews/T021-R1.md` |
