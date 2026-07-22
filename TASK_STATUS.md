@@ -11,7 +11,7 @@
 | State | READY_FOR_REVIEW |
 | Branch | task/uxs-011-deposit-storage |
 | Base SHA | 06b235f |
-| Implementation Head | bafaac4612b00e2648823a808b3960386ae64869 |
+| Implementation Head | 14b615a90a7f0ce012ad8472c114c2e6ae359fb0 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-011.md` |
 | Latest Review | - |
@@ -19,7 +19,7 @@
 
 ## Reviewer Attention
 
-- Review `06b235f..bafaac4612b00e2648823a808b3960386ae64869`.
+- Review `06b235f..14b615a90a7f0ce012ad8472c114c2e6ae359fb0`.
 - Confirm runtime validation, one-key Rules enforcement, conflict handling, backup exclusion of `lastMutation`, and unchanged legacy-ledger behavior.
 
 ## History
