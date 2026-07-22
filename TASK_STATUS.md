@@ -8,18 +8,19 @@
 |---|---|
 | Task ID | UXS-010 |
 | Title | Implement deposit and interest domain model |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-010-deposit-domain |
 | Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
 | Implementation Head | bb5ab6d80f1344fb19af63841b09c847af5ebcd3 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-010.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-010-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-011 |
 
 ## Reviewer Attention
 
-- UXS-010 implementation is complete; awaiting independent review.
+- UXS-010 R1 requests corrected derived status boundaries and stable expected-maturity interest semantics.
+- Coder must read `docs/task-reviews/UXS-010-R1.md`, repair only its blocking items, then submit a new READY_FOR_REVIEW head.
 
 ## History
 
