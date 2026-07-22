@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
 | Implementation Head | 30aedafa9faa7b0aa0b1bb5d6aa9adaafa936aff |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-004-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-004 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
-- UXS-004 redesigns the home page: hero (budget remaining), spending breakdown, categories, streak, recent entries. ViewModel reads from existing balances/entries/settings without duplicating business rules.
+- UXS-004 R1 is CHANGES_REQUESTED. The dashboard is not wired into `main.js`/`index.html`, today spending incorrectly includes income, and over-budget remaining is clamped to zero. Required six-size screenshots are absent; the ViewModel also duplicates legacy budget/entry derivations and locale-file scope needs resolution.
+- Do not start UXS-005. Coder must read `docs/task-reviews/UXS-004-R1.md` and address only its minimum corrections.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
