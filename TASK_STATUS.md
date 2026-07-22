@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-010 |
 | Title | Implement deposit and interest domain model |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-010-deposit-domain |
 | Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
-| Implementation Head | d97eb2c94440e3749f60d423961e52f0e1bd5137 |
-| Review Round | 2 |
+| Implementation Head | c208aa15b8e0f92fd330540a55145e847e7aab84 |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-010.md` |
 | Latest Review | `docs/task-reviews/UXS-010-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-011 |
 
 ## Reviewer Attention
 
-- R2 confirms the two R1 code changes but finds three accepted ADR-004 contract violations: persisted/derived status separation, aggregate population, and fixed-365 interest basis.
-- Coder must read `docs/task-reviews/UXS-010-R2.md`, repair only its blocking items, then submit a new READY_FOR_REVIEW head.
+- R3 repairs all three R2 ADR-004 blockers at implementation head `c208aa15b8e0f92fd330540a55145e847e7aab84`.
+- Review persisted/derived status separation, reminder-window boundaries, eligible aggregates, pending matured principal, fixed-365 calculation and runtime status validation.
 
 ## History
 
