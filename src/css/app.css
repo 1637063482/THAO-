@@ -29,6 +29,108 @@
   --color-surface: #1e293b;
 }
 
+/* ===== Expanded Design Tokens ===== */
+:root {
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --touch-target: 44px;
+  --focus-ring: 0 0 0 2px rgba(217, 119, 6, 0.4);
+  --transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ===== Focus & Reduced Motion ===== */
+*:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-btn);
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ===== Safe Area Support ===== */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  #bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+@supports (padding-top: env(safe-area-inset-top)) {
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+/* ===== Sidebar (>=768px) ===== */
+#sidebar {
+  display: none;
+}
+@media (min-width: 768px) {
+  #sidebar {
+    display: flex;
+    flex-direction: column;
+    width: 16rem;
+    min-height: calc(100vh - 4rem);
+    position: sticky;
+    top: 4rem;
+    align-self: start;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-md) var(--spacing-sm);
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-btn);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: #64748b;
+    transition: all var(--transition-base);
+    min-height: var(--touch-target);
+  }
+  .sidebar-item:hover {
+    background: rgba(217, 119, 6, 0.08);
+    color: #d97706;
+  }
+  .sidebar-item.active {
+    background: rgba(217, 119, 6, 0.12);
+    color: #d97706;
+    font-weight: 600;
+  }
+  .dark .sidebar-item {
+    color: #94a3b8;
+  }
+  .dark .sidebar-item:hover {
+    background: rgba(217, 119, 6, 0.15);
+    color: #fcd34d;
+  }
+  .dark .sidebar-item.active {
+    background: rgba(217, 119, 6, 0.2);
+    color: #fcd34d;
+  }
+  /* Ensure sidebar and bottom nav are never both visible */
+  #bottom-nav {
+    display: none !important;
+  }
+}
+
 /* ===== Scrollbar ===== */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

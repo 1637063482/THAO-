@@ -136,6 +136,30 @@
         </div>
     </nav>
 
+    <!-- Sidebar (desktop) -->
+    <aside id="sidebar">
+        <button class="sidebar-item active" data-nav="overview" onclick="window.switchMobileView('overview')">
+            <span data-icon="home" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="overview"></span>
+        </button>
+        <button class="sidebar-item" data-nav="add" onclick="window.openQuickAdd()">
+            <span data-icon="plus" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="quick_add"></span>
+        </button>
+        <button class="sidebar-item" data-nav="stats" onclick="window.switchMobileView('stats')">
+            <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="stats"></span>
+        </button>
+        <button class="sidebar-item" data-nav="import" onclick="document.getElementById('import-file')?.click()">
+            <span data-icon="download" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="import_label"></span>
+        </button>
+        <button class="sidebar-item" data-nav="export" onclick="window.exportToCSV()">
+            <span data-icon="download" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="export_csv"></span>
+        </button>
+    </aside>
+
     <main class="max-w-[2200px] mx-auto px-4 md:px-6 py-6 pb-24 sm:pb-6">
         <div class="flex flex-col xl:flex-row gap-6">
             <!-- Left column: main content -->
@@ -296,16 +320,16 @@
     </div>
 
     <!-- Bottom Navigation (Mobile) -->
-    <nav id="bottom-nav" class="sm:hidden">
-        <button class="bottom-nav-item active" data-nav="overview" onclick="window.switchMobileView('overview')">
+    <nav id="bottom-nav" class="sm:hidden" role="navigation" aria-label="Main navigation">
+        <button class="bottom-nav-item active" data-nav="overview" onclick="window.switchMobileView('overview')" tabindex="0">
             <span data-icon="home" data-icon-class="w-5 h-5"></span>
             <span data-i18n="overview"></span>
         </button>
-        <button class="bottom-nav-item" data-nav="add" onclick="window.openQuickAdd()">
+        <button class="bottom-nav-item" data-nav="add" onclick="window.openQuickAdd()" tabindex="0">
             <span data-icon="plus" data-icon-class="w-5 h-5"></span>
             <span data-i18n="quick_add"></span>
         </button>
-        <button class="bottom-nav-item" data-nav="stats" onclick="window.switchMobileView('stats')">
+        <button class="bottom-nav-item" data-nav="stats" onclick="window.switchMobileView('stats')" tabindex="0">
             <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>
             <span data-i18n="stats"></span>
         </button>

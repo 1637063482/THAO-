@@ -13,6 +13,7 @@ import { openQuickAdd, closeQuickAdd, submitQuickAdd } from "./quick-add.js";
 import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
+import { initNavigation } from "./navigation.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -435,6 +436,7 @@ function exportToCSV() {
 
 // Init icons on first load
 setTimeout(initIcons, 50);
+setTimeout(initNavigation, 50);
 
 initAuth(
   function(user) {
