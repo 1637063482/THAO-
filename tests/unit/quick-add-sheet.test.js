@@ -48,4 +48,28 @@ describe("quick-add bottom sheet", () => {
     expect(document.getElementById("qa-amount").value).toBe("50000");
     expect(document.getElementById("qa-remark").value).toBe("test note");
   });
+
+  it("ignores a re-entrant duplicate submit while the first save is in flight", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const sync = await import("../../src/js/sync.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.appState.entries = {};
+    stateModule.state.pendingUpdates = { entries: {} };
+    document.getElementById("qa-amount").value = "50000";
+    sync.triggerCloudSave.mockImplementation(() => { quickAdd.submitQuickAdd(); });
+    quickAdd.submitQuickAdd();
+    const key = stateModule.state.activeMonthId + "_1_dining";
+    expect(stateModule.state.appState.entries[key]).toBe("=50000");
+    expect(stateModule.state.pendingUpdates.entries[key]).toBe("=50000");
+  });
+
+  it.each(["1.5", "0", "-1"])("rejects non-positive or fractional VND amount %s", async (amount) => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.currentCurrency = "VND";
+    document.getElementById("qa-amount").value = amount;
+    expect(() => quickAdd.submitQuickAdd()).not.toThrow();
+    expect(stateModule.state.appState.entries[stateModule.state.activeMonthId + "_1_dining"]).toBeUndefined();
+    expect(document.getElementById("qa-amount").value).toBe(amount);
+  });
 });

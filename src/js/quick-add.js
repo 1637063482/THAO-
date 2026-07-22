@@ -9,6 +9,7 @@ import { updateStreakAfterRecord } from "./render.js";
 import { t } from "./i18n.js";
 
 let lastTrigger = null;
+let submitInFlight = false;
 
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
@@ -80,21 +81,31 @@ if (typeof document !== "undefined") {
 }
 
 export function submitQuickAdd() {
+  if (submitInFlight) return;
+  submitInFlight = true;
+  const submitButton = document.querySelector("#quick-add-panel [data-quick-add-submit]");
+  if (submitButton) { submitButton.disabled = true; submitButton.setAttribute("aria-busy", "true"); }
+
   const d = document.getElementById("qa-day")?.value;
   const cat = document.getElementById("qa-cat")?.value;
   const rawAmt = document.getElementById("qa-amount")?.value;
   const remark = document.getElementById("qa-remark")?.value;
 
-  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); return; }
+  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); submitInFlight = false; if (submitButton) submitButton.disabled = false; return; }
 
   let amtVND = rawAmt;
   if (state.currentCurrency === "CNY") {
     const activeRate = getActiveRate();
     if (!isValidCurrencyRate(activeRate)) {
       showToast(t("fx_unavailable"), true);
-      return;
+      submitInFlight = false; if (submitButton) submitButton.disabled = false; return;
     }
     amtVND = convertCnyAmountToVnd(rawAmt, activeRate);
+  }
+  if (!Number.isSafeInteger(Number(amtVND)) || Number(amtVND) <= 0) {
+    showToast(t("enter_valid_amount"), true);
+    submitInFlight = false; if (submitButton) submitButton.disabled = false;
+    return;
   }
 
   const key = state.activeMonthId + "_" + d + "_" + cat;
@@ -123,7 +134,13 @@ export function submitQuickAdd() {
   if (iEl) { iEl.dataset.raw = finalMath; iEl.value = formatDisplay(safeEval(finalMath)); }
 
   calculateAll();
-  triggerCloudSave();
+  try {
+    triggerCloudSave();
+  } catch (error) {
+    submitInFlight = false;
+    if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
+    throw error;
+  }
   showToast(t("record_saved"));
   closeQuickAdd();
   const qaAmt = document.getElementById("qa-amount");
@@ -132,6 +149,7 @@ export function submitQuickAdd() {
   if (qaRemark) qaRemark.value = "";
 
   updateStreakAfterRecord();
+  submitInFlight = false;
 
   setTimeout(() => {
     const el = document.getElementById("row-" + state.activeMonthId + "-" + d);
