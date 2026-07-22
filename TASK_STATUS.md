@@ -6,20 +6,20 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-004 |
-| Title | Redesign dashboard spending awareness zone |
-| State | APPROVED |
-| Branch | task/uxs-004-dashboard |
-| Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
-| Implementation Head | 473e4f631affb1204df5b33527a2d4073dbd61aa |
-| Review Round | 6 |
-| Evidence | `docs/review-evidence/UXS-004.md` |
-| Latest Review | `docs/task-reviews/UXS-004-R6.md` - APPROVED |
-| Next Task | UXS-005 |
+| Task ID | UXS-005 |
+| Title | Implement quick-entry Bottom Sheet |
+| State | PLANNED |
+| Branch | task/uxs-005-quick-add |
+| Base SHA | 473e4f631affb1204df5b33527a2d4073dbd61aa |
+| Implementation Head | pending |
+| Review Round | 0 |
+| Evidence | `docs/review-evidence/UXS-005.md` |
+| Latest Review | pending |
+| Next Task | UXS-006 |
 
 ## Reviewer Attention
 
-- UXS-004 R6 is APPROVED at `473e4f6`. Production-page synthetic screenshots, privacy masking, real refresh-path tests, evidence provenance, and scope are verified. A future Coder run may initialize only the planned next task, UXS-005.
+- UXS-005 is initialized from approved UXS-004 head `473e4f6`; Coder must follow only the UXS-005 file list, RED/GREEN steps, prohibitions, and screenshot requirements.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
