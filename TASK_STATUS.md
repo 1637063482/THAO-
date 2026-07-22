@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-005 |
 | Title | Implement quick-entry Bottom Sheet |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-005-quick-add |
 | Base SHA | 473e4f631affb1204df5b33527a2d4073dbd61aa |
-| Implementation Head | 668cba02c5fc9bcc0d619e80fcbac6cc1eb27f88 |
-| Review Round | 2 |
+| Implementation Head | d31b37212c63fbe6acd9e1a983a73ee1c48220cc |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-005.md` |
 | Latest Review | `docs/task-reviews/UXS-005-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-006 |
