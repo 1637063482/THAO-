@@ -11,7 +11,7 @@
 | State | READY_FOR_REVIEW |
 | Branch | task/uxs-010-deposit-domain |
 | Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
-| Implementation Head | c208aa15b8e0f92fd330540a55145e847e7aab84 |
+| Implementation Head | df5d0e62fd673f29eb80c756526fecd1b7413e35 |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-010.md` |
 | Latest Review | `docs/task-reviews/UXS-010-R2.md` - CHANGES_REQUESTED |
@@ -19,7 +19,7 @@
 
 ## Reviewer Attention
 
-- R3 repairs all three R2 ADR-004 blockers at implementation head `c208aa15b8e0f92fd330540a55145e847e7aab84`.
+- R3 repairs all three R2 ADR-004 blockers and the final maturity-summary issue at implementation head `df5d0e62fd673f29eb80c756526fecd1b7413e35`.
 - Review persisted/derived status separation, reminder-window boundaries, eligible aggregates, pending matured principal, fixed-365 calculation and runtime status validation.
 
 ## History
