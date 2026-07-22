@@ -2,8 +2,8 @@ import { calculateActualSavings, calculateSavingsProgress } from "../domain/savi
 import { readSavingsGoals, writeAnnualSavingsGoal, writeMonthlySavingsGoal } from "./savings-goal-store.js";
 
 const labels = {
-  vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", syncing: "Đang đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" },
-  "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", noGoal: "未设置目标", synced: "已同步", syncing: "正在同步", queued: "等待保存", error: "保存失败" },
+  vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", confirmClear: "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", syncing: "Đang đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" },
+  "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", confirmClear: "确定要清空储蓄目标吗？", noGoal: "未设置目标", synced: "已同步", syncing: "正在同步", queued: "等待保存", error: "保存失败" },
 };
 
 function text(locale, key) { return (labels[locale] || labels.vi)[key]; }
@@ -46,7 +46,7 @@ export function installSavingsSyncBridge(root, syncStatus = document.getElementB
   return () => observer.disconnect();
 }
 
-export function bindSavingsGoalForm(root, { settings, pendingUpdates, month, onSave, onStatus } = {}) {
+export function bindSavingsGoalForm(root, { settings, pendingUpdates, month, locale = root?.dataset.locale || "vi", onSave, onStatus } = {}) {
   const form = root?.querySelector("[data-savings-goal-form]");
   if (!form) return;
   const parse = (value) => value.trim() === "" ? null : Number(value.replace(/,/g, ""));
@@ -60,7 +60,7 @@ export function bindSavingsGoalForm(root, { settings, pendingUpdates, month, onS
     } catch (error) { onStatus?.("error", error); }
   });
   root.querySelector("[data-clear-goals]")?.addEventListener("click", () => {
-    if (!globalThis.confirm || globalThis.confirm("Clear savings goals?")) {
+    if (!globalThis.confirm || globalThis.confirm(text(locale, "confirmClear"))) {
       writeMonthlySavingsGoal(settings, pendingUpdates, month, null);
       writeAnnualSavingsGoal(settings, pendingUpdates, null);
       onSave?.();

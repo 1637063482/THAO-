@@ -99,7 +99,7 @@ function refreshSavingsView(status) {
   if (!summary) return;
   summary.dataset.locale = getCurrentLocale();
   summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
-  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
+  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, locale: getCurrentLocale(), onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
   installSavingsSyncBridge(summary);
 }
 
