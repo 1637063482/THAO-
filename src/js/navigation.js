@@ -58,12 +58,14 @@ export function navigateTo(id) {
   switch (id) {
     case "overview":
       window.switchMobileView("overview");
+      setActive("overview");
       break;
     case "add":
       window.openQuickAdd();
       break;
     case "stats":
       window.switchMobileView("stats");
+      setActive("stats");
       break;
     case "import":
       var fileInput = document.getElementById("import-file");
