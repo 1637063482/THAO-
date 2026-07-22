@@ -63,6 +63,22 @@ describe("quick-add bottom sheet", () => {
     expect(stateModule.state.pendingUpdates.entries[key]).toBe("=50000");
   });
 
+  it("restores the submit control after success and on the next open", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const sync = await import("../../src/js/sync.js");
+    const button = document.createElement("button");
+    button.setAttribute("data-quick-add-submit", "");
+    document.getElementById("quick-add-panel").appendChild(button);
+    sync.triggerCloudSave.mockImplementation(() => {});
+    document.getElementById("qa-amount").value = "50000";
+    quickAdd.submitQuickAdd();
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("aria-busy")).toBe(false);
+    quickAdd.openQuickAdd();
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("aria-busy")).toBe(false);
+  });
+
   it.each(["1.5", "0", "-1"])("rejects non-positive or fractional VND amount %s", async (amount) => {
     const quickAdd = await import("../../src/js/quick-add.js");
     const stateModule = await import("../../src/js/state.js");
@@ -71,5 +87,16 @@ describe("quick-add bottom sheet", () => {
     expect(() => quickAdd.submitQuickAdd()).not.toThrow();
     expect(stateModule.state.appState.entries[stateModule.state.activeMonthId + "_1_dining"]).toBeUndefined();
     expect(document.getElementById("qa-amount").value).toBe(amount);
+  });
+
+  it("clears aria-busy after invalid VND validation", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const button = document.createElement("button");
+    button.setAttribute("data-quick-add-submit", "");
+    document.getElementById("quick-add-panel").appendChild(button);
+    document.getElementById("qa-amount").value = "0";
+    quickAdd.submitQuickAdd();
+    expect(button.disabled).toBe(false);
+    expect(button.hasAttribute("aria-busy")).toBe(false);
   });
 });

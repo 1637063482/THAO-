@@ -11,10 +11,17 @@ import { t } from "./i18n.js";
 let lastTrigger = null;
 let submitInFlight = false;
 
+function resetSubmitControl() {
+  const submitButton = document.querySelector("#quick-add-panel [data-quick-add-submit]");
+  submitInFlight = false;
+  if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
+}
+
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
+  resetSubmitControl();
   lastTrigger = document.getElementById("fab-btn") || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   modal.setAttribute("aria-hidden", "false");
   modal.classList.add("is-open");
@@ -91,20 +98,20 @@ export function submitQuickAdd() {
   const rawAmt = document.getElementById("qa-amount")?.value;
   const remark = document.getElementById("qa-remark")?.value;
 
-  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); submitInFlight = false; if (submitButton) submitButton.disabled = false; return; }
+  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); resetSubmitControl(); return; }
 
   let amtVND = rawAmt;
   if (state.currentCurrency === "CNY") {
     const activeRate = getActiveRate();
     if (!isValidCurrencyRate(activeRate)) {
       showToast(t("fx_unavailable"), true);
-      submitInFlight = false; if (submitButton) submitButton.disabled = false; return;
+      resetSubmitControl(); return;
     }
     amtVND = convertCnyAmountToVnd(rawAmt, activeRate);
   }
   if (!Number.isSafeInteger(Number(amtVND)) || Number(amtVND) <= 0) {
     showToast(t("enter_valid_amount"), true);
-    submitInFlight = false; if (submitButton) submitButton.disabled = false;
+    resetSubmitControl();
     return;
   }
 
@@ -137,8 +144,7 @@ export function submitQuickAdd() {
   try {
     triggerCloudSave();
   } catch (error) {
-    submitInFlight = false;
-    if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
+    resetSubmitControl();
     throw error;
   }
   showToast(t("record_saved"));
@@ -149,7 +155,7 @@ export function submitQuickAdd() {
   if (qaRemark) qaRemark.value = "";
 
   updateStreakAfterRecord();
-  submitInFlight = false;
+  resetSubmitControl();
 
   setTimeout(() => {
     const el = document.getElementById("row-" + state.activeMonthId + "-" + d);
