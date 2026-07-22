@@ -61,4 +61,11 @@ describe("dashboard rendering", () => {
     // Should not throw
     expect(function () { dash.initDashboard(); }).not.toThrow();
   });
+
+  it("refreshDashboard renders the current legacy state into the dashboard", async () => {
+    document.body.innerHTML = '<div id="dashboard-root"></div>';
+    const dash = await import("../../src/js/dashboard.js");
+    dash.refreshDashboard();
+    expect(document.getElementById("dashboard-root").innerHTML).toContain("dashboard-root");
+  });
 });

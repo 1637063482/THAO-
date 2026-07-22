@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | CHANGES_REQUESTED |
+| State | IMPLEMENTING |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
-| Implementation Head | 72c82b8be130d08cb42101c67c5215adc457fa23 |
-| Review Round | 3 |
+| Implementation Head | pending |
+| Review Round | 4 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
 | Latest Review | `docs/task-reviews/UXS-004-R3.md` - CHANGES_REQUESTED |
 | Next Task | UXS-005 |

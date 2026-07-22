@@ -116,14 +116,6 @@ export default {
   confirm_import: "警告：导入将覆盖当前云端的所有数据，确定要继续吗？",
 
   // Dashboard
-  budget_remaining: "本月可花余额",
-  budget_of: "总预算",
-  today_spending: "今日支出",
-  month_spending: "本月支出",
-  month_income: "本月收入",
-  top_categories: "支出最多类别",
-  recent_entries: "最近记录",
-  recent_entries_note: "按日/分类汇总，非逐笔交易",
 
   // Chart
   no_data: "暂无数据",

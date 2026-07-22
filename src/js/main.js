@@ -79,7 +79,7 @@ function persistInputValue(target, vndValueToSave) {
 
 function scheduleInputSave() {
   clearTimeout(window._calcTimeout);
-  window._calcTimeout = setTimeout(function() { calculateAll(); }, 150);
+  window._calcTimeout = setTimeout(function() { calculateAll(); initDashboard(); }, 150);
   triggerCloudSave();
 }
 
@@ -178,6 +178,7 @@ function switchMonthTab(monthId) {
   var activeBtn = document.getElementById("btn-tab-" + monthId);
   if (activeBtn) activeBtn.className = "month-tab active";
   fullRebuildDOM();
+  initDashboard();
   var chartTitle = document.getElementById("monthly-chart-title");
   if (chartTitle) chartTitle.innerText = t("monthly", { month: monthId });
   var b = document.getElementById("budget-label-month");
@@ -343,14 +344,14 @@ var _originalFullRebuildDOM = fullRebuildDOM;
 window.fullRebuildDOM = function() {
   _originalFullRebuildDOM();
   setTimeout(initIcons, 50);
-  setTimeout(initDashboard, 50);
+  initDashboard();
 };
 
 var _originalSoftUpdateDOM = softUpdateDOM;
 window.softUpdateDOM = function() {
   _originalSoftUpdateDOM();
   setTimeout(initIcons, 50);
-  setTimeout(initDashboard, 50);
+  initDashboard();
 };
 
 function togglePrivacy() {
