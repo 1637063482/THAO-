@@ -1,0 +1,90 @@
+/**
+ * Dashboard — spending-awareness home page component.
+ *
+ * Renders the dashboard ViewModel into the DOM and wires up interactions.
+ * Uses buildDashboardViewModel() from dashboard-view-model.js for data.
+ */
+
+import { t } from "./i18n.js";
+import { state } from "./state.js";
+import { getLedgerToday } from "./clock.js";
+import { buildDashboardViewModel } from "./dashboard-view-model.js";
+
+/**
+ * Render the dashboard HTML from a ViewModel object.
+ * @param {object} vm - ViewModel from buildDashboardViewModel()
+ * @returns {string} HTML string
+ */
+export function renderDashboard(vm) {
+  if (vm.noData) {
+    return '<div class="dashboard-root no-data"><p class="text-slate-400 text-sm">' + t("no_data") + '</p></div>';
+  }
+
+  // Hero: budget remaining
+  var heroAmount = vm.budgetRemaining.toLocaleString("en-US");
+  var heroClass = vm.isOverBudget ? "text-red-500" : "text-amber-600";
+
+  var heroHtml = '<div class="dashboard-hero card p-6 mb-4 text-center">'
+    + '<p class="text-sm text-slate-500 mb-1">' + t("budget_remaining") + '</p>'
+    + '<p class="text-4xl font-black ' + heroClass + ' blur-sensitive">' + heroAmount + '</p>'
+    + '<p class="text-xs text-slate-400 mt-1">' + t("budget_of") + ' ' + vm.budgetVnd.toLocaleString("en-US") + '</p>'
+    + '</div>';
+
+  // Stats row
+  var statsHtml = '<div class="grid grid-cols-2 gap-3 mb-4">'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("today_spending") + '</p><p class="text-xl font-bold text-slate-800 blur-sensitive">' + vm.todaySpending.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("month_spending") + '</p><p class="text-xl font-bold text-slate-800 blur-sensitive">' + vm.totalSpending.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("month_income") + '</p><p class="text-xl font-bold text-emerald-600 blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("streak_days") + '</p><p class="text-xl font-bold text-amber-600">' + vm.streak.streak + ' <span class="text-sm font-normal text-slate-400">' + t("streak_unit") + '</span></p></div>'
+    + '</div>';
+
+  // Top categories
+  var topHtml = '';
+  if (vm.topCategories.length > 0) {
+    topHtml = '<div class="card p-4 mb-4"><h3 class="text-sm font-bold text-slate-700 mb-3">' + t("top_categories") + '</h3>';
+    vm.topCategories.forEach(function (cat) {
+      topHtml += '<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">'
+        + '<span class="text-sm">' + cat.emoji + ' ' + t(cat.label) + '</span>'
+        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + cat.spending.toLocaleString("en-US") + '</span>'
+        + '</div>';
+    });
+    topHtml += '</div>';
+  }
+
+  // Recent days
+  var recentHtml = '';
+  if (vm.days.length > 0) {
+    recentHtml = '<div class="card p-4"><h3 class="text-sm font-bold text-slate-700 mb-3">' + t("recent_entries") + '</h3>';
+    recentHtml += '<p class="text-xs text-slate-400 mb-2">' + t("recent_entries_note") + '</p>';
+    vm.days.forEach(function (day) {
+      recentHtml += '<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">'
+        + '<span class="text-xs text-slate-500">' + day.dateKey + '</span>'
+        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + day.totalSpending.toLocaleString("en-US") + '</span>'
+        + '</div>';
+    });
+    recentHtml += '</div>';
+  }
+
+  return '<div class="dashboard-root">' + heroHtml + statsHtml + topHtml + recentHtml + '</div>';
+}
+
+/**
+ * Initialize the dashboard: build the ViewModel and render into the DOM.
+ * @param {string} [containerId] - DOM element ID to render into (default: "dashboard-root")
+ */
+export function initDashboard(containerId) {
+  containerId = containerId || "dashboard-root";
+  var container = document.getElementById(containerId);
+  if (!container) return;
+
+  var today = getLedgerToday();
+  var vm = buildDashboardViewModel({
+    year: state.activeYear,
+    month: state.activeMonthId,
+    today: today.day,
+    state: { appState: state.appState },
+  });
+
+  container.innerHTML = renderDashboard(vm);
+  container.style.display = "";
+}

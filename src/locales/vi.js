@@ -115,6 +115,16 @@ export default {
   confirm_logout: "Bạn có chắc muốn đăng xuất?",
   confirm_import: "Cảnh báo: nhập dữ liệu sẽ ghi đè toàn bộ dữ liệu hiện tại trên đám mây. Bạn có chắc muốn tiếp tục?",
 
+  // Dashboard
+  budget_remaining: "Ngân sách còn lại",
+  budget_of: "trên tổng ngân sách",
+  today_spending: "Chi tiêu hôm nay",
+  month_spending: "Chi tiêu tháng này",
+  month_income: "Thu nhập tháng này",
+  top_categories: "Hạng mục chi tiêu nhiều nhất",
+  recent_entries: "Ghi chép gần đây",
+  recent_entries_note: "Tổng hợp theo ngày và hạng mục, không phải từng giao dịch riêng lẻ",
+
   // Chart
   no_data: "Không có dữ liệu",
 
