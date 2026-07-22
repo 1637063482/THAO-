@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-005 |
 | Title | Implement quick-entry Bottom Sheet |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-005-quick-add |
 | Base SHA | 473e4f631affb1204df5b33527a2d4073dbd61aa |
 | Implementation Head | d31b37212c63fbe6acd9e1a983a73ee1c48220cc |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-005.md` |
-| Latest Review | `docs/task-reviews/UXS-005-R2.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-005-R3.md` - CHANGES_REQUESTED |
 | Next Task | UXS-006 |
 
 ## Reviewer Attention
 
-- UXS-005 R2 is CHANGES_REQUESTED. R2 guards re-entrancy and VND integers but leaves the confirm button disabled after every successful save; validation paths also retain stale `aria-busy`. Read `docs/task-reviews/UXS-005-R2.md`; do not start UXS-006.
+- UXS-005 R3 is CHANGES_REQUESTED. Functional rework passes, but Full Gates evidence is still labeled as recorded after R2 rather than the submitted R3 head. Read `docs/task-reviews/UXS-005-R3.md`; do not start UXS-006.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
