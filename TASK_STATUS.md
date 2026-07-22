@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-011 |
 | Title | Implement validated fixed-document deposit storage |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-011-deposit-storage |
 | Base SHA | 06b235f |
-| Implementation Head | - |
-| Review Round | 0 |
+| Implementation Head | bafaac4612b00e2648823a808b3960386ae64869 |
+| Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-011.md` |
 | Latest Review | - |
 | Next Task | UXS-012 |
 
 ## Reviewer Attention
 
-- UXS-011 must preserve all legacy yearly-ledger behavior.
-- Candidate Firestore Rules are emulator-only and must not be deployed.
+- Review `06b235f..bafaac4612b00e2648823a808b3960386ae64869`.
+- Confirm runtime validation, one-key Rules enforcement, conflict handling, backup exclusion of `lastMutation`, and unchanged legacy-ledger behavior.
 
 ## History
 
