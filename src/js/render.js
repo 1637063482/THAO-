@@ -13,7 +13,9 @@ export function renderDailyLedger(monthId) {
   var container = document.getElementById("daily-ledger-container");
   var tableContainer = document.getElementById("months-container");
   if (!container) return;
-  var activeKey = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.key : null;
+  var activeElement = document.activeElement;
+  var activeKey = container.contains(activeElement) && activeElement.dataset ? activeElement.dataset.key : null;
+  var activeDraft = activeKey ? { value: activeElement.value, raw: activeElement.dataset.raw } : null;
   var categories = expenseCategories.map(function(cat) { return { id: cat.id, label: t(cat.nameKey || cat.name) }; });
   var result = buildDailyLedger({ year: state.activeYear, month: monthId, entries: state.appState.entries, categories: categories, daysInMonth: getDaysInMonth(state.activeYear, monthId) });
   var view = getLedgerView();
@@ -36,7 +38,10 @@ export function renderDailyLedger(monthId) {
   });
   if (activeKey) {
     var activeInput = container.querySelector('[data-key="' + activeKey + '"]');
-    if (activeInput) { activeInput.focus(); activeInput.selectionStart = activeInput.value.length; }
+    if (activeInput) {
+      if (activeDraft) { activeInput.value = activeDraft.value; activeInput.dataset.raw = activeDraft.raw || activeDraft.value; }
+      activeInput.focus(); activeInput.selectionStart = activeInput.value.length;
+    }
   }
 }
 
