@@ -6,21 +6,20 @@
 
 | Field | Value |
 |---|---|
-| Task ID | OPS-001 |
-| Title | Optimize agent context token usage |
-| State | APPROVED |
-| Branch | ops/context-loading-optimization |
-| Base SHA | 4c39dd0395678f9dbd7f140f44b9d68463aaf4c5 |
-| Implementation Head | 118278304078429a5874e1effc9a8359659226d5 |
-| Review Round | 1 |
-| Evidence | `docs/review-evidence/OPS-001.md` |
-| Latest Review | `docs/task-reviews/OPS-001-R1.md` - APPROVED |
-| Next Task | UXS-006 |
+| Task ID | UXS-006 |
+| Title | Implement derived daily ledger view |
+| State | PLANNED |
+| Branch | task/uxs-006-day-ledger |
+| Base SHA | 118278304078429a5874e1effc9a8359659226d5 |
+| Implementation Head | pending |
+| Review Round | 0 |
+| Evidence | `docs/review-evidence/UXS-006.md` |
+| Latest Review | pending |
+| Next Task | UXS-007 |
 
 ## Reviewer Attention
 
-- OPS-001 R1 is APPROVED at implementation head `118278304078429a5874e1effc9a8359659226d5`.
-- The next Coder may initialize UXS-006 in a new Task branch; do not continue OPS-001 implementation.
+- UXS-006 is initialized from approved OPS-001 head `118278304078429a5874e1effc9a8359659226d5`; Coder must follow only the UXS-006 file list, mapping invariants, prohibitions, and screenshot requirements.
 
 ## History
 
