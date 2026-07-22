@@ -54,8 +54,8 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("DepositRepository", () =>
 
   it("persists acknowledgement and rejects stale concurrent versions", async () => {
     await repository.create(input());
-    await repository.acknowledge("deposit-1|2027-01-01|30");
-    expect(Object.keys((await repository.getDocument()).acknowledgementsByKey)).toContain("deposit-1|2027-01-01|30");
+    await repository.acknowledge("deposit-1|2027-01-01|OVERDUE");
+    expect(Object.keys((await repository.getDocument()).acknowledgementsByKey)).toContain("deposit-1|2027-01-01|OVERDUE");
     await expect(repository.update("deposit-1", 2, { note: "stale" })).rejects.toThrow(/version/i);
   });
 });

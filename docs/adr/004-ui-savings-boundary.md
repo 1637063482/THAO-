@@ -120,6 +120,9 @@ Trigger events:
 
 Default stages: D-30, D-7, D-1, D0, OVERDUE.
 
+Acknowledgement keys encode these stages as `D30`, `D7`, `D1`, `D0`, or
+`OVERDUE`: `<depositId>|<maturesOn>|<stage>`.
+
 Not triggered by:
 
 - Web Push API, Notification API, Cloudflare Workers/Cron, Firebase Cloud Messaging, email, SMS, or system calendar.

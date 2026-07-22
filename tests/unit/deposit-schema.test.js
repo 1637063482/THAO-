@@ -70,6 +70,18 @@ describe("deposit storage schema", () => {
     expect(() => validateDepositDocument({ ...documentWith(), depositsById })).toThrow(/100/);
   });
 
+  it("accepts the five reminder stages and rejects an unknown acknowledgement stage", () => {
+    const value = documentWith();
+    value.acknowledgementsByKey["deposit-1|2027-01-01|OVERDUE"] = {
+      acknowledgedAt: new Date("2027-01-02T00:00:00Z"), acknowledgedBy: "fixture-a",
+    };
+    expect(validateDepositDocument(value)).toBe(value);
+    value.acknowledgementsByKey = {
+      "deposit-1|2027-01-01|UNKNOWN": value.acknowledgementsByKey["deposit-1|2027-01-01|OVERDUE"],
+    };
+    expect(() => validateDepositDocument(value)).toThrow(/acknowledgement/i);
+  });
+
   it("creates a deterministic versioned backup without mutating source data", () => {
     const value = documentWith();
     const before = structuredClone(value);

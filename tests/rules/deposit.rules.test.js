@@ -70,8 +70,12 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("deposit fixed-document ru
       lastMutation: { kind: "UPDATE_DEPOSIT", targetId: "deposit-1", actorUid: "owner", at: serverTimestamp() },
     }));
     await assertSucceeds(updateDoc(doc(owner, path), {
-      acknowledgementsByKey: { "deposit-1|2027-01-01|30": { acknowledgedAt: serverTimestamp(), acknowledgedBy: "owner" } },
-      lastMutation: { kind: "ACKNOWLEDGE", targetId: "deposit-1|2027-01-01|30", actorUid: "owner", at: serverTimestamp() },
+      acknowledgementsByKey: { "deposit-1|2027-01-01|OVERDUE": { acknowledgedAt: serverTimestamp(), acknowledgedBy: "owner" } },
+      lastMutation: { kind: "ACKNOWLEDGE", targetId: "deposit-1|2027-01-01|OVERDUE", actorUid: "owner", at: serverTimestamp() },
+    }));
+    await assertFails(updateDoc(doc(owner, path), {
+      acknowledgementsByKey: { "deposit-1|2027-01-01|UNKNOWN": { acknowledgedAt: serverTimestamp(), acknowledgedBy: "owner" } },
+      lastMutation: { kind: "ACKNOWLEDGE", targetId: "deposit-1|2027-01-01|UNKNOWN", actorUid: "owner", at: serverTimestamp() },
     }));
   });
 });

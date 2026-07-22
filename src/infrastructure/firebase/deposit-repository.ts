@@ -4,7 +4,7 @@ import { validateDepositDocument } from "../../js/deposit-schema.js";
 
 const SAVINGS_LEDGER_ID = "shared_ledger_savings";
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
-const ACK_RE = /^[A-Za-z0-9_-]{1,80}\|\d{4}-\d{2}-\d{2}\|(30|7|1|0)$/;
+const ACK_RE = /^[A-Za-z0-9_-]{1,80}\|\d{4}-\d{2}-\d{2}\|(D30|D7|D1|D0|OVERDUE)$/;
 
 export type PersistedDepositStatus = "ACTIVE" | "REDEEMED" | "ROLLED_OVER";
 export interface DepositInput {
