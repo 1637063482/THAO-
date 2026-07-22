@@ -196,7 +196,7 @@ T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度�
 
 - Task ID: UXS-004
 - 目标: 首页首先回答“本月预算还剩多少、今天/本月花了多少、钱花到哪里”，同时保留习惯激励入口。
-- 修改文件: `src/js/dashboard-view-model.js`（新建）、`src/js/dashboard.js`（新建）、`src/js/main.js`、`index.html`、`src/css/app.css`、`tests/unit/dashboard-view-model.test.js`（新建）、`tests/unit/dashboard.test.js`（新建）、`docs/review-evidence/UXS-004.md`。
+- 修改文件: `src/js/dashboard-view-model.js`（新建）、`src/js/dashboard.js`（新建）、`src/js/main.js`、`index.html`、`src/css/app.css`、`src/locales/vi.js`（新增仪表盘 key）、`src/locales/zh-CN.js`（新增仪表盘 key）、`tests/unit/dashboard-view-model.test.js`（新建）、`tests/unit/dashbaord.test.js`（新建）、`docs/review-evidence/UXS-004.md`。
 - 涉及模块: Dashboard、Budget、Category aggregation、Streak。
 - 详细步骤:
   1. RED 覆盖预算剩余、超支、今日支出、本月支出、收入、前三分类、连续天数、无数据和大额 VND。

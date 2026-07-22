@@ -14,6 +14,7 @@ import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 import { initNavigation } from "./navigation.js";
+import { initDashboard } from "./dashboard.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -443,6 +444,7 @@ initAuth(
     setupRealtimeListener();
     initCharts();
     renderStreakPanel();
+    initDashboard();
     setTimeout(function() {
       updateBudgetUI();
       var today = getLedgerToday();

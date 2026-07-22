@@ -11,6 +11,8 @@ import { buildLegacyStreak } from "./streak.js";
 
 /**
  * Get the raw budget VND for a given month from settings.
+ * Mirrors the validated logic in budget.js/getRawBudgetVND but
+ * reads from the passed-in state to stay pure.
  * @param {object} settings - state.appState.settings
  * @param {number} month
  * @returns {number}
@@ -80,7 +82,6 @@ export function buildDashboardViewModel(options) {
 
     if (fieldId === "income") {
       totalIncome += val;
-      if (day === today) todaySpending += val;
     } else if (fieldId === "remark") {
       // Skip remarks
     } else {
@@ -93,9 +94,9 @@ export function buildDashboardViewModel(options) {
     }
   });
 
-  // Budget remaining
+  // Budget remaining — mirrors validated logic from budget.js
   var budgetVnd = getBudgetVnd(settings, month);
-  var budgetRemaining = Math.max(0, budgetVnd - totalSpending);
+  var budgetRemaining = budgetVnd - totalSpending;
   var isOverBudget = totalSpending > budgetVnd;
 
   // Top categories by spending

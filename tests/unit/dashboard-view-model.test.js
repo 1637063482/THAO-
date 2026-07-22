@@ -158,6 +158,32 @@ describe("dashboard ViewModel", () => {
     expect(typeof result.streak).toBe("object");
   });
 
+  it("todaySpending excludes income entries on the same day", async () => {
+    const vm = await import("../../src/js/dashboard-view-model.js");
+    const { state } = await import("../../src/js/state.js");
+    state.appState.entries = {
+      "3_15_dining": "=200000",
+      "3_15_income": "=5000000",
+    };
+
+    const result = vm.buildDashboardViewModel({ year: 2026, month: 3, today: 15, state });
+
+    expect(result.todaySpending).toBe(200000);
+    expect(result.totalIncome).toBe(5000000);
+  });
+
+  it("returns negative budgetRemaining when over budget", async () => {
+    const vm = await import("../../src/js/dashboard-view-model.js");
+    const { state } = await import("../../src/js/state.js");
+    state.appState.settings = { budget_3: "1000000" };
+    state.appState.entries = { "3_1_dining": "=2000000" };
+
+    const result = vm.buildDashboardViewModel({ year: 2026, month: 3, state });
+
+    expect(result.budgetRemaining).toBe(-1000000);
+    expect(result.isOverBudget).toBe(true);
+  });
+
   it("does not modify the input state object", async () => {
     const vm = await import("../../src/js/dashboard-view-model.js");
     const { state } = await import("../../src/js/state.js");
