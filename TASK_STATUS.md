@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-005 |
 | Title | Implement quick-entry Bottom Sheet |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-005-quick-add |
 | Base SHA | 473e4f631affb1204df5b33527a2d4073dbd61aa |
 | Implementation Head | ecf0a8fb8d3222d1e1ad2cd6114c91a5099003a1 |
 | Review Round | 0 |
 | Evidence | `docs/review-evidence/UXS-005.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-005-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-006 |
 
 ## Reviewer Attention
 
-- UXS-005 is initialized from approved UXS-004 head `473e4f6`; Coder must follow only the UXS-005 file list, RED/GREEN steps, prohibitions, and screenshot requirements.
+- UXS-005 R1 is CHANGES_REQUESTED. `submitQuickAdd()` permits duplicate writes and fractional VND facts; final gate evidence is incomplete. Read `docs/task-reviews/UXS-005-R1.md`; do not start UXS-006.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
