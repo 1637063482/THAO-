@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-003 |
 | Title | Establish Apple Warm Design Tokens and responsive App Shell |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-003-apple-warm-tokens |
 | Base SHA | a9fc9fcf67e04b15f2ffc99347896f55dbc55bed |
 | Implementation Head | 72550462032881605bec4a0f605256dc2840ae06 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-003.md` |
-| Latest Review | pending |
+| Latest Review | `docs/task-reviews/UXS-003-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-004 |
 
 ## Reviewer Attention
 
-- UXS-003 R1 is ready for Terra review. Coder has implemented Design Tokens, responsive sidebar (>=768px), bottom nav (<768px), safe-area support, keyboard navigation, and 9 unit tests (147 total).
-- Prohibited: modifying budget/entry/sync calculations, Firestore, business schema.
+- UXS-003 R1 has CHANGES_REQUESTED in `docs/task-reviews/UXS-003-R1.md`. The current implementation leaves 640–767px without navigation, renders the sidebar above rather than alongside main content, does not connect the active-state controller to real click/keyboard paths, and omits required six-viewport screenshot evidence.
+- Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
