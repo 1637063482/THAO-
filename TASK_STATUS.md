@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | BUG-LOGIN-001 |
 | Title | Release loading overlay when initial ledger read fails |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | fix/login-loading-stall |
 | Base SHA | 7825c6589d7095f277923cf255db151ff70adf1c |
-| Implementation Head | pending |
+| Implementation Head | b1debd750c5b3038dfe58c631e3b73fce71d8062 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/BUG-LOGIN-001.md` |
 | Latest Review | pending |
@@ -19,8 +19,8 @@
 
 ## Reviewer Attention
 
-- BUG-LOGIN-001 is an isolated auth-to-ledger-load repair before UXS-011.
-- Do not modify online Firebase configuration, credentials, ledger business rules, deposits, or start UXS-011.
+- BUG-LOGIN-001 is READY_FOR_REVIEW at `b1debd750c5b3038dfe58c631e3b73fce71d8062`.
+- Verify snapshot success/error both end initial loading, while error remains visibly unsynced. Do not start UXS-011 during review.
 
 ## History
 

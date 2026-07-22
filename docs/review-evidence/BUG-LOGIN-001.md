@@ -5,7 +5,7 @@
 | Field | Value |
 |---|---|
 | Base SHA | `7825c6589d7095f277923cf255db151ff70adf1c` |
-| Implementation Head | pending |
+| Implementation Head | `b1debd750c5b3038dfe58c631e3b73fce71d8062` |
 | Branch | `fix/login-loading-stall` |
 
 The login promise was not the permanent-loading source: after authentication, `handleLogin()` intentionally leaves the overlay visible until the first current-year Firestore snapshot. The snapshot success callback hid it, but the snapshot error callback only set sync status to error. Permission, connectivity or Firestore read failure therefore left the full-screen overlay visible forever.
