@@ -267,23 +267,9 @@ function switchCurrency(curr) {
 function changeFxMode(mode) {
   state.fxMode = mode;
   var input = document.getElementById("manual-rate-input");
-  var applyBtn = document.getElementById("btn-apply-rate");
-  var fxAuto = document.getElementById("btn-fx-auto");
-  var fxManual = document.getElementById("btn-fx-manual");
-
-  if (fxAuto) {
-    fxAuto.className = mode === "auto"
-      ? "text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold"
-      : "text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium";
-  }
-  if (fxManual) {
-    fxManual.className = mode === "manual"
-      ? "text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold"
-      : "text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium";
-  }
-
-  if (mode === "manual") { if (input) input.disabled = false; if (applyBtn) applyBtn.classList.remove("hidden"); }
-  else { if (input) input.disabled = true; if (applyBtn) applyBtn.classList.add("hidden"); fullRebuildDOM(); }
+  var btn = document.getElementById("btn-apply-rate");
+  if (mode === "manual") { if (input) input.disabled = false; if (btn) btn.classList.remove("hidden"); }
+  else { if (input) input.disabled = true; if (btn) btn.classList.add("hidden"); fullRebuildDOM(); }
 }
 
 function applyManualRate() {
