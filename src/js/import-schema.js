@@ -50,10 +50,12 @@ export function validateLegacyImport(input, { serializedBytes } = {}) {
   }
 
   for (const [key, value] of Object.entries(input.settings || {})) {
-    const validKey = key === "monthlyBudget" || /^budget_(?:[1-9]|1[0-2])$/.test(key) || key === "expense_streak" || key === "expense_last_date";
+    const validKey = key === "monthlyBudget" || /^budget_(?:[1-9]|1[0-2])$/.test(key) || key === "expense_streak" || key === "expense_last_date" || /^savings_goal_month_(?:[1-9]|1[0-2])$/.test(key) || key === "savings_goal_annual";
     if (!validKey) return failure("INVALID_SETTING_KEY", `settings.${key}`);
     if (key === "expense_last_date") {
       if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return failure("INVALID_SETTING", `settings.${key}`);
+    } else if (/^savings_goal_month_(?:[1-9]|1[0-2])$/.test(key) || key === "savings_goal_annual") {
+      if (value !== null && (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) return failure("INVALID_SETTING", `settings.${key}`);
     } else if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return failure("INVALID_SETTING", `settings.${key}`);
   }
   return { ok: true, data: input };
