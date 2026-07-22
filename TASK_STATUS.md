@@ -6,21 +6,20 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-009 |
-| Title | Implement savings goal UI |
-| State | APPROVED |
-| Branch | task/uxs-009-savings-ui |
-| Base SHA | 0467d102c6d8bac509f4e3ae10f49094d0562cee |
-| Implementation Head | 15f59029f965361cf69003cfcaa9863373393285 |
-| Review Round | 5 |
-| Evidence | `docs/review-evidence/UXS-009.md` |
-| Latest Review | `docs/task-reviews/UXS-009-R5.md` - APPROVED |
-| Next Task | UXS-010 |
+| Task ID | UXS-010 |
+| Title | Implement deposit and interest domain model |
+| State | READY_FOR_REVIEW |
+| Branch | task/uxs-010-deposit-domain |
+| Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
+| Implementation Head | bb5ab6d80f1344fb19af63841b09c847af5ebcd3 |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/UXS-010.md` |
+| Latest Review | pending |
+| Next Task | UXS-011 |
 
 ## Reviewer Attention
 
-- UXS-009 R5 is APPROVED at implementation head `15f59029f965361cf69003cfcaa9863373393285`.
-- The next Coder may initialize UXS-010 in a new Task branch; do not continue UXS-009 implementation.
+- UXS-010 implementation is complete; awaiting independent review.
 
 ## History
 
