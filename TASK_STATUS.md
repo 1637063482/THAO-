@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
 | Implementation Head | 04dd5bf904b89d0b86b7f910db1d7cc04120949c |
 | Review Round | 5 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
-| Latest Review | `docs/task-reviews/UXS-004-R4.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-004-R5.md` - CHANGES_REQUESTED |
 | Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-004 R4 is CHANGES_REQUESTED. R4 fixes the real local and month refresh calls and removes locale-key scope expansion, but all six screenshots remain injected non-live markup, refresh-path behavior lacks direct integration coverage, and evidence metadata still names R3. Read `docs/task-reviews/UXS-004-R4.md`; do not start UXS-005.
+- UXS-004 R5 is CHANGES_REQUESTED. R5 replaces injected markup with an isolated dashboard render, but required production-page/quick-entry/privacy visual proof is still absent; wrapper tests do not cover the real update paths, evidence contradicts itself, and locale comments remain out of scope. Read `docs/task-reviews/UXS-004-R5.md`; do not start UXS-005.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
