@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-009 |
 | Title | Implement savings goal UI |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/uxs-009-savings-ui |
 | Base SHA | 0467d102c6d8bac509f4e3ae10f49094d0562cee |
 | Implementation Head | 15f59029f965361cf69003cfcaa9863373393285 |
 | Review Round | 5 |
 | Evidence | `docs/review-evidence/UXS-009.md` |
-| Latest Review | `docs/task-reviews/UXS-009-R4.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-009-R5.md` - APPROVED |
 | Next Task | UXS-010 |
 
 ## Reviewer Attention
 
-- UXS-009 R4 requests locale-aware clear-goal confirmation text and coverage for both supported locales.
-- Coder must read `docs/task-reviews/UXS-009-R4.md`, repair only its blocking item, then submit a new READY_FOR_REVIEW head.
+- UXS-009 R5 is APPROVED at implementation head `15f59029f965361cf69003cfcaa9863373393285`.
+- The next Coder may initialize UXS-010 in a new Task branch; do not continue UXS-009 implementation.
 
 ## History
 
