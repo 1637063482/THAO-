@@ -86,6 +86,16 @@ shared_ledger_savings
       acknowledgedBy: uid
 ```
 
+### Firestore Rules mutation envelope
+
+The fixed document also carries implementation-only `lastMutation` metadata with
+`kind`, `targetId`, `actorUid`, and a server timestamp. Firestore Rules cannot
+iterate every member of an arbitrary dynamic map. The envelope therefore binds
+each write to one changed deposit or acknowledgement key, allowing Rules to
+validate that member, its version increment, and server audit fields while
+rejecting bulk or forged mutations. It is not a business field and is excluded
+from exported backups.
+
 Note:
 
 - `calculatedInterestVnd` is a read-time derived value (computed from `principalVnd × annualRatePpm ÷ 1_000_000 × depositDays ÷ 365`). It is **never persisted** — only `expectedInterestVnd` and `actualInterestVnd` are stored in the schema.

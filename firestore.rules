@@ -13,8 +13,145 @@ service cloud.firestore {
         );
     }
 
+    function validSavingsRoot(data) {
+      return data.keys().hasOnly(["schemaVersion", "depositsById", "acknowledgementsByKey", "lastMutation"])
+        && data.schemaVersion == 1
+        && data.depositsById is map
+        && data.depositsById.size() <= 100
+        && data.acknowledgementsByKey is map
+        && data.acknowledgementsByKey.size() <= 500
+        && data.lastMutation is map
+        && data.lastMutation.keys().hasOnly(["kind", "targetId", "actorUid", "at"])
+        && data.lastMutation.targetId is string
+        && data.lastMutation.targetId.size() > 0
+        && data.lastMutation.targetId.size() <= 120
+        && data.lastMutation.actorUid == request.auth.uid
+        && data.lastMutation.at == request.time;
+    }
+
+    function validReminderAt(days, index) {
+      return days.size() <= index || (days[index] is int && days[index] >= 0 && days[index] <= 365);
+    }
+
+    function validReminderDays(days) {
+      return days is list && days.size() <= 10
+        && validReminderAt(days, 0) && validReminderAt(days, 1)
+        && validReminderAt(days, 2) && validReminderAt(days, 3)
+        && validReminderAt(days, 4) && validReminderAt(days, 5)
+        && validReminderAt(days, 6) && validReminderAt(days, 7)
+        && validReminderAt(days, 8) && validReminderAt(days, 9);
+    }
+
+    function validDate(value) {
+      return value is string && value.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$");
+    }
+
+    function validDeposit(data) {
+      return data is map
+        && data.keys().hasOnly([
+          "institutionName", "productName", "principalVnd", "annualRatePpm", "openedOn", "maturesOn",
+          "expectedInterestVnd", "actualInterestVnd", "reminderDays", "remindersEnabled", "status",
+          "redeemedOn", "rolledOverToDepositId", "note", "version", "createdAt", "updatedAt",
+          "createdBy", "updatedBy", "archivedAt"
+        ])
+        && data.institutionName is string && data.institutionName.size() <= 120
+        && data.productName is string && data.productName.size() <= 120
+        && data.principalVnd is int && data.principalVnd >= 0
+        && data.annualRatePpm is int && data.annualRatePpm >= 0 && data.annualRatePpm <= 1000000
+        && validDate(data.openedOn) && validDate(data.maturesOn) && data.maturesOn > data.openedOn
+        && (data.expectedInterestVnd == null || (data.expectedInterestVnd is int && data.expectedInterestVnd >= 0))
+        && (data.actualInterestVnd == null || (data.actualInterestVnd is int && data.actualInterestVnd >= 0))
+        && validReminderDays(data.reminderDays)
+        && data.remindersEnabled is bool
+        && data.status in ["ACTIVE", "REDEEMED", "ROLLED_OVER"]
+        && (data.redeemedOn == null || validDate(data.redeemedOn))
+        && (data.rolledOverToDepositId == null || (data.rolledOverToDepositId is string && data.rolledOverToDepositId.matches("^[A-Za-z0-9_-]{1,80}$")))
+        && (data.status != "ACTIVE" || (data.redeemedOn == null && data.rolledOverToDepositId == null))
+        && (data.status != "REDEEMED" || (data.redeemedOn != null && data.rolledOverToDepositId == null))
+        && (data.status != "ROLLED_OVER" || data.rolledOverToDepositId != null)
+        && data.note is string && data.note.size() <= 1000
+        && data.version is int && data.version >= 1
+        && data.createdAt is timestamp && data.updatedAt is timestamp
+        && data.createdBy is string && data.createdBy.size() > 0 && data.createdBy.size() <= 128
+        && data.updatedBy is string && data.updatedBy.size() > 0 && data.updatedBy.size() <= 128
+        && (data.archivedAt == null || data.archivedAt is timestamp);
+    }
+
+    function validSavingsCreate() {
+      let data = request.resource.data;
+      let id = data.lastMutation.targetId;
+      return validSavingsRoot(data)
+        && data.lastMutation.kind == "CREATE_DEPOSIT"
+        && id.matches("^[A-Za-z0-9_-]{1,80}$")
+        && data.depositsById.size() == 1
+        && data.depositsById.keys().hasOnly([id])
+        && data.acknowledgementsByKey.size() == 0
+        && validDeposit(data.depositsById[id])
+        && data.depositsById[id].version == 1
+        && data.depositsById[id].createdAt == request.time
+        && data.depositsById[id].updatedAt == request.time
+        && data.depositsById[id].createdBy == request.auth.uid
+        && data.depositsById[id].updatedBy == request.auth.uid
+        && data.depositsById[id].archivedAt == null;
+    }
+
+    function validDepositUpdate(before, after, id, kind) {
+      let oldDeposit = before.depositsById[id];
+      let newDeposit = after.depositsById[id];
+      return id.matches("^[A-Za-z0-9_-]{1,80}$")
+        && id in before.depositsById && id in after.depositsById
+        && after.depositsById.diff(before.depositsById).affectedKeys().hasOnly([id])
+        && after.acknowledgementsByKey == before.acknowledgementsByKey
+        && validDeposit(newDeposit)
+        && newDeposit.version == oldDeposit.version + 1
+        && newDeposit.createdAt == oldDeposit.createdAt
+        && newDeposit.createdBy == oldDeposit.createdBy
+        && newDeposit.updatedAt == request.time
+        && newDeposit.updatedBy == request.auth.uid
+        && (
+          (kind == "UPDATE_DEPOSIT" && newDeposit.archivedAt == oldDeposit.archivedAt)
+          || (kind == "ARCHIVE_DEPOSIT"
+            && oldDeposit.archivedAt == null
+            && newDeposit.archivedAt == request.time
+            && newDeposit.diff(oldDeposit).affectedKeys().hasOnly(["version", "updatedAt", "updatedBy", "archivedAt"]))
+        );
+    }
+
+    function validAcknowledgementUpdate(before, after, key) {
+      let acknowledgement = after.acknowledgementsByKey[key];
+      return key.matches("^[A-Za-z0-9_-]{1,80}\\|[0-9]{4}-[0-9]{2}-[0-9]{2}\\|(30|7|1|0)$")
+        && after.depositsById == before.depositsById
+        && after.acknowledgementsByKey.diff(before.acknowledgementsByKey).affectedKeys().hasOnly([key])
+        && key in after.acknowledgementsByKey
+        && acknowledgement is map
+        && acknowledgement.keys().hasOnly(["acknowledgedAt", "acknowledgedBy"])
+        && acknowledgement.acknowledgedAt == request.time
+        && acknowledgement.acknowledgedBy == request.auth.uid;
+    }
+
+    function validSavingsUpdate() {
+      let before = resource.data;
+      let after = request.resource.data;
+      let mutation = after.lastMutation;
+      return validSavingsRoot(after)
+        && before.schemaVersion == after.schemaVersion
+        && (
+          (mutation.kind in ["UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT"]
+            && validDepositUpdate(before, after, mutation.targetId, mutation.kind))
+          || (mutation.kind == "ACKNOWLEDGE"
+            && validAcknowledgementUpdate(before, after, mutation.targetId))
+        );
+    }
+
+    match /artifacts/{appId}/public/data/ledgers/shared_ledger_savings {
+      allow read: if isAuthorizedLedgerEmail();
+      allow create: if isAuthorizedLedgerEmail() && validSavingsCreate();
+      allow update: if isAuthorizedLedgerEmail() && validSavingsUpdate();
+      allow delete: if false;
+    }
+
     match /artifacts/{appId}/public/data/ledgers/{ledgerId} {
-      allow read, create, update: if isAuthorizedLedgerEmail();
+      allow read, create, update: if ledgerId != "shared_ledger_savings" && isAuthorizedLedgerEmail();
       allow delete: if false;
     }
 

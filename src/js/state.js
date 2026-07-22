@@ -1,4 +1,5 @@
 import { getLedgerToday } from "./clock.js";
+import { createEmptyDepositDocument } from "./deposit-schema.js";
 
 const listeners = new Map();
 const initialLedgerDate = getLedgerToday();
@@ -20,6 +21,7 @@ export const state = {
   isFirstLoad: true,
   currentUser: null,
   appState: { balances: {}, entries: {}, settings: {} },
+  depositDocument: createEmptyDepositDocument(),
   previousYearEntries: {},
   pendingUpdates: { balances: {}, entries: {}, settings: {} },
   yearlyCatSums: {},

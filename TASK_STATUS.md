@@ -6,21 +6,21 @@
 
 | Field | Value |
 |---|---|
-| Task ID | BUG-LOGIN-001 |
-| Title | Release loading overlay when initial ledger read fails |
-| State | APPROVED |
-| Branch | fix/login-loading-stall |
-| Base SHA | 7825c6589d7095f277923cf255db151ff70adf1c |
-| Implementation Head | b1debd750c5b3038dfe58c631e3b73fce71d8062 |
-| Review Round | 1 |
-| Evidence | `docs/review-evidence/BUG-LOGIN-001.md` |
-| Latest Review | `docs/task-reviews/BUG-LOGIN-001-R1.md` - APPROVED |
-| Next Task | UXS-011 |
+| Task ID | UXS-011 |
+| Title | Implement validated fixed-document deposit storage |
+| State | IMPLEMENTING |
+| Branch | task/uxs-011-deposit-storage |
+| Base SHA | 06b235f |
+| Implementation Head | - |
+| Review Round | 0 |
+| Evidence | `docs/review-evidence/UXS-011.md` |
+| Latest Review | - |
+| Next Task | UXS-012 |
 
 ## Reviewer Attention
 
-- BUG-LOGIN-001 is APPROVED at `b1debd750c5b3038dfe58c631e3b73fce71d8062`.
-- Next Task is UXS-011.
+- UXS-011 must preserve all legacy yearly-ledger behavior.
+- Candidate Firestore Rules are emulator-only and must not be deployed.
 
 ## History
 
