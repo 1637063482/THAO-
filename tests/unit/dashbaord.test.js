@@ -68,4 +68,23 @@ describe("dashboard rendering", () => {
     dash.refreshDashboard();
     expect(document.getElementById("dashboard-root").innerHTML).toContain("dashboard-root");
   });
+
+  it.each([
+    ["refreshDashboardAfterLocalUpdate"],
+    ["refreshDashboardAfterMonthSwitch"],
+  ])("%s preserves legacy state and renders the updated hero", async (refreshName) => {
+    document.body.innerHTML = '<div id="dashboard-root"></div>';
+    const dash = await import("../../src/js/dashboard.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.activeYear = 2026;
+    stateModule.state.activeMonthId = 3;
+    stateModule.state.appState = { balances: {}, entries: { "3_15_dining": "120000" }, settings: { monthly_budget_3: "2000000" } };
+    stateModule.state.pendingUpdates = { entries: { "3_15_dining": "120000" } };
+    const appStateBefore = stateModule.state.appState;
+    const pendingBefore = stateModule.state.pendingUpdates;
+    dash[refreshName]();
+    expect(document.querySelector(".dashboard-hero")).not.toBeNull();
+    expect(stateModule.state.appState).toBe(appStateBefore);
+    expect(stateModule.state.pendingUpdates).toBe(pendingBefore);
+  });
 });

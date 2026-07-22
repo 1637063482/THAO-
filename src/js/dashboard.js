@@ -111,3 +111,11 @@ export function initDashboard(containerId) {
 export function refreshDashboard() {
   initDashboard();
 }
+
+export function refreshDashboardAfterLocalUpdate() {
+  initDashboard();
+}
+
+export function refreshDashboardAfterMonthSwitch() {
+  initDashboard();
+}
