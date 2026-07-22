@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-003 |
 | Title | Establish Apple Warm Design Tokens and responsive App Shell |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-003-apple-warm-tokens |
 | Base SHA | a9fc9fcf67e04b15f2ffc99347896f55dbc55bed |
 | Implementation Head | 5db02b7fbde137f4cb653a7e6b2961fd4e99c192 |
 | Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-003.md` |
-| Latest Review | `docs/task-reviews/UXS-003-R2.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-003-R3.md` - CHANGES_REQUESTED |
 | Next Task | UXS-004 |
 
 ## Reviewer Attention
 
-- UXS-003 R3 is ready for Terra review. All R2 findings fixed: `navigateTo()` reasserts `setActive` after `switchMobileView`, tests use real call chain, 6 viewport screenshots captured via Puppeteer with breakpoint verification.
+- UXS-003 R3 review is CHANGES_REQUESTED. R2 active-state repair and six viewport screenshots are verified, but R3 adds unapproved `puppeteer` dependency/lock-file churn and duplicate `scripts/capture-screenshots.{cjs,mjs}` outside UXS-003's explicit allowed file set. Remove only those scope-expanding files/dependency; retain the required evidence images. Do not start UXS-004.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
