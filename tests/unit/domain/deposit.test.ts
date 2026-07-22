@@ -7,11 +7,13 @@ describe("deposit domain", () => {
     expect(actualDays("2024-01-01", "2025-01-01")).toBe(366);
     expect(expectedInterestVnd(deposit())).toBe(50_000);
   });
-  it("supports override interest and derived MATURING status", () => {
+  it("supports override interest and explicit derived date boundaries", () => {
     const d = deposit({ expectedInterestVndOverride: 12345 });
     expect(expectedInterestVnd(d)).toBe(12345);
-    expect(deriveDepositStatus(d, "2024-06-01")).toBe("MATURING");
-    expect(deriveDepositStatus(d, "2025-01-01")).toBe("MATURED");
+    expect(deriveDepositStatus(d, "2023-12-31")).toBe("ACTIVE");
+    expect(deriveDepositStatus(d, "2024-06-01")).toBe("ACTIVE");
+    expect(deriveDepositStatus(d, "2025-01-01")).toBe("MATURING");
+    expect(deriveDepositStatus(d, "2025-01-02")).toBe("MATURED");
   });
   it("enforces status transitions and preserves input", () => {
     const d = deposit(); const next = transitionDeposit(d, "MATURED");
@@ -21,6 +23,12 @@ describe("deposit domain", () => {
   it("summarizes principal, expected and actual interest without redeemed principal", () => {
     const redeemed = deposit({ id: "d2", status: "REDEEMED", actualInterestVnd: 40000 });
     expect(summarizeDeposits([deposit(), redeemed], "2024-07-01")).toEqual({ currentPrincipalVnd: 1_000_000, expectedInterestVnd: 49_726, expectedMaturityTotalVnd: 1_049_726, actualInterestVnd: 40_000 });
+  });
+  it("keeps expected maturity interest stable after maturity", () => {
+    const d = deposit();
+    expect(expectedInterestVnd(d, "2025-01-01")).toBe(50_000);
+    expect(expectedInterestVnd(d, "2026-01-01")).toBe(50_000);
+    expect(summarizeDeposits([d], "2026-01-01").expectedMaturityTotalVnd).toBe(1_050_000);
   });
   it("rejects invalid ranges, rates and unsafe values", () => {
     expect(() => deposit({ maturityDate: "2023-12-31" })).toThrowError(/precede/);

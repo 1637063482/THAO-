@@ -50,12 +50,16 @@ export function actualDays(startDate: string, endDate: string): number {
 export function deriveDepositStatus(deposit: Deposit, today: string): DepositStatus | "MATURING" {
   dateValue(today);
   if (deposit.status !== "ACTIVE") return deposit.status;
-  return today < deposit.maturityDate ? "MATURING" : "MATURED";
+  if (today < deposit.startDate) return "ACTIVE";
+  if (today < deposit.maturityDate) return "ACTIVE";
+  if (today === deposit.maturityDate) return "MATURING";
+  return "MATURED";
 }
 
 export function expectedInterestVnd(deposit: Deposit, asOfDate = deposit.maturityDate): number {
   if (deposit.expectedInterestVndOverride !== null) return deposit.expectedInterestVndOverride;
-  const days = actualDays(deposit.startDate, asOfDate);
+  const cappedDate = asOfDate > deposit.maturityDate ? deposit.maturityDate : asOfDate;
+  const days = actualDays(deposit.startDate, cappedDate);
   const yearDays = new Date(Date.UTC(Number(deposit.startDate.slice(0, 4)), 1, 29)).getUTCDate() === 29 ? 366n : 365n;
   return asSafe(roundHalfUp(BigInt(deposit.principalVnd) * BigInt(deposit.annualRatePpm) * BigInt(days), 1_000_000n * yearDays));
 }
