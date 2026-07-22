@@ -8,19 +8,19 @@
 |---|---|
 | Task ID | UXS-006 |
 | Title | Implement derived daily ledger view |
-| State | READY_FOR_REVIEW |
+| State | CHANGES_REQUESTED |
 | Branch | task/uxs-006-day-ledger |
 | Base SHA | 118278304078429a5874e1effc9a8359659226d5 |
 | Implementation Head | e383903c33b147ca7d75342f88a90ca1a2fea112 |
 | Review Round | 2 |
 | Evidence | `docs/review-evidence/UXS-006.md` |
-| Latest Review | `docs/task-reviews/UXS-006-R1.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-006-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-007 |
 
 ## Reviewer Attention
 
-- UXS-006 R1 requests corrections for daily-view remote snapshot refresh, remark rendering, and trustworthy responsive evidence.
-- Coder must read `docs/task-reviews/UXS-006-R1.md`, repair only its blocking items, then submit a new READY_FOR_REVIEW head.
+- UXS-006 R2 requests correction for remote refresh overwriting a focused daily input's unsaved draft.
+- Coder must read `docs/task-reviews/UXS-006-R2.md`, repair only its blocking item, then submit a new READY_FOR_REVIEW head.
 
 ## History
 
