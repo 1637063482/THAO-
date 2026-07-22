@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-009 |
 | Title | Implement savings goal UI |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-009-savings-ui |
 | Base SHA | 0467d102c6d8bac509f4e3ae10f49094d0562cee |
-| Implementation Head | 945e19dc50edbab5035c9e0d0561bce9d325d0ab |
-| Review Round | 1 |
+| Implementation Head | acbb3779d669ec060186b860343a3d78693ca89a |
+| Review Round | 2 |
 | Evidence | `docs/review-evidence/UXS-009.md` |
 | Latest Review | `docs/task-reviews/UXS-009-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-010 |
