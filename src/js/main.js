@@ -77,7 +77,7 @@ function persistInputValue(target, vndValueToSave) {
   }
 }
 
-function scheduleInputSave() {
+export function scheduleInputSave() {
   clearTimeout(window._calcTimeout);
   window._calcTimeout = setTimeout(function() { calculateAll(); refreshDashboardAfterLocalUpdate(); }, 150);
   triggerCloudSave();
@@ -172,7 +172,7 @@ document.getElementById("quick-add-modal")?.addEventListener("click", function(e
   if (e.target === e.currentTarget) closeQuickAdd();
 });
 
-function switchMonthTab(monthId) {
+export function switchMonthTab(monthId) {
   state.activeMonthId = monthId;
   document.querySelectorAll('[id^="btn-tab-"]').forEach(function(btn) { btn.className = "month-tab"; });
   var activeBtn = document.getElementById("btn-tab-" + monthId);

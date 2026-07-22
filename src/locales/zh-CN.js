@@ -114,9 +114,6 @@ export default {
   // Dialogs
   confirm_logout: "确定要退出账号吗？",
   confirm_import: "警告：导入将覆盖当前云端的所有数据，确定要继续吗？",
-
-  // Dashboard
-
   // Chart
   no_data: "暂无数据",
 
