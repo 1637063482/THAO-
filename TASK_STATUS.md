@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | UXS-003 |
 | Title | Establish Apple Warm Design Tokens and responsive App Shell |
-| State | PLANNED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-003-apple-warm-tokens |
 | Base SHA | a9fc9fcf67e04b15f2ffc99347896f55dbc55bed |
-| Implementation Head | pending |
+| Implementation Head | 72550462032881605bec4a0f605256dc2840ae06 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-003.md` |
 | Latest Review | pending |
@@ -19,8 +19,7 @@
 
 ## Reviewer Attention
 
-- UXS-003 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
-- UXS-003 establishes Apple Warm Design Tokens (<768px bottom nav, >=768px sidebar), PWA safe-area, keyboard/accessibility navigation.
+- UXS-003 R1 is ready for Terra review. Coder has implemented Design Tokens, responsive sidebar (>=768px), bottom nav (<768px), safe-area support, keyboard navigation, and 9 unit tests (147 total).
 - Prohibited: modifying budget/entry/sync calculations, Firestore, business schema.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
