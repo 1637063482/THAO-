@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bindSavingsGoalForm, buildSavingsViewModel, renderSavingsPage, renderSavingsSummary } from "../../src/js/savings-view.js";
+import { bindSavingsGoalForm, buildSavingsViewModel, installSavingsSyncBridge, renderSavingsPage, renderSavingsSummary } from "../../src/js/savings-view.js";
 
 describe("savings view", () => {
   const input = { settings: { savings_goal_month_3: 300000, savings_goal_annual: 4000000 }, month: 3, monthlyIncome: 500000, monthlyExpense: 200000, annualIncome: 5000000, annualExpense: 2000000 };
@@ -28,5 +28,21 @@ describe("savings view", () => {
     expect(status).toBe("error");
     expect(root.querySelector('[name="monthly"]').value).toBe("draft-vnd");
     expect(root.querySelector('[name="annual"]').value).toBe("7000000");
+  });
+
+  it("bridges all real sync indicator states while retaining Chinese locale", async () => {
+    document.body.innerHTML = '<div id="root"></div><div id="sync-status"></div>';
+    const root = document.getElementById("root");
+    root.dataset.locale = "zh-CN";
+    root.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input, locale: "zh-CN" }));
+    const sync = document.getElementById("sync-status");
+    const stop = installSavingsSyncBridge(root, sync);
+    const states = [["", "已同步"], ["bg-yellow-50", "正在同步"], ["bg-red-50", "保存失败"], ["bg-emerald-50", "已同步"]];
+    for (const [className, label] of states) {
+      sync.className = className;
+      await Promise.resolve();
+      expect(root.querySelector(".savings-sync-status").textContent).toBe(label);
+    }
+    stop();
   });
 });

@@ -97,6 +97,7 @@ function refreshSavingsView(status) {
   const vm = buildSavingsViewModel({ settings: state.appState.settings, month: state.activeMonthId, monthlyIncome: monthlyVm.totalIncome, monthlyExpense: monthlyVm.totalSpending, annualIncome, annualExpense, locale: getCurrentLocale(), status: status || "synced" });
   const summary = document.getElementById("savings-root");
   if (!summary) return;
+  summary.dataset.locale = getCurrentLocale();
   summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
   bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
   installSavingsSyncBridge(summary);
