@@ -2,8 +2,8 @@ import { calculateActualSavings, calculateSavingsProgress } from "../domain/savi
 import { readSavingsGoals, writeAnnualSavingsGoal, writeMonthlySavingsGoal } from "./savings-goal-store.js";
 
 const labels = {
-  vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" },
-  "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", noGoal: "未设置目标", synced: "已同步", queued: "等待保存", error: "保存失败" },
+  vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", syncing: "Đang đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" },
+  "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", noGoal: "未设置目标", synced: "已同步", syncing: "正在同步", queued: "等待保存", error: "保存失败" },
 };
 
 function text(locale, key) { return (labels[locale] || labels.vi)[key]; }
@@ -25,9 +25,25 @@ export function renderSavingsSummary(vm) {
 }
 
 export function renderSavingsPage(vm) {
-  return '<section class="savings-page card p-4 md:p-6" aria-labelledby="savings-page-title"><div class="flex items-center justify-between gap-3"><h2 id="savings-page-title" class="text-lg font-bold text-slate-800">' + text(vm.locale, "title") + '</h2><span class="savings-sync-status" data-status="' + vm.status + '">' + text(vm.locale, vm.status === "error" ? "error" : vm.status === "queued" ? "queued" : "synced") + '</span></div>' +
+  return '<section class="savings-page card p-4 md:p-6" aria-labelledby="savings-page-title"><div class="flex items-center justify-between gap-3"><h2 id="savings-page-title" class="text-lg font-bold text-slate-800">' + text(vm.locale, "title") + '</h2><span class="savings-sync-status" data-status="' + vm.status + '">' + text(vm.locale, vm.status === "error" ? "error" : vm.status === "queued" ? "queued" : vm.status === "syncing" ? "syncing" : "synced") + '</span></div>' +
     '<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4"><div class="savings-metric"><span>' + text(vm.locale, "month") + '</span><strong class="blur-sensitive">' + money(vm.monthlyActual) + ' / ' + (vm.monthly.targetVnd === null ? "—" : money(vm.monthly.targetVnd)) + '</strong><small>' + text(vm.locale, "difference") + ': ' + (vm.monthly.targetVnd === null ? "—" : money(Math.max(0, vm.monthly.targetVnd - vm.monthlyActual))) + '</small></div><div class="savings-metric"><span>' + text(vm.locale, "annual") + '</span><strong class="blur-sensitive">' + money(vm.annualActual) + ' / ' + (vm.annual.targetVnd === null ? "—" : money(vm.annual.targetVnd)) + '</strong><small>' + text(vm.locale, "difference") + ': ' + (vm.annual.targetVnd === null ? "—" : money(Math.max(0, vm.annual.targetVnd - vm.annualActual))) + '</small></div></div>' +
     '<form class="savings-goal-form mt-5" data-savings-goal-form><label>' + text(vm.locale, "month") + ' ' + vm.month + '<input inputmode="numeric" name="monthly" value="' + (vm.goals.monthly[vm.month - 1] ?? "") + '" aria-label="' + text(vm.locale, "month") + '"></label><label>' + text(vm.locale, "annual") + '<input inputmode="numeric" name="annual" value="' + (vm.goals.annual ?? "") + '" aria-label="' + text(vm.locale, "annual") + '"></label><div class="flex gap-2 md:col-span-2"><button type="submit" class="btn-primary">' + text(vm.locale, "save") + '</button><button type="button" class="btn-secondary" data-clear-goals>' + text(vm.locale, "clear") + '</button></div></form></section>';
+}
+
+export function setSavingsStatus(root, status) {
+  const node = root?.querySelector(".savings-sync-status");
+  if (!node) return;
+  node.dataset.status = status;
+  node.textContent = text(root.dataset.locale || "vi", status === "error" ? "error" : status === "queued" ? "queued" : status === "syncing" ? "syncing" : "synced");
+}
+
+export function installSavingsSyncBridge(root, syncStatus = document.getElementById("sync-status")) {
+  if (!syncStatus || typeof MutationObserver === "undefined") return () => {};
+  const update = () => setSavingsStatus(root, syncStatus.className.includes("red") ? "error" : syncStatus.className.includes("yellow") ? "syncing" : "synced");
+  const observer = new MutationObserver(update);
+  observer.observe(syncStatus, { attributes: true, childList: true, subtree: true });
+  update();
+  return () => observer.disconnect();
 }
 
 export function bindSavingsGoalForm(root, { settings, pendingUpdates, month, onSave, onStatus } = {}) {

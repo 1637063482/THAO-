@@ -16,7 +16,7 @@ import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 import { initNavigation } from "./navigation.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
-import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm } from "./savings-view.js";
+import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
 
 window.switchMonthTab = switchMonthTab;
@@ -98,7 +98,8 @@ function refreshSavingsView(status) {
   const summary = document.getElementById("savings-root");
   if (!summary) return;
   summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
-  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, onStatus: function(next) { refreshSavingsView(next); }, onSave: function() { triggerCloudSave(); refreshSavingsView("queued"); } });
+  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
+  installSavingsSyncBridge(summary);
 }
 
 document.body.addEventListener("input", function(e) {
