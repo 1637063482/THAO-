@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
 | Implementation Head | 473e4f631affb1204df5b33527a2d4073dbd61aa |
 | Review Round | 6 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
-| Latest Review | `docs/task-reviews/UXS-004-R5.md` - CHANGES_REQUESTED |
+| Latest Review | `docs/task-reviews/UXS-004-R6.md` - APPROVED |
 | Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-004 R5 is CHANGES_REQUESTED. R5 replaces injected markup with an isolated dashboard render, but required production-page/quick-entry/privacy visual proof is still absent; wrapper tests do not cover the real update paths, evidence contradicts itself, and locale comments remain out of scope. Read `docs/task-reviews/UXS-004-R5.md`; do not start UXS-005.
+- UXS-004 R6 is APPROVED at `473e4f6`. Production-page synthetic screenshots, privacy masking, real refresh-path tests, evidence provenance, and scope are verified. A future Coder run may initialize only the planned next task, UXS-005.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
@@ -28,6 +28,7 @@
 
 | Task | Final State | Approved Head | Review |
 |---|---|---|---|
+| UXS-004 | APPROVED | `473e4f6` | `docs/task-reviews/UXS-004-R6.md` |
 | UXS-003 | APPROVED | `c252742` | `docs/task-reviews/UXS-003-R4.md` |
 | UXS-002 | APPROVED | `a9fc9fc` | `docs/task-reviews/UXS-002-R7.md` |
 | UXS-001 | APPROVED | `460d337` | `docs/task-reviews/UXS-001-R4.md` |
