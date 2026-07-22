@@ -531,6 +531,13 @@ tr:hover td:not(.sticky-col) {
 #quick-add-modal.is-open { display: flex !important; opacity: 1 !important; }
 #quick-add-modal[aria-hidden="true"] { pointer-events: none; }
 #quick-add-panel { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+
+#daily-ledger-container { display: none; }
+#daily-ledger-container.ledger-view-active { display: block; }
+#months-container.ledger-table-hidden { display: none; }
+.daily-ledger-card { border: 1px solid #f8e7c4; }
+.daily-ledger-cell { display: flex; flex-direction: column; gap: 0.25rem; }
+.daily-ledger-input { width: 100%; min-width: 0; }
 .dark #quick-add-panel { @apply bg-slate-800; }
 
 /* ===== Loading Overlay ===== */

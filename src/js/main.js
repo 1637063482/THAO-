@@ -7,7 +7,8 @@ import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
 import { initCharts } from "./charts.js";
-import { fullRebuildDOM, softUpdateDOM, renderMonthTable, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
+import { fullRebuildDOM, softUpdateDOM, renderMonthTable, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
+import { setLedgerView, getLedgerView } from "./day-ledger.js";
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
 import { openQuickAdd, closeQuickAdd, submitQuickAdd } from "./quick-add.js";
 import { initIcons } from "./icons.js";
@@ -24,6 +25,7 @@ window.applyManualRate = applyManualRate;
 window.togglePrivacy = togglePrivacy;
 window.toggleDarkMode = toggleDarkMode;
 window.switchMobileView = switchMobileView;
+window.toggleLedgerView = toggleLedgerView;
 window.toggleNavMore = toggleNavMore;
 window.changeYear = changeYear;
 window.handleLogin = handleLogin;
@@ -183,6 +185,11 @@ export function switchMonthTab(monthId) {
   if (chartTitle) chartTitle.innerText = t("monthly", { month: monthId });
   var b = document.getElementById("budget-label-month");
   if (b) b.innerText = monthId;
+}
+
+export function toggleLedgerView() {
+  setLedgerView(getLedgerView() === "daily" ? "table" : "daily");
+  renderDailyLedger(state.activeMonthId);
 }
 
 function updateYearLabels() {
