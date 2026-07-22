@@ -338,17 +338,19 @@ document.addEventListener("click", function(e) {
   }
 });
 
-// Override fullRebuildDOM to also init icons after DOM rebuild
+// Override fullRebuildDOM to also init icons and dashboard after DOM rebuild
 var _originalFullRebuildDOM = fullRebuildDOM;
 window.fullRebuildDOM = function() {
   _originalFullRebuildDOM();
   setTimeout(initIcons, 50);
+  setTimeout(initDashboard, 50);
 };
 
 var _originalSoftUpdateDOM = softUpdateDOM;
 window.softUpdateDOM = function() {
   _originalSoftUpdateDOM();
   setTimeout(initIcons, 50);
+  setTimeout(initDashboard, 50);
 };
 
 function togglePrivacy() {
