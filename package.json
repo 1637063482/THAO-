@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "context:coder": "node scripts/task-context.mjs coder",
+    "context:reviewer": "node scripts/task-context.mjs reviewer",
     "preview": "vite preview",
     "test": "vitest",
     "test:watch": "vitest",

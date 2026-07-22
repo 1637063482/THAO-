@@ -126,6 +126,27 @@
 
 T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度矩阵并移出 T011/T012 主线。以下 UXS 任务必须继续遵守该结论；任何任务都不得部署 Cloudflare/Firebase、修改线上 Rules/Auth 或迁移真实数据，除非用户另行明确授权。
 
+## OPS-001：降低 Agent 重复上下文 Token
+
+- Task ID: OPS-001
+- 目标: 将默认读取从完整 workflow/plan/review 文档改为精简上下文与当前 Task 自动提取，同时保留完整规则供异常时按需读取。
+- 前置条件/基线: UXS-005 R4 APPROVED；批准 review commit `4c39dd0`；UXS-006 尚未开始。
+- 修改文件: `AGENTS.md`、`AGENT_WORKFLOW.md`、`TASK_PLAN.md`、`REVIEW_PLAN.md`、`TASK_STATUS.md`、`package.json`、`docs/CODEX_CONTEXT.md`（新建）、`docs/AGENTS_FULL.md`（新建）、`docs/TASK_HISTORY.md`（新建）、`scripts/task-context.mjs`（新建）、`tests/unit/task-context.test.js`（新建）、`docs/review-evidence/OPS-001.md`（新建）。
+- 涉及模块: Agent context loading、workflow state machine、documentation tooling。
+- 详细步骤:
+  1. RED 验证当前不存在 `context:coder/context:reviewer`，且无法只提取当前/下一 Task。
+  2. 将详细 AGENTS 内容归档到 `docs/AGENTS_FULL.md`，把自动注入的 `AGENTS.md` 缩为只含入口、不可违反的安全边界和异常升级条件。
+  3. 创建 `docs/CODEX_CONTEXT.md`，集中稳定产品事实、状态动作、禁止事项、门禁和提交规范；其内容为默认绑定规则。
+  4. 创建 `scripts/task-context.mjs`：解析 `TASK_STATUS.md`，Coder 根据状态输出当前或下一 Task；Reviewer 只在 `READY_FOR_REVIEW` 输出审查包；按需包含最新 review/evidence，不输出无关 Task。
+  5. 添加两个 npm scripts，并用纯函数测试覆盖 PLANNED、APPROVED、CHANGES_REQUESTED、READY_FOR_REVIEW、非法状态/角色和 Task 缺失。
+  6. 将历史表移到 `docs/TASK_HISTORY.md`，让 `TASK_STATUS.md` 只保存当前状态；更新完整 workflow 为“默认运行上下文命令，异常时才读全文”。
+  7. 比较优化前后默认字符数并记录 evidence。
+- 禁止修改: 业务代码、UI、Firebase/Cloudflare 配置、线上资源、全局 `engineering-workflow` Skill、UXS-006 实现。
+- 完成标准: 默认 Coder/Reviewer 不需要读取完整 `AGENT_WORKFLOW.md`、`TASK_PLAN.md`、`REVIEW_PLAN.md`；命令只输出行动所需片段；详细规则仍可追溯；无关 Task 不进入输出。
+- 测试要求: `npm test -- --run tests/unit/task-context.test.js`；实际运行两个 context 命令；通用门禁；记录输出字符数与降幅。
+- Evidence: `docs/review-evidence/OPS-001.md`。
+- 建议提交: `chore: add token-efficient agent context loader`。
+
 ## UXS 通用施工约束
 
 - 执行 Coder：DeepSeek V4 Flash；Reviewer：GPT-5.6 Terra。两者严格串行。

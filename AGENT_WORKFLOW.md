@@ -11,7 +11,18 @@
 | Coder | DeepSeek V4 Flash | 使用产品提供的最高可用思考档；若没有思考档则按默认 | 不得在 evidence 中虚构不存在的推理档位；复杂任务依靠更细 Task 和门禁控制 |
 | Reviewer | GPT-5.6 Terra | High | P0、跨年/并发/安全或第二轮仍有争议时使用 Extra High |
 
-使用 Standard speed。每个 Task 使用独立或清理过的线程；无论线程是否延续，都必须重新读取仓库状态。
+使用 Standard speed。每个 Task 使用独立或清理过的线程。每轮必须读取精简状态，但不再默认读取完整计划和本文件。
+
+默认入口：
+
+```powershell
+npm run context:coder     # Coder
+npm run context:reviewer  # Reviewer
+```
+
+两个命令的输出已经包含 `docs/CODEX_CONTEXT.md` 与 `TASK_STATUS.md`，不得在正常回合预先重复打开。
+
+只有 context 命令报错、状态/Task 缺失、规则冲突、计划变更或安全边界不清时，才读取本文件、完整 `TASK_PLAN.md`、`REVIEW_PLAN.md`、`docs/AGENTS_FULL.md` 或 `docs/TASK_HISTORY.md`。本文件保留完整解释和故障恢复流程，不属于正常回合的默认输入。
 
 ## 2. 唯一状态机
 
@@ -87,8 +98,8 @@ Reviewer 只允许修改 review 文件和 `TASK_STATUS.md`，并以独立 commit
 
 Coder 每次启动只执行以下算法：
 
-1. 读取 `AGENTS.md`、`TASK_STATUS.md` 和本文件。
-2. 执行 `git status --short`，非干净工作树必须先判断来源；不得覆盖未知改动。
+1. 运行 `npm run context:coder`；其输出包含精简规则、状态和行动 Task，正常时不得预读这些文件或再读完整计划。
+2. 执行 `git status --short`，非干净工作树必须先判断来源；不得覆盖未知改动。context 命令失败或输出冲突时才升级读取完整文档。
 3. 根据状态行动：
    - `APPROVED`：读取 `TASK_PLAN.md` 的下一 Task，建立 `task/<id>-<slug>` 分支，把状态初始化为 `PLANNED` 后开始。
    - `PLANNED`：转为 `IMPLEMENTING`，执行当前 Task。
@@ -117,7 +128,7 @@ DeepSeek V4 Flash 额外约束：
 
 Terra 每次启动只执行以下算法：
 
-1. 读取 `AGENTS.md`、`TASK_STATUS.md`、本文件、当前 Task、Review Plan、evidence。
+1. 运行 `npm run context:reviewer`；该命令提供精简规则、状态、当前 Task、专项标准、evidence 和适用的前轮 review。
 2. 只有状态为 `READY_FOR_REVIEW` 才开始；否则停止。
 3. 以状态记录的 `base_sha..implementation_head` 为完整审查范围；返修轮还需检查上一 reviewed head 到新 head 的增量。
 4. 不能只读 evidence 摘要，必须读实际代码、测试和完整 diff。
@@ -161,13 +172,13 @@ Terra 每次启动只执行以下算法：
 ### 启动 Coder
 
 ```text
-你是本仓库的 DeepSeek V4 Flash Coder。不要依赖聊天历史，也不要等待我复制 Reviewer 结论。请从工作区实际文件开始，完整遵循 AGENTS.md 和 AGENT_WORKFLOW.md 的 Coder 状态机，读取 TASK_STATUS.md 决定是开始下一 Task、执行当前 Task、处理 CHANGES_REQUESTED，还是停止等待审查。严格按 TASK_PLAN.md 当前 Task 的精确文件、步骤、禁止修改和测试要求施工，不得合并 Task 或自行扩展范围。完成后提交代码、evidence 和状态，停在 READY_FOR_REVIEW，不得自动进入下一 Task。
+你是 DeepSeek V4 Flash Coder。运行 npm run context:coder，只按输出处理一个状态动作。命令已包含精简规则与状态，不要重复打开；报错或冲突时才读完整 workflow/plan。完成后提交实现、evidence 和状态，停在 READY_FOR_REVIEW。
 ```
 
 ### 启动 Terra
 
 ```text
-你是本仓库的 GPT-5.6 Terra Reviewer。不要依赖聊天历史，也不要让我复制 Coder 结论。请从工作区实际文件开始，完整遵循 AGENTS.md 和 AGENT_WORKFLOW.md 的 Reviewer 状态机，读取 TASK_STATUS.md、当前 Task、evidence、实际 commit 和 diff 独立审查。亲自运行验证命令；禁止修改业务代码。把 APPROVED、CHANGES_REQUESTED 或 BLOCKED 写入 docs/task-reviews 对应文件并更新 TASK_STATUS.md，提交审查记录后停止，不得代替 Coder 修复或进入下一 Task。
+你是 GPT-5.6 Terra Reviewer。运行 npm run context:reviewer；命令已包含精简规则与状态，不要重复打开。仅在 READY_FOR_REVIEW 时按输出独立审查实际 commit/diff 并亲自运行门禁；禁止修改业务代码。提交 review 与状态后停止。
 ```
 
-这两条启动语句在所有后续 Task 中保持不变。Task 细节只能从仓库事实源读取，不再嵌入聊天 Prompt。
+这两条启动语句在所有后续 Task 中保持不变。Task 细节由 context 命令从仓库事实源按需提取，不再嵌入聊天 Prompt，也不再默认加载完整计划。
