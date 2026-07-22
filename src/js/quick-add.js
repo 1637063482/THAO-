@@ -8,10 +8,17 @@ import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
 import { t } from "./i18n.js";
 
+let lastTrigger = null;
+
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
+  lastTrigger = document.getElementById("fab-btn") || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  modal.setAttribute("aria-hidden", "false");
+  modal.classList.add("is-open");
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
 
   const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
   const daySel = document.getElementById("qa-day");
@@ -43,9 +50,33 @@ export function closeQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
+  modal.setAttribute("aria-hidden", "true");
+  modal.classList.remove("is-open");
   modal.style.opacity = '0';
   panel.style.transform = 'scale(0.95)';
-  setTimeout(() => { modal.style.display = 'none';  }, 300);
+  setTimeout(() => { modal.style.display = 'none'; if (lastTrigger && typeof lastTrigger.focus === "function") lastTrigger.focus(); }, 300);
+}
+
+if (typeof document !== "undefined") {
+  if (window.__quickAddEscapeHandler) document.removeEventListener("keydown", window.__quickAddEscapeHandler);
+  window.__quickAddEscapeHandler = (event) => {
+    const modal = document.getElementById("quick-add-modal");
+    const panel = document.getElementById("quick-add-panel");
+    if (!modal?.classList.contains("is-open")) return;
+    if (event.key === "Escape") {
+      closeQuickAdd();
+      return;
+    }
+    if (event.key === "Tab" && panel) {
+      const focusable = [...panel.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])")].filter((el) => !el.disabled);
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    }
+  };
+  document.addEventListener("keydown", window.__quickAddEscapeHandler);
 }
 
 export function submitQuickAdd() {
@@ -91,6 +122,8 @@ export function submitQuickAdd() {
   const iEl = document.getElementById("entry-" + state.activeMonthId + "-" + d + "-" + cat);
   if (iEl) { iEl.dataset.raw = finalMath; iEl.value = formatDisplay(safeEval(finalMath)); }
 
+  calculateAll();
+  triggerCloudSave();
   showToast(t("record_saved"));
   closeQuickAdd();
   const qaAmt = document.getElementById("qa-amount");
@@ -98,8 +131,6 @@ export function submitQuickAdd() {
   if (qaAmt) qaAmt.value = "";
   if (qaRemark) qaRemark.value = "";
 
-  calculateAll();
-  triggerCloudSave();
   updateStreakAfterRecord();
 
   setTimeout(() => {

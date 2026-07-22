@@ -303,10 +303,10 @@
     </button>
 
     <!-- Quick-add modal -->
-    <div id="quick-add-modal" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:opacity 0.3s;opacity:0;">
+    <div id="quick-add-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="quick-add-title" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:700;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:opacity 0.3s;opacity:0;">
         <div id="quick-add-panel" class="bg-white rounded-3xl shadow-2xl p-6 w-full max-w-md mx-4 scale-95 transition-transform duration-300">
             <div class="flex items-center justify-between mb-5">
-                <h3 class="text-lg font-black text-slate-800 font-heading">
+                <h3 id="quick-add-title" class="text-lg font-black text-slate-800 font-heading">
                     <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-amber-500"></span><span data-i18n="quick_add_title"></span>
                 </h3>
                 <button onclick="window.closeQuickAdd()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
