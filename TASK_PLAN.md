@@ -147,6 +147,24 @@ T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度�
 - Evidence: `docs/review-evidence/OPS-001.md`。
 - 建议提交: `chore: add token-efficient agent context loader`。
 
+## BUG-LOGIN-001：登录后初始账本加载失败时退出加载遮罩
+
+- Task ID: BUG-LOGIN-001
+- 目标: Firebase 登录成功但首个 Firestore snapshot 失败时，应用必须退出全屏加载状态并显示同步错误，而不是永久卡住。
+- 前置条件/基线: UXS-010 APPROVED；用户已在真实 PWA 观察到点击登录后长期停留在加载界面。
+- 修改文件: `src/js/sync.js`、`tests/unit/sync-state.test.js`、`TASK_PLAN.md`、`REVIEW_PLAN.md`、`TASK_STATUS.md`、`docs/TASK_HISTORY.md`、`docs/review-evidence/BUG-LOGIN-001.md`（新建）。
+- 涉及模块: Firebase Auth handoff、Firestore snapshot、loading overlay、sync status。
+- 详细步骤:
+  1. RED 模拟登录后的首个当前年度 snapshot error，证明 loading overlay 保持显示且 `isFirstLoad` 不结束。
+  2. 抽取首载结束函数，让 snapshot success/error 都清理 loading overlay 和 `isFirstLoad`；error 继续保留同步错误状态。
+  3. 验证 snapshot success、error、重复 listener 均不会留下遮罩或伪报 synced。
+  4. 运行全量门禁并记录已知构建警告。
+- 禁止修改: Firebase 线上 Rules/Auth、真实账号/数据、登录凭证、业务账务、存款实现、UXS-011。
+- 完成标准: 登录成功后的 Firestore read error 不会永久遮挡 UI；失败仍明确显示 offline/error；成功路径行为不回退。
+- 测试要求: 定向 sync/auth 测试；全量门禁；不需要 Rules 测试。
+- Evidence: `docs/review-evidence/BUG-LOGIN-001.md`。
+- 建议提交: `fix: release loading overlay on ledger read failure`。
+
 ## UXS 通用施工约束
 
 - 执行 Coder：DeepSeek V4 Flash；Reviewer：GPT-5.6 Terra。两者严格串行。

@@ -6,21 +6,21 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-010 |
-| Title | Implement deposit and interest domain model |
-| State | APPROVED |
-| Branch | task/uxs-010-deposit-domain |
-| Base SHA | 15f59029f965361cf69003cfcaa9863373393285 |
-| Implementation Head | df5d0e62fd673f29eb80c756526fecd1b7413e35 |
-| Review Round | 3 |
-| Evidence | `docs/review-evidence/UXS-010.md` |
-| Latest Review | `docs/task-reviews/UXS-010-R3.md` - APPROVED |
+| Task ID | BUG-LOGIN-001 |
+| Title | Release loading overlay when initial ledger read fails |
+| State | IMPLEMENTING |
+| Branch | fix/login-loading-stall |
+| Base SHA | 7825c6589d7095f277923cf255db151ff70adf1c |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/BUG-LOGIN-001.md` |
+| Latest Review | pending |
 | Next Task | UXS-011 |
 
 ## Reviewer Attention
 
-- UXS-010 R3 is APPROVED at implementation head `df5d0e62fd673f29eb80c756526fecd1b7413e35`.
-- Before UXS-011, initialize the separately requested login-loading Bug Task; do not mix it into deposit persistence.
+- BUG-LOGIN-001 is an isolated auth-to-ledger-load repair before UXS-011.
+- Do not modify online Firebase configuration, credentials, ledger business rules, deposits, or start UXS-011.
 
 ## History
 

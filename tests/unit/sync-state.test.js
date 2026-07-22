@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 const firestoreMock = vi.hoisted(() => ({
   snapshotHandler: null,
+  snapshotErrorHandler: null,
 }));
 
 vi.mock("firebase/app", () => ({
@@ -11,8 +12,9 @@ vi.mock("firebase/firestore", () => ({
   doc: vi.fn((...parts) => parts.join("/")),
   getFirestore: vi.fn(() => ({})),
   setDoc: vi.fn(),
-  onSnapshot: vi.fn((ref, onNext) => {
+  onSnapshot: vi.fn((ref, onNext, onError) => {
     firestoreMock.snapshotHandler = onNext;
+    firestoreMock.snapshotErrorHandler = onError;
     return vi.fn();
   }),
 }));
@@ -164,6 +166,26 @@ describe("sync queue", () => {
     expect(state.appState.entries).toEqual({ "3_31_dining": "100000" });
     expect(window.updateStreakAfterRecord).toHaveBeenCalledTimes(1);
     expect(window.updateStreakAfterRecord).toHaveBeenCalledWith({ launchDefaultFireworks: false });
+  });
+
+  it("releases the initial loading overlay when the current ledger snapshot fails", async () => {
+    vi.useFakeTimers();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    document.body.innerHTML = '<div id="loading-overlay" style="display:flex;opacity:1"></div><div id="sync-status"></div>';
+    state.activeYear = 2026;
+    state.isFirstLoad = true;
+
+    setupRealtimeListener();
+    firestoreMock.snapshotErrorHandler(new Error("permission denied"));
+
+    expect(document.getElementById("loading-overlay").style.opacity).toBe("0");
+    expect(state.isFirstLoad).toBe(false);
+    await vi.advanceTimersByTimeAsync(300);
+    expect(document.getElementById("loading-overlay").style.display).toBe("none");
+    expect(document.getElementById("sync-status").className).toContain("red");
+
+    consoleError.mockRestore();
+    vi.useRealTimers();
   });
 
   it.each([7, 30])("triggers the %i day milestone once from remote snapshots", (days) => {

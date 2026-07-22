@@ -13,6 +13,15 @@ function refreshStreakFromSnapshot() {
   else if (window.renderStreakPanel) window.renderStreakPanel();
 }
 
+function completeInitialLedgerLoad() {
+  const loadingOverlay = document.getElementById("loading-overlay");
+  if (loadingOverlay) {
+    loadingOverlay.style.opacity = "0";
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+  }
+  state.isFirstLoad = false;
+}
+
 export function createSyncQueue({
   takeBatch,
   hasPendingChanges,
@@ -137,16 +146,12 @@ export function setupRealtimeListener() {
     if (window.softUpdateDOM) window.softUpdateDOM();
     refreshStreakFromSnapshot();
     updateSyncStatus("synced");
-    // 每次快照到达都隐藏 loading（首次加载、超时重登录等场景都需要）
-    const loadingOverlay = document.getElementById("loading-overlay");
-    if (loadingOverlay) {
-      loadingOverlay.style.opacity = "0";
-      setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
-    }
-    state.isFirstLoad = false;
+    // 首次加载无论成功还是失败都必须退出全屏 loading，避免认证成功后永久遮挡 UI。
+    completeInitialLedgerLoad();
   }, (error) => {
     console.error("拉取数据失败:", error);
     updateSyncStatus("error");
+    completeInitialLedgerLoad();
   });
 }
 
