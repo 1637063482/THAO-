@@ -25,7 +25,7 @@ export function getActive() {
 }
 
 /**
- * Set the active navigation item.
+ * Set the active navigation item (visual only).
  * @param {string} id - One of the NAV_ITEMS ids.
  * @throws {Error} If id is not a valid navigation item.
  * @returns {string} The newly active id.
@@ -36,20 +36,57 @@ export function setActive(id) {
   }
   _activeId = id;
 
-  // Update DOM active states
+  // Update active state on ALL [data-nav] elements (bottom nav + sidebar)
   document.querySelectorAll("[data-nav]").forEach(function (el) {
-    el.classList.toggle("active", el.getAttribute("data-nav") === id);
+    if (el.getAttribute("data-nav") === id) {
+      el.classList.add("active");
+    } else {
+      el.classList.remove("active");
+    }
   });
 
   return _activeId;
 }
 
 /**
- * Initialize keyboard navigation on nav elements.
- * Attaches keydown listeners to all [data-nav] elements for Enter/Space.
+ * Navigate to a destination: sets active state and invokes the action.
+ * Called by both bottom-nav and sidebar click/keyboard handlers.
+ * @param {string} id - Navigation destination id.
+ */
+export function navigateTo(id) {
+  setActive(id);
+  switch (id) {
+    case "overview":
+      window.switchMobileView("overview");
+      break;
+    case "add":
+      window.openQuickAdd();
+      break;
+    case "stats":
+      window.switchMobileView("stats");
+      break;
+    case "import":
+      var fileInput = document.getElementById("import-file");
+      if (fileInput) fileInput.click();
+      break;
+    case "export":
+      window.exportToCSV();
+      break;
+  }
+}
+
+/**
+ * Initialize navigation: configure click and keyboard handlers.
  */
 export function initNavigation() {
   document.querySelectorAll("[data-nav]").forEach(function (el) {
+    // Unified click handler
+    el.addEventListener("click", function (e) {
+      var id = el.getAttribute("data-nav");
+      if (id) navigateTo(id);
+    });
+
+    // Keyboard: Enter/Space trigger the same unified handler
     el.addEventListener("keydown", function (e) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();

@@ -1,7 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-// Navigation module doesn't exist yet — these tests confirm its required API
 describe("navigation", () => {
+  beforeEach(function () {
+    vi.resetModules();
+    localStorage.clear();
+    document.body.innerHTML = "";
+  });
+
   it("exports NAV_ITEMS with 5 destinations", async () => {
     const nav = await import("../../src/js/navigation.js");
     expect(nav.NAV_ITEMS).toBeDefined();
@@ -35,8 +40,58 @@ describe("navigation", () => {
     expect(function () { nav.setActive("bogus"); }).toThrow();
   });
 
-  it("exports initNavigation and handles keyboard Enter on nav items", async () => {
+  it("exports initNavigation and navigateTo", async () => {
     const nav = await import("../../src/js/navigation.js");
     expect(nav.initNavigation).toBeTypeOf("function");
+    expect(nav.navigateTo).toBeTypeOf("function");
+  });
+
+  it("navigateTo + initNavigation activates the clicked nav item and updates both surfaces", async function () {
+    // Set up both nav surfaces
+    document.body.innerHTML = [
+      '<button class="bottom-nav-item active" data-nav="overview">Overview</button>',
+      '<button class="bottom-nav-item" data-nav="stats">Stats</button>',
+      '<button class="sidebar-item" data-nav="stats">Stats</button>',
+    ].join("");
+
+    const nav = await import("../../src/js/navigation.js");
+    // Mock window handlers
+    window.switchMobileView = vi.fn();
+
+    nav.initNavigation();
+
+    // Click the bottom-nav stats button
+    var statsBtn = document.querySelector('.bottom-nav-item[data-nav="stats"]');
+    statsBtn.click();
+
+    expect(nav.getActive()).toBe("stats");
+    // Both surfaces should have active class
+    expect(statsBtn.classList.contains("active")).toBe(true);
+    var sidebarStats = document.querySelector('.sidebar-item[data-nav="stats"]');
+    expect(sidebarStats.classList.contains("active")).toBe(true);
+    // The previously active item should be inactive
+    var overviewBtn = document.querySelector('[data-nav="overview"]');
+    expect(overviewBtn.classList.contains("active")).toBe(false);
+    // The correct handler was called
+    expect(window.switchMobileView).toHaveBeenCalledWith("stats");
+  });
+
+  it("pressing Enter on a nav item activates it", async function () {
+    document.body.innerHTML = [
+      '<button class="bottom-nav-item active" data-nav="overview">Overview</button>',
+      '<button class="bottom-nav-item" data-nav="stats">Stats</button>',
+    ].join("");
+    window.switchMobileView = vi.fn();
+
+    const nav = await import("../../src/js/navigation.js");
+    nav.initNavigation();
+
+    var statsBtn = document.querySelector('[data-nav="stats"]');
+    var event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true });
+    statsBtn.dispatchEvent(event);
+
+    expect(nav.getActive()).toBe("stats");
+    expect(statsBtn.classList.contains("active")).toBe(true);
+    expect(window.switchMobileView).toHaveBeenCalledWith("stats");
   });
 });
