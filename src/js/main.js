@@ -16,6 +16,8 @@ import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 import { initNavigation } from "./navigation.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
+import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm } from "./savings-view.js";
+import { buildDashboardViewModel } from "./dashboard-view-model.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -83,6 +85,20 @@ export function scheduleInputSave() {
   clearTimeout(window._calcTimeout);
   window._calcTimeout = setTimeout(function() { calculateAll(); refreshDashboardAfterLocalUpdate(); }, 150);
   triggerCloudSave();
+}
+
+function refreshSavingsView(status) {
+  const monthlyVm = buildDashboardViewModel({ year: state.activeYear, month: state.activeMonthId, state: { appState: state.appState } });
+  let annualIncome = 0; let annualExpense = 0;
+  for (let month = 1; month <= 12; month += 1) {
+    const vm = buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } });
+    annualIncome += vm.totalIncome; annualExpense += vm.totalSpending;
+  }
+  const vm = buildSavingsViewModel({ settings: state.appState.settings, month: state.activeMonthId, monthlyIncome: monthlyVm.totalIncome, monthlyExpense: monthlyVm.totalSpending, annualIncome, annualExpense, locale: getCurrentLocale(), status: status || "synced" });
+  const summary = document.getElementById("savings-root");
+  if (!summary) return;
+  summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
+  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, onStatus: function(next) { refreshSavingsView(next); }, onSave: function() { triggerCloudSave(); refreshSavingsView("queued"); } });
 }
 
 document.body.addEventListener("input", function(e) {
@@ -352,6 +368,7 @@ window.fullRebuildDOM = function() {
   _originalFullRebuildDOM();
   setTimeout(initIcons, 50);
   initDashboard();
+  refreshSavingsView();
 };
 
 var _originalSoftUpdateDOM = softUpdateDOM;
@@ -359,6 +376,7 @@ window.softUpdateDOM = function() {
   _originalSoftUpdateDOM();
   setTimeout(initIcons, 50);
   initDashboard();
+  refreshSavingsView();
 };
 
 function togglePrivacy() {
@@ -455,6 +473,7 @@ initAuth(
     initCharts();
     renderStreakPanel();
     initDashboard();
+    refreshSavingsView();
     setTimeout(function() {
       updateBudgetUI();
       var today = getLedgerToday();
