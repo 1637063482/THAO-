@@ -6,27 +6,29 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-002 |
-| Title | Establish Vietnamese-first complete i18n baseline |
-| State | CHANGES_REQUESTED |
-| Branch | task/uxs-002-i18n |
-| Base SHA | 460d337018106118b19c74fb3ca66ea33e07fa37 |
-| Implementation Head | b9916cd2d60037902bc0c5497f092e8d996916a3 |
-| Review Round | 6 |
-| Evidence | `docs/review-evidence/UXS-002.md` |
-| Latest Review | `docs/task-reviews/UXS-002-R6.md` - CHANGES_REQUESTED |
-| Next Task | UXS-003 |
+| Task ID | UXS-003 |
+| Title | Establish Apple Warm Design Tokens and responsive App Shell |
+| State | PLANNED |
+| Branch | task/uxs-003-apple-warm-tokens |
+| Base SHA | a9fc9fcf67e04b15f2ffc99347896f55dbc55bed |
+| Implementation Head | pending |
+| Review Round | 1 |
+| Evidence | `docs/review-evidence/UXS-003.md` |
+| Latest Review | pending |
+| Next Task | UXS-004 |
 
 ## Reviewer Attention
 
-- UXS-002 R6 has CHANGES_REQUESTED in `docs/task-reviews/UXS-002-R6.md`. The R5 renderer test is real and i18n icon/streak fixes are valid, but R6 also adds unauthorized FX mode-button active-state design behavior. Evidence/status test counts must be reconciled to the current 20 targeted and 138 passed / 8 skipped full results.
-- User chose Option B (narrowed scope): fireworks.js has both Chinese and Vietnamese barrages; currency-view.js/fx-display.js excluded. Preserve this boundary; no UXS-003 work may start.
+- UXS-003 is ready for the DeepSeek V4 Flash Coder. Terra must stop until the state is `READY_FOR_REVIEW`.
+- UXS-003 establishes Apple Warm Design Tokens (<768px bottom nav, >=768px sidebar), PWA safe-area, keyboard/accessibility navigation.
+- Prohibited: modifying budget/entry/sync calculations, Firestore, business schema.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
 
 ## History
 
 | Task | Final State | Approved Head | Review |
 |---|---|---|---|
+| UXS-002 | APPROVED | `a9fc9fc` | `docs/task-reviews/UXS-002-R7.md` |
 | UXS-001 | APPROVED | `460d337` | `docs/task-reviews/UXS-001-R4.md` |
 | T021 | APPROVED | `311dd41` | `docs/task-reviews/T021-R1.md` |
 | T020 | APPROVED | `a4d853e` | `docs/task-reviews/T020-R2.md` |
