@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
-| Implementation Head | 30aedafa9faa7b0aa0b1bb5d6aa9adaafa936aff |
-| Review Round | 1 |
+| Implementation Head | e14956f1fef7b5531a989b14823c0e6702d513d7 |
+| Review Round | 2 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
 | Latest Review | `docs/task-reviews/UXS-004-R1.md` - CHANGES_REQUESTED |
 | Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-004 R1 is CHANGES_REQUESTED. The dashboard is not wired into `main.js`/`index.html`, today spending incorrectly includes income, and over-budget remaining is clamped to zero. Required six-size screenshots are absent; the ViewModel also duplicates legacy budget/entry derivations and locale-file scope needs resolution.
+- UXS-004 R2 is ready for Terra review. All R1 findings fixed: dashboard wired into main.js/index.html, todaySpending excludes income, over-budget returns negative, 6 viewport screenshots captured. 166 tests pass.
 - Do not start UXS-005. Coder must read `docs/task-reviews/UXS-004-R1.md` and address only its minimum corrections.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
