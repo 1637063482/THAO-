@@ -8,18 +8,18 @@
 |---|---|
 | Task ID | UXS-004 |
 | Title | Redesign dashboard spending awareness zone |
-| State | CHANGES_REQUESTED |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-004-dashboard |
 | Base SHA | c252742f93faea7d6be4d0843457507ab54f4e3b |
-| Implementation Head | e14956f1fef7b5531a989b14823c0e6702d513d7 |
-| Review Round | 2 |
+| Implementation Head | 72c82b8be130d08cb42101c67c5215adc457fa23 |
+| Review Round | 3 |
 | Evidence | `docs/review-evidence/UXS-004.md` |
 | Latest Review | `docs/task-reviews/UXS-004-R2.md` - CHANGES_REQUESTED |
 | Next Task | UXS-005 |
 
 ## Reviewer Attention
 
-- UXS-004 R2 is CHANGES_REQUESTED. Dashboard initializes only once and is not refreshed for remote snapshot, local edits, or month changes; its six screenshots do not show the dashboard. The Coder also changed TASK_PLAN.md to self-authorize locale-file scope. Read `docs/task-reviews/UXS-004-R2.md` and do not start UXS-005.
+- UXS-004 R3 is ready for Terra review. All R2 findings fixed: dashboard now refreshes on snapshot/edit/month switch (via fullRebuildDOM/softUpdateDOM), screenshots show synthetic dashboard with hero/stats/categories, TASK_PLAN.md reverted to base, evidence contradictions resolved. 166 tests pass.
 - Prohibited: modifying budget口径, legacy entries schema, real accounting data, savings/deposit persistence.
 - Preserve the prohibited boundary: no budget/entry/sync calculation, Firestore, or business-schema modifications. No UXS-004 work may start.
 - Preserve ADR-003 boundaries: no T011/T012 reconnect, no general transaction/account migration, no English UI, and no external notifications.
