@@ -1,6 +1,7 @@
 import { DomainError } from "./errors";
 
-export type DepositStatus = "ACTIVE" | "MATURED" | "REDEEMED" | "ROLLED_OVER";
+export type DepositStatus = "ACTIVE" | "REDEEMED" | "ROLLED_OVER";
+export type DerivedDepositStatus = DepositStatus | "MATURING" | "MATURED";
 export interface Deposit {
   readonly id: string;
   readonly principalVnd: number;
@@ -11,12 +12,19 @@ export interface Deposit {
   readonly expectedInterestVndOverride: number | null;
   readonly actualInterestVnd: number | null;
 }
-export interface DepositSummary { readonly currentPrincipalVnd: number; readonly expectedInterestVnd: number; readonly expectedMaturityTotalVnd: number; readonly actualInterestVnd: number; }
+export interface DepositSummary {
+  readonly currentPrincipalVnd: number;
+  readonly pendingMaturedPrincipalVnd: number;
+  readonly expectedInterestVnd: number;
+  readonly expectedMaturityTotalVnd: number;
+  readonly actualInterestVnd: number;
+}
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const transitions: Record<DepositStatus, readonly DepositStatus[]> = {
-  ACTIVE: ["MATURED", "REDEEMED", "ROLLED_OVER"], MATURED: ["REDEEMED", "ROLLED_OVER"], REDEEMED: [], ROLLED_OVER: [],
+  ACTIVE: ["REDEEMED", "ROLLED_OVER"], REDEEMED: [], ROLLED_OVER: [],
 };
+function isDepositStatus(value: string): value is DepositStatus { return Object.hasOwn(transitions, value); }
 function dateValue(value: string): number {
   if (!DATE_RE.test(value)) throw new DomainError("INVALID_DATE", "Date must use YYYY-MM-DD");
   const [year, month, day] = value.split("-").map(Number);
@@ -38,7 +46,9 @@ export function createDeposit(input: Omit<Deposit, "status"> & { status?: Deposi
   if (input.actualInterestVnd !== null) safeAmount(input.actualInterestVnd, "Actual interest");
   const start = dateValue(input.startDate); const maturity = dateValue(input.maturityDate);
   if (maturity < start) throw new DomainError("INVALID_DATE_RANGE", "Maturity date must not precede start date");
-  return Object.freeze({ ...input, status: input.status || "ACTIVE" });
+  const status = input.status ?? "ACTIVE";
+  if (!isDepositStatus(status)) throw new DomainError("INVALID_DEPOSIT_STATUS", "Deposit status is not persistable");
+  return Object.freeze({ ...input, status });
 }
 
 export function actualDays(startDate: string, endDate: string): number {
@@ -47,34 +57,51 @@ export function actualDays(startDate: string, endDate: string): number {
   return Math.floor((end - start) / 86_400_000);
 }
 
-export function deriveDepositStatus(deposit: Deposit, today: string): DepositStatus | "MATURING" {
-  dateValue(today);
+export function deriveDepositStatus(deposit: Deposit, today: string, maturingWindowDays = 30): DerivedDepositStatus {
+  const todayValue = dateValue(today);
+  if (!Number.isSafeInteger(maturingWindowDays) || maturingWindowDays < 0) {
+    throw new DomainError("INVALID_REMINDER_WINDOW", "Maturing window must be a non-negative integer");
+  }
   if (deposit.status !== "ACTIVE") return deposit.status;
-  if (today < deposit.startDate) return "ACTIVE";
-  if (today < deposit.maturityDate) return "ACTIVE";
-  if (today === deposit.maturityDate) return "MATURING";
-  return "MATURED";
+  const startValue = dateValue(deposit.startDate);
+  const maturityValue = dateValue(deposit.maturityDate);
+  if (todayValue < startValue) return "ACTIVE";
+  if (todayValue >= maturityValue) return "MATURED";
+  const daysUntilMaturity = Math.floor((maturityValue - todayValue) / 86_400_000);
+  return daysUntilMaturity <= maturingWindowDays ? "MATURING" : "ACTIVE";
 }
 
 export function expectedInterestVnd(deposit: Deposit, asOfDate = deposit.maturityDate): number {
   if (deposit.expectedInterestVndOverride !== null) return deposit.expectedInterestVndOverride;
   const cappedDate = asOfDate > deposit.maturityDate ? deposit.maturityDate : asOfDate;
   const days = actualDays(deposit.startDate, cappedDate);
-  const yearDays = new Date(Date.UTC(Number(deposit.startDate.slice(0, 4)), 1, 29)).getUTCDate() === 29 ? 366n : 365n;
-  return asSafe(roundHalfUp(BigInt(deposit.principalVnd) * BigInt(deposit.annualRatePpm) * BigInt(days), 1_000_000n * yearDays));
+  return asSafe(roundHalfUp(BigInt(deposit.principalVnd) * BigInt(deposit.annualRatePpm) * BigInt(days), 1_000_000n * 365n));
 }
 
 export function transitionDeposit(deposit: Deposit, next: DepositStatus): Deposit {
-  if (!transitions[deposit.status].includes(next)) throw new DomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${deposit.status} to ${next}`);
+  if (!isDepositStatus(next) || !transitions[deposit.status].includes(next)) throw new DomainError("INVALID_STATUS_TRANSITION", `Cannot transition ${deposit.status} to ${next}`);
   return Object.freeze({ ...deposit, status: next });
 }
 
 export function summarizeDeposits(deposits: readonly Deposit[], asOfDate: string): DepositSummary {
-  let principal = 0n; let expected = 0n; let actual = 0n;
+  let principal = 0n; let pendingMatured = 0n; let expected = 0n; let actual = 0n;
   for (const deposit of deposits) {
-    if (deposit.status !== "REDEEMED") principal += BigInt(deposit.principalVnd);
-    expected += BigInt(expectedInterestVnd(deposit, asOfDate));
+    if (deposit.status === "ACTIVE") {
+      const derivedStatus = deriveDepositStatus(deposit, asOfDate);
+      if (derivedStatus === "MATURED") {
+        pendingMatured += BigInt(deposit.principalVnd);
+      } else {
+        principal += BigInt(deposit.principalVnd);
+        expected += BigInt(expectedInterestVnd(deposit, asOfDate));
+      }
+    }
     if (deposit.actualInterestVnd !== null) actual += BigInt(deposit.actualInterestVnd);
   }
-  return { currentPrincipalVnd: asSafe(principal), expectedInterestVnd: asSafe(expected), expectedMaturityTotalVnd: asSafe(principal + expected), actualInterestVnd: asSafe(actual) };
+  return {
+    currentPrincipalVnd: asSafe(principal),
+    pendingMaturedPrincipalVnd: asSafe(pendingMatured),
+    expectedInterestVnd: asSafe(expected),
+    expectedMaturityTotalVnd: asSafe(principal + expected),
+    actualInterestVnd: asSafe(actual),
+  };
 }
