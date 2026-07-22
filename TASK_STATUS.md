@@ -8,10 +8,10 @@
 |---|---|
 | Task ID | OPS-001 |
 | Title | Optimize agent context token usage |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | ops/context-loading-optimization |
 | Base SHA | 4c39dd0395678f9dbd7f140f44b9d68463aaf4c5 |
-| Implementation Head | pending |
+| Implementation Head | 118278304078429a5874e1effc9a8359659226d5 |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/OPS-001.md` |
 | Latest Review | pending |
@@ -19,9 +19,9 @@
 
 ## Reviewer Attention
 
-- OPS-001 is a workflow/tooling-only optimization inserted after UXS-005 approval and before UXS-006.
+- OPS-001 is READY_FOR_REVIEW at implementation head `118278304078429a5874e1effc9a8359659226d5`.
+- Terra should run `npm run context:reviewer`; review parsing behavior, state selection, path containment, retained safety rules and measured context reduction.
 - Do not modify business code, UI, Firebase/Cloudflare configuration, global skills, or begin UXS-006.
-- Terra must review parsing behavior, state selection, retained safety rules, and measured context reduction rather than UI behavior.
 
 ## History
 
