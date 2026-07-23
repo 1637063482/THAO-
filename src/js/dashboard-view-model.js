@@ -52,6 +52,7 @@ export function buildDashboardViewModel(options) {
   var appState = options.state ? options.state.appState : { entries: {}, settings: {} };
   var entries = appState.entries || {};
   var settings = appState.settings || {};
+  var previousYearEntries = options.previousYearEntries;
 
   // Filter entries for the given month
   var prefix = month + "_";
@@ -131,11 +132,15 @@ export function buildDashboardViewModel(options) {
   days.sort(function (a, b) { return b.day - a.day; });
   days = days.slice(0, 5);
 
-  // Streak data
+  // Streak data — build a proper Date from year/month/day so the
+  // streak computation doesn't receive a bare day-number as Date.
+  var streakDate = typeof today === "number" && today < 100
+    ? new Date(Date.UTC(year, month - 1, today))
+    : new Date();
   var streak = { streak: 0, hasRecordedToday: false };
   if (options.state && options.state.appState.entries) {
     try {
-      streak = buildLegacyStreak(options.state.appState.entries, year, today, "Asia/Ho_Chi_Minh");
+      streak = buildLegacyStreak(options.state.appState.entries, year, streakDate, "Asia/Ho_Chi_Minh", { previousYearEntries: previousYearEntries });
     } catch (_e) {
       // Fallback: streak computation may fail in test env
     }

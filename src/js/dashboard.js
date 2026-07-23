@@ -102,6 +102,7 @@ export function initDashboard(containerId) {
     month: state.activeMonthId,
     today: today.day,
     state: { appState: state.appState },
+    previousYearEntries: state.previousYearEntries,
   });
 
   container.innerHTML = renderDashboard(vm);
