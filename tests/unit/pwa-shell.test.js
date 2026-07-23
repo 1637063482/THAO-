@@ -1,7 +1,16 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { readFileSync } from "node:fs";
 
 const read = path => readFileSync(path, "utf8");
+
+function loadWorker(source, { fetchImpl = vi.fn() } = {}) {
+  const listeners = new Map(); const stored = new Map();
+  const cache = { addAll: vi.fn(), put: vi.fn((key, value) => { stored.set(typeof key === "string" ? key : key.url, value); }), match: vi.fn(key => Promise.resolve(stored.get(typeof key === "string" ? key : key.url))) };
+  const caches = { open: vi.fn(() => Promise.resolve(cache)), keys: vi.fn(() => Promise.resolve([])), delete: vi.fn(), match: cache.match };
+  const self = { location: { origin: "http://localhost:3000" }, clients: { claim: vi.fn() }, skipWaiting: vi.fn(), addEventListener: (name, handler) => listeners.set(name, handler) };
+  new Function("self", "caches", "fetch", "Response", "URL", source)(self, caches, fetchImpl, Response, URL);
+  return { listeners, stored, cache, caches, self };
+}
 
 describe("PWA acceptance shell", () => {
   it("keeps root and Vite public PWA artifacts identical", () => {
@@ -47,5 +56,20 @@ describe("PWA acceptance shell", () => {
     const bytes = readFileSync(path);
     expect([...bytes.subarray(0, 8)]).toEqual([137, 80, 78, 71, 13, 10, 26, 10]);
     expect(bytes.readUInt32BE(16)).toBe(size); expect(bytes.readUInt32BE(20)).toBe(size);
+  });
+
+  it("serves the cached app shell for an offline navigation", async () => {
+    const runtime = loadWorker(read("public/sw.js"), { fetchImpl: vi.fn().mockRejectedValue(new Error("offline")) });
+    const cachedShell = new Response("cached shell", { status: 200 }); runtime.stored.set("/index.html", cachedShell);
+    let responsePromise;
+    runtime.listeners.get("fetch")({ request: { method: "GET", url: "http://localhost:3000/overview", mode: "navigate" }, respondWith: promise => { responsePromise = promise; } });
+    expect(await (await responsePromise).text()).toBe("cached shell");
+  });
+
+  it("activates a waiting worker only after an explicit message", () => {
+    const runtime = loadWorker(read("public/sw.js"));
+    expect(runtime.self.skipWaiting).not.toHaveBeenCalled();
+    runtime.listeners.get("message")({ data: { action: "skipWaiting" } });
+    expect(runtime.self.skipWaiting).toHaveBeenCalledOnce();
   });
 });
