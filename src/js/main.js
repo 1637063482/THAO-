@@ -98,7 +98,7 @@ function persistInputValue(target, vndValueToSave) {
     state.appState.entries[dataKey] = vndValueToSave;
     if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
     state.pendingUpdates.entries[dataKey] = vndValueToSave;
-    if (!dataKey.endsWith("_remark")) updateStreakAfterRecord();
+    // Streak is checked on blur (focusout), not here on every keystroke
   }
 }
 
@@ -382,6 +382,9 @@ document.body.addEventListener("focusout", function(e) {
     delete e.target.dataset.currencyViewBefore;
     delete e.target.dataset.currencyInputDirty;
   }
+  // Trigger streak check on blur — input is complete, not on every keystroke
+  var _dataKey = e.target.getAttribute("data-key");
+  if (_dataKey && !_dataKey.endsWith("_remark")) updateStreakAfterRecord();
 });
 
 // 页面浏览/交互刷新活跃计时（节流30秒，避免频繁写 localStorage）
