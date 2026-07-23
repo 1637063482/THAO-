@@ -729,11 +729,11 @@ tr:hover td:not(.sticky-col) {
 .stat-value {
   @apply text-xl font-black tracking-tight;
 }
-.stat-value.income { @apply text-emerald-600; }
-.stat-value.expense { @apply text-rose-600; }
+.stat-value.income { @apply text-rose-600; }
+.stat-value.expense { @apply text-emerald-600; }
 .stat-value.balance { @apply text-indigo-600; }
-.dark .stat-value.income { @apply text-emerald-400; }
-.dark .stat-value.expense { @apply text-rose-400; }
+.dark .stat-value.income { @apply text-rose-400; }
+.dark .stat-value.expense { @apply text-emerald-400; }
 .dark .stat-value.balance { @apply text-indigo-400; }
 
 /* ===== App Icon Pills ===== */

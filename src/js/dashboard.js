@@ -53,7 +53,7 @@ export function renderDashboard(vm) {
   var statsHtml = '<div class="grid grid-cols-2 gap-3 mb-4">'
     + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("today_spending") + '</p><p class="text-xl font-bold text-slate-800 blur-sensitive">' + vm.todaySpending.toLocaleString("en-US") + '</p></div>'
     + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_spending") + '</p><p class="text-xl font-bold text-slate-800 blur-sensitive">' + vm.totalSpending.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold text-emerald-600 blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold text-rose-600 blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
     + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("streak_days") + '</p><p class="text-xl font-bold text-amber-600">' + vm.streak.streak + ' <span class="text-sm font-normal text-slate-400">' + t("streak_unit") + '</span></p></div>'
     + '</div>';
 
