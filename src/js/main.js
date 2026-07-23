@@ -150,6 +150,7 @@ function openDepositForm(id = null) {
   host.innerHTML = renderDepositForm({ locale: getCurrentLocale(), id: formId, deposit });
   bindDepositForm(host, {
     onClose: closeDepositForm,
+    locale: getCurrentLocale(),
     async onSubmit(input, { expectedVersion }) {
       if (!depositRepository) throw new Error("Deposit repository is unavailable");
       depositUiStatus = "syncing";
