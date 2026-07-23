@@ -441,6 +441,14 @@ function switchLanguage(locale) {
   }
 }
 
+var _chartsInited = false;
+function ensureCharts() {
+  if (_chartsInited) { updateCharts(); return; }
+  initCharts();
+  _chartsInited = true;
+  updateCharts();
+}
+
 var lastLedgerDate = getLedgerToday();
 var ledgerDateTimer = null;
 
@@ -536,21 +544,18 @@ function switchMobileView(view) {
 
   if (view === "add") { openQuickAdd(); return; }
 
-  var mainCol = document.querySelector(".flex-1.min-w-0");
-  var sidebar = document.querySelector(".w-full.xl\\:w-96");
-  if (!mainCol || !sidebar) return;
-
-  // Desktop (>=768px): both columns always visible — do not toggle,
-  // so sidebar items don't hide the analysis panel on the right.
-  if (window.innerWidth >= 768) return;
+  var overviewContent = document.getElementById("overview-content");
+  var analysisView = document.getElementById("analysis-view");
+  if (!overviewContent || !analysisView) return;
 
   if (view === "overview") {
-    mainCol.style.display = "";
-    sidebar.style.display = "none";
+    overviewContent.style.display = "";
+    analysisView.style.display = "none";
     depositReminderController.check();
   } else if (view === "stats") {
-    mainCol.style.display = "none";
-    sidebar.style.display = "";
+    overviewContent.style.display = "none";
+    analysisView.style.display = "";
+    ensureCharts();
   }
 }
 
@@ -682,7 +687,6 @@ initAuth(
   function(user) {
     setupRealtimeListener();
     startDepositManagement(user);
-    initCharts();
     renderStreakPanel();
     initDashboard();
     refreshSavingsView();
