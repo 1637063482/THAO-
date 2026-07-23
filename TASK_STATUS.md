@@ -23,6 +23,12 @@
 - Known non-blocking build warning: the main bundle remains above 500 kB; this was not expanded into an unplanned refactor.
 - No deployment or online Firebase/Auth/Rules/data mutation was performed.
 
+## Bug Fixes (post-approval)
+
+| Bug ID | Title | Head SHA | Evidence |
+|---|---|---|---|
+| BUG-L10N-001 | Fix language switching partial update & analysis panel disappearance | 293334a | `docs/review-evidence/BUG-L10N-001.md` |
+
 ## History
 
 Completed-task history is stored in `docs/TASK_HISTORY.md` and is not part of the default context.
