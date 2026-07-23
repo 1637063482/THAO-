@@ -10,7 +10,7 @@
 | Title | Add responsive deposit management interface |
 | State | READY_FOR_REVIEW |
 | Branch | task/uxs-012-deposit-form |
-| Base SHA | da462f019b743d7c48fbd24860335a9915de2c60 |
+| Base SHA | da462f09419c1b0d54d7361ebffe20a577b90760 |
 | Implementation Head | d7954c68a9f65e65ff3baf1737394fc51d67f71d |
 | Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-012.md` |
