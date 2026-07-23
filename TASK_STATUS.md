@@ -6,22 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-013 |
-| Title | Add in-app deposit maturity reminders |
-| State | APPROVED |
-| Branch | task/uxs-013-deposit-reminders |
-| Base SHA | 4a0379d57048627990de360eeb2d1e1adb3bfda1 |
-| Implementation Head | 9ac53aee418990019dd6bfa4dfd371571f24cbaf |
-| Review Round | 1 |
-| Evidence | `docs/review-evidence/UXS-013.md` |
-| Latest Review | `docs/task-reviews/UXS-013-R1.md` - APPROVED |
-| Next Task | UXS-014 |
+| Task ID | UXS-014 |
+| Title | Add safe deposit settlement and rollover workflow |
+| State | IMPLEMENTING |
+| Branch | task/uxs-014-deposit-settlement |
+| Base SHA | 6bcef767f82bae405848cefd10b18088d9cbf0ee |
+| Implementation Head | - |
+| Review Round | 0 |
+| Evidence | `docs/review-evidence/UXS-014.md` |
+| Latest Review | - |
+| Next Task | UXS-015 |
 
 ## Reviewer Attention
 
 - UXS-012 must use the approved UXS-010 domain and UXS-011 storage adapter.
-- UXS-013 is APPROVED at `9ac53aee418990019dd6bfa4dfd371571f24cbaf`.
-- Next Task is UXS-014.
+- Principal must never be written as legacy income; only confirmed actual interest may be queued.
+- Settlement and rollover must be idempotent and recoverable across the deposit and yearly ledger documents.
 
 ## History
 
