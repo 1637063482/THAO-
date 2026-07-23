@@ -29,8 +29,9 @@ describe("deposit form", () => {
 
   it("renders both locales and retains the draft after an async save failure", async () => {
     expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain("新增存款");
-    document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
-    const form = document.querySelector("form");
+    document.body.innerHTML = '<div id="form-host" data-locale="vi">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("form-host");
+    const form = host.querySelector("form");
     form.elements.institutionName.value = "Draft Bank";
     form.elements.productName.value = "Draft Product";
     form.elements.principalVnd.value = "1000000";
@@ -38,7 +39,7 @@ describe("deposit form", () => {
     form.elements.openedOn.value = "2026-01-01";
     form.elements.maturesOn.value = "2027-01-01";
     const onSubmit = vi.fn().mockRejectedValue(new Error("network"));
-    bindDepositForm(document.body, { onSubmit });
+    bindDepositForm(host, { onSubmit });
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(form.querySelector("[data-form-error]").textContent).toContain("Không thể lưu"));
     expect(form.elements.institutionName.value).toBe("Draft Bank");

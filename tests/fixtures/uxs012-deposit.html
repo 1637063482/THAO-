@@ -13,6 +13,7 @@
 </head>
 <body>
   <main id="fixture-root"></main>
+  <div id="deposit-form-root" data-deposit-form-host></div>
   <script type="module">
     import { buildDepositViewModel, renderDepositManagement } from "/src/js/deposit-view.js";
     import { renderDepositForm } from "/src/js/deposit-form.js";
@@ -42,7 +43,9 @@
     const root = document.getElementById("fixture-root");
     root.innerHTML = renderDepositManagement(vm);
     if (params.get("form") === "1") {
-      root.querySelector("[data-deposit-form-host]").innerHTML = renderDepositForm({ locale, id: "fixture-new" });
+      const formRoot = document.getElementById("deposit-form-root");
+      formRoot.dataset.locale = locale;
+      formRoot.innerHTML = renderDepositForm({ locale, id: "fixture-new" });
     }
   </script>
 </body>

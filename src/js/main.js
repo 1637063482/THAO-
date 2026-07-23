@@ -120,15 +120,16 @@ function newDepositId() {
 }
 
 function closeDepositForm() {
-  const host = document.querySelector("#deposit-root [data-deposit-form-host]");
+  const host = document.getElementById("deposit-form-root");
   if (host) host.innerHTML = "";
 }
 
 function openDepositForm(id = null) {
-  const host = document.querySelector("#deposit-root [data-deposit-form-host]");
+  const host = document.getElementById("deposit-form-root");
   if (!host) return;
   const deposit = id ? state.depositDocument.depositsById[id] : null;
   const formId = id || newDepositId();
+  host.dataset.locale = getCurrentLocale();
   host.innerHTML = renderDepositForm({ locale: getCurrentLocale(), id: formId, deposit });
   bindDepositForm(host, {
     onClose: closeDepositForm,
