@@ -434,6 +434,11 @@ body {
   color: transparent !important; text-shadow: 0 0 10px rgba(0,0,0,0.5) !important;
   filter: blur(4px) !important; opacity: 0.8 !important; user-select: none !important;
 }
+.privacy-mode .deposit-form-grid input[name="principalVnd"]:not(:focus),
+.privacy-mode .deposit-form-grid input[name="expectedInterestVnd"]:not(:focus) {
+  color: transparent !important;
+  text-shadow: 0 0 8px rgba(0,0,0,.5) !important;
+}
 
 /* ===== Auth Overlay ===== */
 #auth-overlay input[type="email"],
