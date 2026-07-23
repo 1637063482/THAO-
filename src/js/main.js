@@ -18,6 +18,12 @@ import { initNavigation } from "./navigation.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
 import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
+import { db, projectId } from "./firebase.js";
+import { DepositRepository } from "../infrastructure/firebase/deposit-repository.ts";
+import { createEmptyDepositDocument } from "./deposit-schema.js";
+import { subscribeToDeposits } from "./deposit-sync.js";
+import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
+import { bindDepositForm, renderDepositForm } from "./deposit-form.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -101,6 +107,98 @@ function refreshSavingsView(status) {
   summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
   bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, locale: getCurrentLocale(), onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
   installSavingsSyncBridge(summary);
+}
+
+let depositRepository = null;
+let unsubscribeDeposits = null;
+let depositUiStatus = "loading";
+let depositFilter = "all";
+
+function newDepositId() {
+  const suffix = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  return `deposit-${suffix}`;
+}
+
+function closeDepositForm() {
+  const host = document.querySelector("#deposit-root [data-deposit-form-host]");
+  if (host) host.innerHTML = "";
+}
+
+function openDepositForm(id = null) {
+  const host = document.querySelector("#deposit-root [data-deposit-form-host]");
+  if (!host) return;
+  const deposit = id ? state.depositDocument.depositsById[id] : null;
+  const formId = id || newDepositId();
+  host.innerHTML = renderDepositForm({ locale: getCurrentLocale(), id: formId, deposit });
+  bindDepositForm(host, {
+    onClose: closeDepositForm,
+    async onSubmit(input, { expectedVersion }) {
+      if (!depositRepository) throw new Error("Deposit repository is unavailable");
+      depositUiStatus = "syncing";
+      const { id: inputId, ...changes } = input;
+      try {
+        if (deposit) await depositRepository.update(inputId, expectedVersion, changes);
+        else await depositRepository.create(input);
+        closeDepositForm();
+        refreshDepositView();
+      } catch (error) {
+        depositUiStatus = "error";
+        throw error;
+      }
+    },
+  });
+}
+
+function refreshDepositView() {
+  const root = document.getElementById("deposit-root");
+  if (!root) return;
+  const vm = buildDepositViewModel({
+    document: state.depositDocument,
+    today: getLedgerToday().dateKey,
+    locale: getCurrentLocale(),
+    status: depositUiStatus,
+    filter: depositFilter,
+  });
+  root.innerHTML = renderDepositManagement(vm);
+  bindDepositManagement(root, {
+    onAdd: () => openDepositForm(),
+    onEdit: id => openDepositForm(id),
+    async onArchive(id) {
+      const record = state.depositDocument.depositsById[id];
+      if (!depositRepository || !record) throw new Error("Deposit is unavailable");
+      depositUiStatus = "syncing";
+      refreshDepositView();
+      try {
+        await depositRepository.archive(id, record.version);
+      } catch (error) {
+        depositUiStatus = "error";
+        refreshDepositView();
+        throw error;
+      }
+    },
+    onFilter: next => { depositFilter = next; refreshDepositView(); },
+  });
+}
+
+function stopDepositManagement() {
+  if (unsubscribeDeposits) unsubscribeDeposits();
+  unsubscribeDeposits = null;
+  depositRepository = null;
+  depositUiStatus = "loading";
+  depositFilter = "all";
+  state.depositDocument = createEmptyDepositDocument();
+  refreshDepositView();
+}
+
+function startDepositManagement(user) {
+  if (unsubscribeDeposits) unsubscribeDeposits();
+  depositRepository = new DepositRepository(db, projectId, user.uid);
+  depositUiStatus = navigator.onLine ? "loading" : "offline";
+  refreshDepositView();
+  unsubscribeDeposits = subscribeToDeposits(db, projectId, {
+    onChange() { depositUiStatus = navigator.onLine ? "synced" : "offline"; refreshDepositView(); },
+    onError() { depositUiStatus = navigator.onLine ? "error" : "offline"; refreshDepositView(); },
+  });
 }
 
 document.body.addEventListener("input", function(e) {
@@ -371,6 +469,7 @@ window.fullRebuildDOM = function() {
   setTimeout(initIcons, 50);
   initDashboard();
   refreshSavingsView();
+  refreshDepositView();
 };
 
 var _originalSoftUpdateDOM = softUpdateDOM;
@@ -472,6 +571,7 @@ setTimeout(initNavigation, 50);
 initAuth(
   function(user) {
     setupRealtimeListener();
+    startDepositManagement(user);
     initCharts();
     renderStreakPanel();
     initDashboard();
@@ -484,8 +584,18 @@ initAuth(
       initIcons();
     }, 300);
   },
-  function() { teardownListener(); }
+  function() { teardownListener(); stopDepositManagement(); }
 );
+
+window.addEventListener("offline", function() {
+  if (!state.currentUser) return;
+  depositUiStatus = "offline";
+  refreshDepositView();
+});
+window.addEventListener("online", function() {
+  if (!state.currentUser) return;
+  startDepositManagement(state.currentUser);
+});
 
 document.addEventListener("visibilitychange", function() {
   if (!document.hidden) {

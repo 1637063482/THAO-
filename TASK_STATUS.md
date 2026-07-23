@@ -6,21 +6,21 @@
 
 | Field | Value |
 |---|---|
-| Task ID | BUG-LOGIN-002 |
-| Title | Recover localhost login initialization from render and timeout failures |
-| State | APPROVED |
-| Branch | fix/login-initialization-timeout |
-| Base SHA | 92e4a22 |
-| Implementation Head | 27f035c3e2f7423463d92b7ef896b491c94c9666 |
-| Review Round | 1 |
-| Evidence | `docs/review-evidence/BUG-LOGIN-002.md` |
-| Latest Review | `docs/task-reviews/BUG-LOGIN-002-R1.md` - APPROVED |
-| Next Task | UXS-012 |
+| Task ID | UXS-012 |
+| Title | Add responsive deposit management interface |
+| State | IMPLEMENTING |
+| Branch | task/uxs-012-deposit-form |
+| Base SHA | da462f019b743d7c48fbd24860335a9915de2c60 |
+| Implementation Head | - |
+| Review Round | 0 |
+| Evidence | `docs/review-evidence/UXS-012.md` |
+| Latest Review | - |
+| Next Task | UXS-013 |
 
 ## Reviewer Attention
 
-- BUG-LOGIN-002 is APPROVED at `27f035c3e2f7423463d92b7ef896b491c94c9666`.
-- Next Task is UXS-012.
+- UXS-012 must use the approved UXS-010 domain and UXS-011 storage adapter.
+- Preserve drafts on failure and never display a false synced state.
 
 ## History
 
