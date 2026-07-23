@@ -2,6 +2,25 @@ const copy = {
   vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", product: "Sản phẩm", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập." },
   "zh-CN": { add: "新增存款", edit: "编辑存款", institution: "银行", product: "产品", principal: "存款金额（VND）", rate: "年利率（%）", opened: "存入日期", matures: "到期日期", expected: "预计收益（可选）", note: "备注", reminders: "到期前提醒", save: "保存存款", cancel: "取消", saveError: "保存失败，草稿已保留。", invalid: "请检查输入内容。" },
 };
+
+const settlementCopy = {
+  vi: {
+    redeem: "Tất toán tiền gửi", rollover: "Tái tục tiền gửi", settledOn: "Ngày tất toán",
+    actualInterest: "Tiền lãi thực nhận (VND)", writeInterest: "Ghi tiền lãi thực nhận vào thu nhập",
+    principalWarning: "Tiền gốc không bao giờ được ghi là thu nhập.", confirmInterest: "Chỉ ghi tiền lãi thực nhận vào thu nhập?",
+    nextInstitution: "Ngân hàng mới", nextProduct: "Sản phẩm mới", nextPrincipal: "Tiền gốc kỳ mới (VND)",
+    nextRate: "Lãi suất kỳ mới (%)", nextOpened: "Ngày bắt đầu kỳ mới", nextMatures: "Ngày đáo hạn kỳ mới",
+    nextExpected: "Lợi nhuận dự kiến kỳ mới", saveRedeem: "Xác nhận tất toán", saveRollover: "Xác nhận tái tục",
+    cancel: "Hủy", saveError: "Không thể hoàn tất. Dữ liệu đã nhập vẫn được giữ lại.",
+  },
+  "zh-CN": {
+    redeem: "赎回存款", rollover: "续存", settledOn: "赎回日期", actualInterest: "实收利息（VND）",
+    writeInterest: "将实收利息记入收入", principalWarning: "本金绝不会记作收入。", confirmInterest: "确认只将实收利息记入收入？",
+    nextInstitution: "新银行", nextProduct: "新产品", nextPrincipal: "新一期本金（VND）", nextRate: "新一期年利率（%）",
+    nextOpened: "新一期开立日期", nextMatures: "新一期到期日期", nextExpected: "新一期预计收益",
+    saveRedeem: "确认赎回", saveRollover: "确认续存", cancel: "取消", saveError: "操作未完成，已保留当前输入。",
+  },
+};
 function words(locale) { return copy[locale] || copy.vi; }
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
 function parseVnd(value, optional = false) {
@@ -71,4 +90,50 @@ export function bindDepositForm(root, { onSubmit, onClose } = {}) {
     finally { submit.disabled = false; }
   });
   form.elements.institutionName?.focus();
+}
+
+export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "redeem", today }) {
+  const labels = settlementCopy[locale] || settlementCopy.vi;
+  const rollover = mode === "rollover";
+  const nextFields = rollover ? `<label>${labels.nextInstitution}<input name="institutionName" required maxlength="120" value="${escapeHtml(deposit.institutionName)}"></label><label>${labels.nextProduct}<input name="productName" required maxlength="120" value="${escapeHtml(deposit.productName)}"></label><label>${labels.nextPrincipal}<input name="principalVnd" required inputmode="numeric" value="${escapeHtml(deposit.principalVnd)}"></label><label>${labels.nextRate}<input name="annualRatePercent" required inputmode="decimal"></label><label>${labels.nextOpened}<input name="openedOn" required type="date" value="${escapeHtml(today)}"></label><label>${labels.nextMatures}<input name="maturesOn" required type="date"></label><label>${labels.nextExpected}<input name="expectedInterestVnd" inputmode="numeric"></label>` : `<label>${labels.settledOn}<input name="settledOn" required type="date" value="${escapeHtml(today)}" min="${escapeHtml(deposit.maturesOn)}"></label>`;
+  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-settlement-title"><header><h3 id="deposit-settlement-title">${rollover ? labels.rollover : labels.redeem}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-settlement-form data-mode="${mode}" data-deposit-id="${escapeHtml(deposit.id)}"><div class="deposit-form-grid">${nextFields}<label>${labels.actualInterest}<input name="actualInterestVnd" inputmode="numeric"></label><label class="deposit-reminder-toggle"><input name="writeInterestToLedger" type="checkbox"><span>${labels.writeInterest}</span></label><p class="deposit-principal-warning" role="note">${labels.principalWarning}</p></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${rollover ? labels.saveRollover : labels.saveRedeem}</button></div></form></section></div>`;
+}
+
+export function parseDepositSettlementForm(form) {
+  const actualInterestVnd = parseVnd(formValue(form, "actualInterestVnd"), true);
+  const writeInterestToLedger = Boolean(form.elements.writeInterestToLedger?.checked);
+  if (writeInterestToLedger && (!actualInterestVnd || actualInterestVnd <= 0)) throw new Error("Confirmed interest requires a positive actual amount");
+  if (form.dataset.mode === "redeem") {
+    const settledOn = formValue(form, "settledOn");
+    if (!validDate(settledOn)) throw new Error("Settlement date is invalid");
+    return { mode: "redeem", settledOn, actualInterestVnd, writeInterestToLedger };
+  }
+  const openedOn = formValue(form, "openedOn"); const maturesOn = formValue(form, "maturesOn");
+  if (!validDate(openedOn) || !validDate(maturesOn) || maturesOn <= openedOn) throw new Error("Rollover dates are invalid");
+  const institutionName = formValue(form, "institutionName").trim(); const productName = formValue(form, "productName").trim();
+  if (!institutionName || !productName || institutionName.length > 120 || productName.length > 120) throw new Error("Rollover institution and product are required");
+  return { mode: "rollover", actualInterestVnd, writeInterestToLedger, rollover: {
+    institutionName, productName, principalVnd: parseVnd(formValue(form, "principalVnd")),
+    annualRatePpm: parseAnnualRateToPpm(formValue(form, "annualRatePercent")), openedOn, maturesOn,
+    expectedInterestVnd: parseVnd(formValue(form, "expectedInterestVnd"), true), actualInterestVnd: null,
+    reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", redeemedOn: null,
+    rolledOverToDepositId: null, note: "",
+  } };
+}
+
+export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClose } = {}) {
+  const form = root?.querySelector?.("[data-deposit-settlement-form]"); if (!form) return;
+  root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
+  root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
+  form.addEventListener("submit", async event => {
+    event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");
+    if (errorNode) errorNode.textContent = ""; submit.disabled = true;
+    try {
+      const parsed = parseDepositSettlementForm(form);
+      if (parsed.writeInterestToLedger && globalThis.confirm && !globalThis.confirm((settlementCopy[locale] || settlementCopy.vi).confirmInterest)) return;
+      await onSubmit?.(parsed);
+    } catch (_) { if (errorNode) errorNode.textContent = (settlementCopy[locale] || settlementCopy.vi).saveError; }
+    finally { submit.disabled = false; }
+  });
+  form.querySelector("input")?.focus();
 }

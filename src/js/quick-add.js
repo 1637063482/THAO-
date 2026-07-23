@@ -11,6 +11,61 @@ import { t } from "./i18n.js";
 let lastTrigger = null;
 let submitInFlight = false;
 
+const LEGACY_OPERATION_ID_RE = /^[A-Za-z0-9_-]{1,120}$/;
+
+function isValidDateKey(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
+}
+
+/**
+ * Queue actual deposit interest into the legacy yearly ledger exactly once.
+ * Deposit principal is intentionally absent from this API.
+ */
+export async function queueLegacyIncomeOnce(
+  { amountVnd, dateKey, operationId, note = "Lãi tiền gửi" },
+  { stateRef = state, onQueue = triggerCloudSave, onStreak = updateStreakAfterRecord } = {},
+) {
+  if (!Number.isSafeInteger(amountVnd) || amountVnd <= 0) throw new Error("Income must be a positive safe integer VND amount");
+  if (!isValidDateKey(dateKey)) throw new Error("Income date is invalid");
+  if (!LEGACY_OPERATION_ID_RE.test(operationId)) throw new Error("Operation id is invalid");
+  const [year, month, day] = dateKey.split("-").map(Number);
+  if (year !== stateRef.activeYear) throw new Error("Income date is outside the active ledger year");
+
+  const incomeKey = `${month}_${day}_income`;
+  const remarkKey = `${month}_${day}_remark`;
+  const marker = `[#op:${operationId}]`;
+  const entries = stateRef.appState.entries;
+  const pending = stateRef.pendingUpdates.entries || (stateRef.pendingUpdates.entries = {});
+  if (String(entries[remarkKey] || "").includes(marker)) return { applied: false, operationId };
+
+  const snapshots = [incomeKey, remarkKey].map(key => ({
+    key,
+    entryPresent: Object.prototype.hasOwnProperty.call(entries, key), entryValue: entries[key],
+    pendingPresent: Object.prototype.hasOwnProperty.call(pending, key), pendingValue: pending[key],
+  }));
+  let existing = String(entries[incomeKey] || "0");
+  if (existing.startsWith("=")) existing = existing.slice(1);
+  const formula = `=${existing === "0" || existing === "" ? "" : `${existing}+`}${amountVnd}`;
+  const oldRemark = String(entries[remarkKey] || "");
+  const newRemark = `${oldRemark ? `${oldRemark},` : ""}${String(note).trim() || "Lãi tiền gửi"} ${marker}`;
+  entries[incomeKey] = formula; pending[incomeKey] = formula;
+  entries[remarkKey] = newRemark; pending[remarkKey] = newRemark;
+
+  try { await onQueue(); }
+  catch (error) {
+    snapshots.forEach(snapshot => {
+      if (snapshot.entryPresent) entries[snapshot.key] = snapshot.entryValue; else delete entries[snapshot.key];
+      if (snapshot.pendingPresent) pending[snapshot.key] = snapshot.pendingValue; else delete pending[snapshot.key];
+    });
+    throw error;
+  }
+  await onStreak();
+  return { applied: true, operationId };
+}
+
 function resetSubmitControl() {
   const submitButton = document.querySelector("#quick-add-panel [data-quick-add-submit]");
   submitInFlight = false;

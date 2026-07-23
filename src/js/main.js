@@ -10,7 +10,7 @@ import { initCharts } from "./charts.js";
 import { fullRebuildDOM, softUpdateDOM, renderMonthTable, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
 import { setLedgerView, getLedgerView } from "./day-ledger.js";
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
-import { openQuickAdd, closeQuickAdd, submitQuickAdd } from "./quick-add.js";
+import { openQuickAdd, closeQuickAdd, submitQuickAdd, queueLegacyIncomeOnce } from "./quick-add.js";
 import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
@@ -23,8 +23,9 @@ import { DepositRepository } from "../infrastructure/firebase/deposit-repository
 import { createEmptyDepositDocument } from "./deposit-schema.js";
 import { subscribeToDeposits } from "./deposit-sync.js";
 import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
-import { bindDepositForm, renderDepositForm } from "./deposit-form.js";
+import { bindDepositForm, renderDepositForm, bindDepositSettlementForm, renderDepositSettlementForm } from "./deposit-form.js";
 import { createDepositReminderController } from "./deposit-reminder-controller.js";
+import { buildRolloverDepositId, redeemDeposit, rolloverDeposit } from "../application/deposits/settle-deposit.ts";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -166,6 +167,74 @@ function openDepositForm(id = null) {
   });
 }
 
+function settlementRecord(id) {
+  const record = state.depositDocument.depositsById[id];
+  if (!record) throw new Error("Deposit is unavailable");
+  return { id, ...record };
+}
+
+function rolloverInput(id, record) {
+  return {
+    id, institutionName: record.institutionName, productName: record.productName,
+    principalVnd: record.principalVnd, annualRatePpm: record.annualRatePpm,
+    openedOn: record.openedOn, maturesOn: record.maturesOn,
+    expectedInterestVnd: record.expectedInterestVnd, actualInterestVnd: record.actualInterestVnd,
+    reminderDays: [...record.reminderDays], remindersEnabled: record.remindersEnabled,
+    status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: record.note,
+  };
+}
+
+function settlementDependencies() {
+  if (!depositRepository) throw new Error("Deposit repository is unavailable");
+  return {
+    updateDeposit: (id, version, changes) => depositRepository.update(id, version, changes),
+    queueLegacyInterest: input => queueLegacyIncomeOnce(input),
+  };
+}
+
+function rolloverDependencies() {
+  const base = settlementDependencies();
+  return { ...base, getDeposit: id => depositRepository.get(id), createDeposit: input => depositRepository.create(input) };
+}
+
+function openDepositSettlement(id, mode) {
+  const host = document.getElementById("deposit-form-root"); if (!host) return;
+  const deposit = settlementRecord(id); const locale = getCurrentLocale();
+  host.dataset.locale = locale;
+  host.innerHTML = renderDepositSettlementForm({ locale, deposit, mode, today: getLedgerToday().dateKey });
+  bindDepositSettlementForm(host, {
+    locale, onClose: closeDepositForm,
+    async onSubmit(input) {
+      depositUiStatus = "syncing"; refreshDepositView();
+      try {
+        if (input.mode === "redeem") {
+          await redeemDeposit({ deposit, settledOn: input.settledOn, actualInterestVnd: input.actualInterestVnd, writeInterestToLedger: input.writeInterestToLedger }, settlementDependencies());
+        } else {
+          const next = { id: buildRolloverDepositId(deposit), ...input.rollover };
+          await rolloverDeposit({ deposit, rolloverDeposit: next, actualInterestVnd: input.actualInterestVnd, writeInterestToLedger: input.writeInterestToLedger }, rolloverDependencies());
+        }
+        closeDepositForm(); refreshDepositView();
+      } catch (error) { depositUiStatus = "error"; refreshDepositView(); throw error; }
+    },
+  });
+}
+
+async function retryDepositInterest(id) {
+  const deposit = settlementRecord(id); const locale = getCurrentLocale();
+  const message = locale === "zh-CN" ? "确认只将实收利息记入收入？本金不会记作收入。" : "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc sẽ không được ghi.";
+  if (globalThis.confirm && !globalThis.confirm(message)) return;
+  depositUiStatus = "syncing"; refreshDepositView();
+  try {
+    if (deposit.status === "REDEEMED") {
+      await redeemDeposit({ deposit, settledOn: deposit.redeemedOn, actualInterestVnd: deposit.actualInterestVnd, writeInterestToLedger: true }, settlementDependencies());
+    } else if (deposit.status === "ROLLED_OVER") {
+      const target = settlementRecord(deposit.rolledOverToDepositId);
+      await rolloverDeposit({ deposit, rolloverDeposit: rolloverInput(target.id, target), actualInterestVnd: deposit.actualInterestVnd, writeInterestToLedger: true }, rolloverDependencies());
+    }
+    depositUiStatus = "synced"; refreshDepositView();
+  } catch (error) { depositUiStatus = "error"; refreshDepositView(); throw error; }
+}
+
 function refreshDepositView() {
   const root = document.getElementById("deposit-root");
   if (!root) return;
@@ -175,11 +244,15 @@ function refreshDepositView() {
     locale: getCurrentLocale(),
     status: depositUiStatus,
     filter: depositFilter,
+    ledgerEntries: state.appState.entries,
   });
   root.innerHTML = renderDepositManagement(vm);
   bindDepositManagement(root, {
     onAdd: () => openDepositForm(),
     onEdit: id => openDepositForm(id),
+    onRedeem: id => openDepositSettlement(id, "redeem"),
+    onRollover: id => openDepositSettlement(id, "rollover"),
+    onRecordInterest: id => retryDepositInterest(id),
     async onArchive(id) {
       const record = state.depositDocument.depositsById[id];
       if (!depositRepository || !record) throw new Error("Deposit is unavailable");

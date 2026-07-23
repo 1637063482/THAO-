@@ -10,6 +10,7 @@ const copy = {
     institution: "Ngân hàng", product: "Sản phẩm", amount: "Số tiền", rate: "Lãi suất",
     opened: "Ngày gửi", matures: "Ngày đáo hạn", status: "Trạng thái", actions: "Thao tác",
     edit: "Sửa", archive: "Lưu trữ", archiveConfirm: "Lưu trữ khoản tiền gửi này? Bạn vẫn có thể xem trong bộ lọc lưu trữ.",
+    redeem: "Tất toán", rollover: "Tái tục", recordInterest: "Ghi lại tiền lãi",
     all: "Tất cả", active: "Đang hoạt động", maturing: "Sắp đáo hạn", matured: "Đã đáo hạn", archived: "Đã lưu trữ",
     ACTIVE: "Đang hoạt động", MATURING: "Sắp đáo hạn", MATURED: "Đã đáo hạn", REDEEMED: "Đã tất toán", ROLLED_OVER: "Đã tái tục",
     noNearest: "Chưa có", vnd: "₫", syncError: "Thao tác thất bại; dữ liệu chưa được đánh dấu là đã đồng bộ.",
@@ -22,6 +23,7 @@ const copy = {
     institution: "银行", product: "产品", amount: "金额", rate: "利率", opened: "存入日期",
     matures: "到期日期", status: "状态", actions: "操作", edit: "编辑", archive: "归档",
     archiveConfirm: "确认归档这笔存款吗？之后仍可在归档筛选中查看。", all: "全部", active: "有效",
+    redeem: "赎回", rollover: "续存", recordInterest: "补记实收利息",
     maturing: "即将到期", matured: "已到期", archived: "已归档", ACTIVE: "有效",
     MATURING: "即将到期", MATURED: "已到期", REDEEMED: "已赎回", ROLLED_OVER: "已续存",
     noNearest: "暂无", vnd: "₫", syncError: "操作失败，数据未标记为已同步。",
@@ -41,10 +43,12 @@ function toDomain(id, record) {
   });
 }
 
-export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", filter = "all" }) {
+export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", filter = "all", ledgerEntries = {} }) {
+  const ledgerRemarks = Object.entries(ledgerEntries).filter(([key]) => key.endsWith("_remark")).map(([, value]) => String(value || "")).join("\n");
   const records = Object.entries(document?.depositsById || {}).map(([id, record]) => {
     const domain = toDomain(id, record);
-    return { id, ...record, domain, derivedStatus: deriveDepositStatus(domain, today), calculatedInterestVnd: expectedInterestVnd(domain) };
+    const interestRecorded = ledgerRemarks.includes(`[#op:deposit-interest-${id}-${record.maturesOn}]`);
+    return { id, ...record, domain, derivedStatus: deriveDepositStatus(domain, today), calculatedInterestVnd: expectedInterestVnd(domain), interestRecorded };
   });
   const current = records.filter(item => item.archivedAt === null);
   const archived = records.filter(item => item.archivedAt !== null);
@@ -69,7 +73,12 @@ function stateMessage(vm, label) {
 function statusBadge(item, labels) { return `<span class="deposit-status status-${item.derivedStatus.toLowerCase()}">${escapeHtml(labels[item.derivedStatus])}</span>`; }
 function actions(item, labels) {
   if (item.archivedAt !== null) return "";
-  return `<div class="deposit-actions"><button type="button" class="btn-ghost" data-edit-deposit="${escapeHtml(item.id)}">${labels.edit}</button><button type="button" class="btn-ghost danger" data-archive-deposit="${escapeHtml(item.id)}">${labels.archive}</button></div>`;
+  const workflow = item.status === "ACTIVE" && item.derivedStatus === "MATURED"
+    ? `<button type="button" class="btn-primary" data-redeem-deposit="${escapeHtml(item.id)}">${labels.redeem}</button><button type="button" class="btn-ghost" data-rollover-deposit="${escapeHtml(item.id)}">${labels.rollover}</button>`
+    : ["REDEEMED", "ROLLED_OVER"].includes(item.status) && Number(item.actualInterestVnd) > 0 && !item.interestRecorded
+      ? `<button type="button" class="btn-ghost" data-record-interest="${escapeHtml(item.id)}">${labels.recordInterest}</button>` : "";
+  const edit = item.status === "ACTIVE" ? `<button type="button" class="btn-ghost" data-edit-deposit="${escapeHtml(item.id)}">${labels.edit}</button>` : "";
+  return `<div class="deposit-actions">${workflow}${edit}<button type="button" class="btn-ghost danger" data-archive-deposit="${escapeHtml(item.id)}">${labels.archive}</button></div>`;
 }
 function card(item, labels, locale) {
   return `<article class="deposit-card" data-deposit-id="${escapeHtml(item.id)}"><div class="deposit-card-head"><div><strong>${escapeHtml(item.institutionName)}</strong><p>${escapeHtml(item.productName)}</p></div>${statusBadge(item, labels)}</div><p class="deposit-card-amount blur-sensitive">${money(item.principalVnd, locale)}</p><dl><div><dt>${labels.rate}</dt><dd>${(item.annualRatePpm / 10_000).toLocaleString()}%</dd></div><div><dt>${labels.matures}</dt><dd>${escapeHtml(item.maturesOn)}</dd></div><div><dt>${labels.interest}</dt><dd class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</dd></div></dl>${actions(item, labels)}</article>`;
@@ -90,11 +99,17 @@ export function renderDepositManagement(vm) {
   return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 
-export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter } = {}) {
+export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest } = {}) {
   const section = root?.querySelector?.("[data-deposit-management]") || (root?.matches?.("[data-deposit-management]") ? root : null);
   if (!section) return;
   section.querySelectorAll("[data-add-deposit]").forEach(button => button.addEventListener("click", () => onAdd?.()));
   section.querySelectorAll("[data-edit-deposit]").forEach(button => button.addEventListener("click", () => onEdit?.(button.dataset.editDeposit)));
+  section.querySelectorAll("[data-redeem-deposit]").forEach(button => button.addEventListener("click", () => onRedeem?.(button.dataset.redeemDeposit)));
+  section.querySelectorAll("[data-rollover-deposit]").forEach(button => button.addEventListener("click", () => onRollover?.(button.dataset.rolloverDeposit)));
+  section.querySelectorAll("[data-record-interest]").forEach(button => button.addEventListener("click", async () => {
+    try { await onRecordInterest?.(button.dataset.recordInterest); }
+    catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
+  }));
   section.querySelectorAll("[data-archive-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(section.dataset.locale);
     if (globalThis.confirm && !globalThis.confirm(labels.archiveConfirm)) return;

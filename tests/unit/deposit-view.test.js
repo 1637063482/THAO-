@@ -65,4 +65,24 @@ describe("deposit management view", () => {
     expect(onAdd).toHaveBeenCalledOnce(); expect(onEdit).toHaveBeenCalledWith("active"); expect(onFilter).toHaveBeenCalledWith("matured");
     globalThis.confirm = originalConfirm;
   });
+
+  it("offers settlement only for matured active deposits and retry for terminal interest", () => {
+    const matured = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ old: deposit({ maturesOn: "2026-05-01" }) }), today: "2026-06-01" }));
+    expect(matured).toContain('data-redeem-deposit="old"');
+    expect(matured).toContain('data-rollover-deposit="old"');
+    const terminal = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ done: deposit({ status: "REDEEMED", redeemedOn: "2026-06-01", maturesOn: "2026-05-01", actualInterestVnd: 500 }) }), today: "2026-06-01" }));
+    expect(terminal).toContain('data-record-interest="done"');
+    expect(terminal).not.toContain('data-edit-deposit="done"');
+    const recorded = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ done: deposit({ status: "REDEEMED", redeemedOn: "2026-06-01", maturesOn: "2026-05-01", actualInterestVnd: 500 }) }), today: "2026-06-01", ledgerEntries: { "6_1_remark": "Interest [#op:deposit-interest-done-2026-05-01]" } }));
+    expect(recorded).not.toContain('data-record-interest="done"');
+  });
+
+  it("binds redeem, rollover and interest-retry actions", () => {
+    document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ old: deposit({ maturesOn: "2026-05-01" }) }), today: "2026-06-01" }));
+    const onRedeem = vi.fn(); const onRollover = vi.fn();
+    bindDepositManagement(document.body, { onRedeem, onRollover });
+    document.querySelector("[data-redeem-deposit=old]").click();
+    document.querySelector("[data-rollover-deposit=old]").click();
+    expect(onRedeem).toHaveBeenCalledWith("old"); expect(onRollover).toHaveBeenCalledWith("old");
+  });
 });

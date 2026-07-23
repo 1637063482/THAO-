@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindDepositForm, parseAnnualRateToPpm, parseDepositForm, renderDepositForm } from "../../src/js/deposit-form.js";
+import { bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/js/deposit-form.js";
 
 describe("deposit form", () => {
   it.each([["5.5", 55_000], ["0.01", 100], ["100", 1_000_000]])("converts %s percent to integer ppm", (input, expected) => {
@@ -44,5 +44,33 @@ describe("deposit form", () => {
     await vi.waitFor(() => expect(form.querySelector("[data-form-error]").textContent).toContain("Không thể lưu"));
     expect(form.elements.institutionName.value).toBe("Draft Bank");
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
+  });
+});
+
+describe("deposit settlement form", () => {
+  const deposit = { id: "fixture-id", institutionName: "Fixture Bank", productName: "12 months", principalVnd: 10_000_000, maturesOn: "2026-07-01" };
+
+  it("parses redemption and requires positive interest when ledger writing is selected", () => {
+    document.body.innerHTML = renderDepositSettlementForm({ locale: "vi", deposit, mode: "redeem", today: "2026-07-02" });
+    const form = document.querySelector("form");
+    expect(parseDepositSettlementForm(form)).toMatchObject({ mode: "redeem", settledOn: "2026-07-02", actualInterestVnd: null, writeInterestToLedger: false });
+    form.elements.writeInterestToLedger.checked = true;
+    expect(() => parseDepositSettlementForm(form)).toThrow(/positive actual/i);
+    form.elements.actualInterestVnd.value = "550,000";
+    expect(parseDepositSettlementForm(form).actualInterestVnd).toBe(550_000);
+  });
+
+  it("parses a VND-only rollover and asks for secondary interest confirmation", async () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositSettlementForm({ locale: "zh-CN", deposit, mode: "rollover", today: "2026-07-02" }) + "</div>";
+    const host = document.getElementById("host"); const form = host.querySelector("form");
+    form.elements.annualRatePercent.value = "5.25"; form.elements.maturesOn.value = "2027-07-02";
+    form.elements.actualInterestVnd.value = "500000"; form.elements.writeInterestToLedger.checked = true;
+    const confirmBefore = globalThis.confirm; globalThis.confirm = vi.fn(() => true); const onSubmit = vi.fn();
+    bindDepositSettlementForm(host, { locale: "zh-CN", onSubmit });
+    form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
+    expect(globalThis.confirm).toHaveBeenCalledOnce();
+    expect(onSubmit.mock.calls[0][0]).toMatchObject({ mode: "rollover", rollover: { principalVnd: 10_000_000, annualRatePpm: 52_500 } });
+    globalThis.confirm = confirmBefore;
   });
 });
