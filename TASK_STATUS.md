@@ -8,20 +8,20 @@
 |---|---|
 | Task ID | UXS-015 |
 | Title | Complete PWA, accessibility and regression acceptance |
-| State | IMPLEMENTING |
+| State | APPROVED |
 | Branch | task/uxs-015-pwa-acceptance |
 | Base SHA | af96c613992c31d5d9081ee3cb51b9da1809387c |
-| Implementation Head | - |
-| Review Round | 0 |
+| Implementation Head | 182eaae742bbc2c2f7f1d565d6d06e708312476a |
+| Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-015.md` |
-| Latest Review | - |
+| Latest Review | `docs/task-reviews/UXS-015-R1.md` |
 | Next Task | - |
 
 ## Reviewer Attention
 
-- This is a regression and acceptance task; do not add product features.
-- Validate browser and install-mode shell, online/offline recovery, update behavior, keyboard/screen-reader semantics, privacy and all primary flows.
-- Use only synthetic data; do not deploy or modify online Firebase configuration.
+- UXS-001 through UXS-015 are approved. No next task is authorized.
+- Known non-blocking build warning: the main bundle remains above 500 kB; this was not expanded into an unplanned refactor.
+- No deployment or online Firebase/Auth/Rules/data mutation was performed.
 
 ## History
 
