@@ -24,6 +24,7 @@ import { createEmptyDepositDocument } from "./deposit-schema.js";
 import { subscribeToDeposits } from "./deposit-sync.js";
 import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
 import { bindDepositForm, renderDepositForm } from "./deposit-form.js";
+import { createDepositReminderController } from "./deposit-reminder-controller.js";
 
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
@@ -113,6 +114,21 @@ let depositRepository = null;
 let unsubscribeDeposits = null;
 let depositUiStatus = "loading";
 let depositFilter = "all";
+let depositDataReady = false;
+let depositSnapshotFromCache = false;
+const depositReminderController = createDepositReminderController({
+  root: document.getElementById("deposit-reminder-root"),
+  getDocument: () => state.depositDocument,
+  getToday: () => getLedgerToday().dateKey,
+  getLocale: getCurrentLocale,
+  isAuthenticated: () => Boolean(state.currentUser),
+  isReady: () => depositDataReady,
+  isOffline: () => !navigator.onLine || depositSnapshotFromCache,
+  acknowledge: key => {
+    if (!depositRepository) throw new Error("Deposit repository is unavailable");
+    return depositRepository.acknowledge(key);
+  },
+});
 
 function newDepositId() {
   const suffix = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
@@ -187,6 +203,9 @@ function stopDepositManagement() {
   depositRepository = null;
   depositUiStatus = "loading";
   depositFilter = "all";
+  depositDataReady = false;
+  depositSnapshotFromCache = false;
+  depositReminderController.destroy();
   state.depositDocument = createEmptyDepositDocument();
   refreshDepositView();
 }
@@ -194,11 +213,20 @@ function stopDepositManagement() {
 function startDepositManagement(user) {
   if (unsubscribeDeposits) unsubscribeDeposits();
   depositRepository = new DepositRepository(db, projectId, user.uid);
+  depositDataReady = false;
+  depositSnapshotFromCache = false;
+  depositReminderController.destroy();
   depositUiStatus = navigator.onLine ? "loading" : "offline";
   refreshDepositView();
   unsubscribeDeposits = subscribeToDeposits(db, projectId, {
-    onChange() { depositUiStatus = navigator.onLine ? "synced" : "offline"; refreshDepositView(); },
-    onError() { depositUiStatus = navigator.onLine ? "error" : "offline"; refreshDepositView(); },
+    onChange(_document, metadata = {}) {
+      depositDataReady = true;
+      depositSnapshotFromCache = Boolean(metadata.fromCache);
+      depositUiStatus = navigator.onLine && !depositSnapshotFromCache ? "synced" : "offline";
+      refreshDepositView();
+      depositReminderController.check();
+    },
+    onError() { depositSnapshotFromCache = true; depositUiStatus = navigator.onLine ? "error" : "offline"; refreshDepositView(); },
   });
 }
 
@@ -335,6 +363,7 @@ function switchLanguage(locale) {
     if (budgetMonth) budgetMonth.textContent = t("month_display", { month: state.activeMonthId });
     fullRebuildDOM();
     renderStreakPanel();
+    depositReminderController.check();
   }
 }
 
@@ -365,6 +394,7 @@ function refreshForLedgerDateChange() {
     fullRebuildDOM();
   }
   renderStreakPanel();
+  depositReminderController.check();
 }
 
 function scheduleLedgerDateRefresh() {
@@ -439,6 +469,7 @@ function switchMobileView(view) {
   if (view === "overview") {
     mainCol.style.display = "";
     sidebar.style.display = "none";
+    depositReminderController.check();
   } else if (view === "stats") {
     mainCol.style.display = "none";
     sidebar.style.display = "";
@@ -592,6 +623,7 @@ window.addEventListener("offline", function() {
   if (!state.currentUser) return;
   depositUiStatus = "offline";
   refreshDepositView();
+  depositReminderController.check();
 });
 window.addEventListener("online", function() {
   if (!state.currentUser) return;
@@ -602,10 +634,12 @@ document.addEventListener("visibilitychange", function() {
   if (!document.hidden) {
     refreshForLedgerDateChange();
     scheduleLedgerDateRefresh();
+    depositReminderController.check();
   }
 });
 window.addEventListener("focus", function() {
   refreshForLedgerDateChange();
   scheduleLedgerDateRefresh();
+  depositReminderController.check();
 });
 scheduleLedgerDateRefresh();

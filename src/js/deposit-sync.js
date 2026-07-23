@@ -19,7 +19,7 @@ export function subscribeToDeposits(db, projectId, { onChange = () => {}, onErro
   const reference = doc(db, "artifacts", projectId, "public", "data", "ledgers", SAVINGS_LEDGER_ID);
   return onSnapshot(reference, snapshot => {
     try {
-      onChange(applyDepositSnapshot(snapshot.exists() ? snapshot.data() : null));
+      onChange(applyDepositSnapshot(snapshot.exists() ? snapshot.data() : null), { fromCache: Boolean(snapshot.metadata?.fromCache) });
     } catch (error) {
       onError(error);
     }
