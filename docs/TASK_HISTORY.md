@@ -4,6 +4,7 @@ This append-only table is read only when historical investigation is required. I
 
 | Task | Final State | Approved Head | Review |
 |---|---|---|---|
+| UXS-013 | APPROVED | `9ac53ae` | `docs/task-reviews/UXS-013-R1.md` |
 | UXS-012 | APPROVED | `d7954c6` | `docs/task-reviews/UXS-012-R1.md` |
 | BUG-LOGIN-002 | APPROVED | `27f035c` | `docs/task-reviews/BUG-LOGIN-002-R1.md` |
 | UXS-011 | APPROVED | `14b615a` | `docs/task-reviews/UXS-011-R1.md` |
