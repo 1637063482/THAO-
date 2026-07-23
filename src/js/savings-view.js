@@ -23,7 +23,7 @@ export function renderSavingsSummary(vm) {
   const goal = vm.monthly;
   return '<section class="savings-summary card p-4 mb-4" aria-label="' + text(vm.locale, "title") + '">' +
     '<div class="flex items-center justify-between gap-3"><h2 class="text-sm font-bold text-slate-700">' + text(vm.locale, "title") + '</h2><span class="text-xs text-slate-400">' + text(vm.locale, "month") + '</span></div>' +
-    '<div class="mt-3 flex items-end justify-between"><div><p class="text-xs text-slate-500">' + text(vm.locale, "actual") + '</p><p class="text-2xl font-black text-emerald-600 blur-sensitive">' + money(vm.monthlyActual) + '</p></div><div class="text-right"><p class="text-xs text-slate-500">' + text(vm.locale, "target") + '</p><p class="font-bold text-slate-700 blur-sensitive">' + (goal.targetVnd === null ? text(vm.locale, "noGoal") : money(goal.targetVnd)) + '</p></div></div>' +
+    '<div class="mt-3 flex items-end justify-between"><div><p class="text-xs text-slate-500">' + text(vm.locale, "actual") + '</p><p class="text-2xl font-black text-rose-600 blur-sensitive">' + money(vm.monthlyActual) + '</p></div><div class="text-right"><p class="text-xs text-slate-500">' + text(vm.locale, "target") + '</p><p class="font-bold text-slate-700 blur-sensitive">' + (goal.targetVnd === null ? text(vm.locale, "noGoal") : money(goal.targetVnd)) + '</p></div></div>' +
     '<div class="savings-progress mt-3"><div class="savings-progress-bar" style="width:' + (goal.percent || 0) + '%"></div></div><p class="text-xs text-slate-500 mt-2">' + (goal.percent === null ? text(vm.locale, "noGoal") : Math.round(goal.percent) + "%") + '</p></section>';
 }
 

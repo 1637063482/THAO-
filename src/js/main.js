@@ -434,6 +434,11 @@ function switchLanguage(locale) {
     document.title = state.activeYear + " " + t("app_name");
     var budgetMonth = document.getElementById("budget-label-month");
     if (budgetMonth) budgetMonth.textContent = t("month_display", { month: state.activeMonthId });
+    // Update month tab labels for the new locale
+    for (var _m = 1; _m <= 12; _m++) {
+      var _tab = document.getElementById("btn-tab-" + _m);
+      if (_tab) _tab.textContent = t("month_tab", { month: _m });
+    }
     window.fullRebuildDOM();
     renderStreakPanel();
     updateCharts();
