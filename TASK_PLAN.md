@@ -165,6 +165,25 @@ T013-T021 均已通过独立审查。T019/ADR-003 已选择稳定 legacy 年度�
 - Evidence: `docs/review-evidence/BUG-LOGIN-001.md`。
 - 建议提交: `fix: release loading overlay on ledger read failure`。
 
+## BUG-LOGIN-002：本地登录后渲染异常与无响应等待不得永久阻塞应用
+
+- Task ID: BUG-LOGIN-002
+- 目标: 修复 `http://localhost:3000/` 登录成功、Firestore 快照已返回后仍永久显示加载遮罩的问题，并为 Auth/Firestore 无响应增加有限等待兜底。
+- 前置条件/基线: BUG-LOGIN-001 APPROVED；本地运行现场可稳定观察到储蓄目标渲染抛出非整数 VND `DomainError`，异常发生在首次加载完成调用之前。
+- 修改文件: `src/js/auth.js`、`src/js/sync.js`、`src/js/savings-view.js`、`src/locales/vi.js`、`src/locales/zh-CN.js`、对应 unit tests、`BUG_REPORT.md`、工作流状态/evidence/review 文档。
+- 涉及模块: Firebase Auth handoff、Firestore snapshot、Savings ViewModel、loading overlay、vi/zh 错误恢复。
+- 详细步骤:
+  1. RED 覆盖派生金额含小数、快照渲染抛错、Auth promise 永不结束、Firestore 首次监听永不回调四条路径。
+  2. 在 Savings ViewModel 边界按 VND 最小单位舍入派生汇总，不放宽领域层 safe-integer 规则，也不改写云端原始账务。
+  3. 快照 UI 刷新使用 `try/catch/finally`，任何子模块异常都必须退出首载遮罩且不得伪报 synced。
+  4. Auth 和首次账本监听增加 15 秒 UI 恢复守卫；成功、失败、登出和 teardown 均清理 timer。
+  5. 在干净 localhost 标签页重新走认证恢复与真实快照读取，只记录非敏感 DOM 状态和控制台错误计数。
+- 禁止修改: Firebase 线上 Rules/Auth、真实账号/数据、登录凭证、存款实现、VND 领域精度规则、Cloudflare 部署。
+- 完成标准: localhost 登录恢复后加载遮罩隐藏、认证遮罩隐藏、同步状态正常；渲染异常或后端无响应时也能退出无限等待并给出 vi/zh 提示。
+- 测试要求: 定向 auth/sync/savings tests；全量 unit/typecheck/build/diff；localhost 干净标签页运行复验。
+- Evidence: `docs/review-evidence/BUG-LOGIN-002.md`。
+- 建议提交: `fix: recover local login initialization`。
+
 ## UXS 通用施工约束
 
 - 执行 Coder：DeepSeek V4 Flash；Reviewer：GPT-5.6 Terra。两者严格串行。

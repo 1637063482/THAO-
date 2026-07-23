@@ -87,6 +87,7 @@ Task ID:
 |---|---|---|---|
 | OPS-001 | 默认上下文只包含稳定规则、当前状态和相关 Task；完整规则仍可按需追溯 | 精简后丢失安全边界；错误状态选错 Task；把 review/evidence 无条件全部输出；修改全局 Skill | 状态矩阵 unit tests、两个 CLI smoke、前后字符数、full gates |
 | BUG-LOGIN-001 | snapshot 成功和失败都结束首载遮罩；失败保持 error | 只在登录 promise catch 隐藏；Firestore error 仍卡住；错误被标记 synced；修改线上 Firebase | snapshot error/success DOM 状态测试 + auth/sync 回归 + full gates |
+| BUG-LOGIN-002 | localhost 快照渲染异常仍结束首载；小数派生 VND 在 ViewModel 边界舍入；Auth/监听无响应可恢复 | 放宽领域整数规则；修改真实账务；catch 后伪报 synced；timer 未清理；只用单测不复验本地运行 | 四条 RED/GREEN 路径 + full gates + 干净 localhost 标签页无控制台错误 |
 | T001 | Vitest/jsdom/TS strict 基线可在干净安装运行 | 一次性把 legacy JS 纳入 strict 造成噪音；脚本在 Windows 不可用 | `npm ci` 后 test/typecheck/build 全绿 |
 | T002 | characterization 与当前 `safeEval` 完全一致 | 测试偷偷把错误现状写成未来规范；漏非法文本/非有限数 | 15+ 表驱动用例，未改生产代码 |
 | T003 | raw/remark 只作为文本值，不形成节点或属性 | 仅替换 `<`、漏引号/换行；仍在别处拼用户数据 innerHTML | 恶意 payload DOM 断言 + 月切换回归 |
