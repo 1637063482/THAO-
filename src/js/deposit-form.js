@@ -75,6 +75,17 @@ function addMonths(dateStr, months) {
   const d = new Date(Date.UTC(year, month - 1 + months, day));
   return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
 }
+function calculateExpectedInterest(principalVnd, annualRatePercent, openedOn, maturesOn) {
+  const principal = Number(String(principalVnd ?? "").replace(/[,.\s]/g, ""));
+  const rate = Number(String(annualRatePercent ?? "").replace(",", "."));
+  if (!principal || !rate || !validDate(openedOn) || !validDate(maturesOn)) return null;
+  if (principal <= 0 || rate <= 0) return null;
+  const opened = new Date(openedOn); const matured = new Date(maturesOn);
+  const days = Math.floor((matured - opened) / 86400000);
+  if (days <= 0) return null;
+  // interest = principal * rate% * days / 365 = principal * rate * days / 36500
+  return Math.round(principal * rate * days / 36500);
+}
 function termLabel(labels, termValue) {
   const key = TERM_LABEL_KEYS[termValue];
   return key ? labels[key] : "";
@@ -109,7 +120,7 @@ export function renderDepositForm({ locale = "vi", id, deposit = null } = {}) {
   const bankOptions = VIETNAM_BANKS.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join("");
   const termOptions = `<option value="">${escapeHtml(labels.termBlank)}</option>` +
     TERM_OPTIONS.map(t => `<option value="${t.value}">${escapeHtml(labels[TERM_LABEL_KEYS[t.value]])}</option>`).join("");
-  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<input name="productName" required maxlength="120" value="${escapeHtml(deposit?.productName)}"></label><label>${labels.term}<select name="termDuration" data-term-select>${termOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" inputmode="numeric" value="${escapeHtml(deposit?.expectedInterestVnd)}"></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
+  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<input name="productName" required maxlength="120" value="${escapeHtml(deposit?.productName)}"></label><label>${labels.term}<select name="termDuration" data-term-select>${termOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
 }
 
 export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {}) {
@@ -124,6 +135,10 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
   const maturesInput = form.elements.maturesOn;
   const productInput = form.elements.productName;
 
+  const principalInput = form.elements.principalVnd;
+  const rateInput = form.elements.annualRatePercent;
+  const expectedInput = form.elements.expectedInterestVnd;
+
   function recalcMaturity() {
     const termValue = termSelect?.value;
     const opened = openedInput?.value;
@@ -136,6 +151,15 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     }
   }
 
+  function recalcExpected() {
+    if (!expectedInput) return;
+    const interest = calculateExpectedInterest(
+      principalInput?.value, rateInput?.value,
+      openedInput?.value, maturesInput?.value,
+    );
+    expectedInput.value = interest !== null ? Number(interest).toLocaleString("en-US") : "";
+  }
+
   function autoFillProduct() {
     const termValue = termSelect?.value;
     if (termValue && productInput) {
@@ -144,11 +168,20 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     }
   }
 
-  termSelect?.addEventListener("change", function () {
+  function onFieldChange() {
     recalcMaturity();
     autoFillProduct();
-  });
-  openedInput?.addEventListener("change", recalcMaturity);
+    recalcExpected();
+  }
+
+  termSelect?.addEventListener("change", onFieldChange);
+  openedInput?.addEventListener("change", onFieldChange);
+  principalInput?.addEventListener("input", recalcExpected);
+  rateInput?.addEventListener("input", recalcExpected);
+  maturesInput?.addEventListener("change", recalcExpected);
+
+  // Initial calculation for edit mode
+  setTimeout(recalcExpected, 50);
 
   form.addEventListener("submit", async event => {
     event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");

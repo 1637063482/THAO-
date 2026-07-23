@@ -66,8 +66,21 @@ if (yearSelector) {
 var displayYearText = document.getElementById("display-year-text");
 if (displayYearText) displayYearText.innerText = state.activeYear;
 document.title = state.activeYear + " " + t("app_name");
-updateYearLabels();
 applyI18n();
+// updateYearLabels must run AFTER applyI18n so the {year} param is not
+// overwritten by the unsubstituted template from applyI18n.
+updateYearLabels();
+
+// Sync language toggle buttons with persisted locale.
+(function initLangButtons() {
+  var locale = getCurrentLocale();
+  if (locale !== "vi") {
+    var btnVi = document.getElementById("btn-lang-vi");
+    var btnZh = document.getElementById("btn-lang-zh");
+    if (btnVi) btnVi.className = "month-tab";
+    if (btnZh) btnZh.className = "month-tab active";
+  }
+})();
 
 function isMathOrCell(el) {
   if (el.classList.contains("remark-input")) return false;

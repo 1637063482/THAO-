@@ -271,6 +271,8 @@ body {
 .dark .deposit-form-grid label { color: #cbd5e1; }
 .deposit-form-grid input, .deposit-form-grid textarea { width: 100%; min-height: 44px; padding: .68rem .75rem; border: 1px solid #cbd5e1; border-radius: .75rem; background: white; color: #1e293b; font-size: 1rem; }
 .dark .deposit-form-grid input, .dark .deposit-form-grid textarea { background: #1e293b; color: #f8fafc; border-color: #475569; }
+.deposit-form-grid input.deposit-calc-input { background: #f1f5f9; color: #334155; font-weight: 600; cursor: default; }
+.dark .deposit-form-grid input.deposit-calc-input { background: #1a2234; color: #94a3b8; }
 .deposit-reminder-toggle { grid-template-columns: auto 1fr !important; align-items: center; }
 .deposit-reminder-toggle input { width: 22px; min-height: 22px; }
 .deposit-note-field textarea { min-height: 88px; resize: vertical; }
@@ -1057,6 +1059,13 @@ tr:hover td:not(.sticky-col) {
   height: 100% !important;
   pointer-events: none !important;
 }
+
+/* ===== Dark Mode — text color overrides for JS-rendered templates ===== */
+.dark [class*="text-slate-800"] { color: #f1f5f9; }
+.dark [class*="text-slate-700"] { color: #e2e8f0; }
+.dark [class*="text-slate-600"] { color: #cbd5e1; }
+.dark [class*="text-slate-500"] { color: #94a3b8; }
+.dark [class*="text-slate-400"] { color: #64748b; }
 
 /* ===== Reduced Motion ===== */
 @media (prefers-reduced-motion: reduce) {

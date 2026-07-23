@@ -159,8 +159,8 @@ export function renderMonthTable(monthId) {
     + '<tfoot><tr>'
     + '<td class="sticky-col">' + t("total") + '</td>'
     + sumCellsHtml
-    + '<td class="total-col"><span id="sum-' + monthId + '-exp" style="color:#10b981;font-weight:700;">0</span></td>'
-    + '<td class="income-col"><span id="sum-' + monthId + '-inc" style="color:#ef4444;font-weight:700;">0</span></td>'
+    + '<td class="total-col"><span id="sum-' + monthId + '-exp" class="blur-sensitive" style="color:#10b981;font-weight:700;">0</span></td>'
+    + '<td class="income-col"><span id="sum-' + monthId + '-inc" class="blur-sensitive" style="color:#ef4444;font-weight:700;">0</span></td>'
     + '<td></td>'
     + '</tr></tfoot>'
     + '</table>'
