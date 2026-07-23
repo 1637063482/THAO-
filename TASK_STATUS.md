@@ -6,22 +6,22 @@
 
 | Field | Value |
 |---|---|
-| Task ID | UXS-014 |
-| Title | Add safe deposit settlement and rollover workflow |
+| Task ID | UXS-015 |
+| Title | Complete PWA, accessibility and regression acceptance |
 | State | IMPLEMENTING |
-| Branch | task/uxs-014-deposit-settlement |
-| Base SHA | 6bcef767f82bae405848cefd10b18088d9cbf0ee |
+| Branch | task/uxs-015-pwa-acceptance |
+| Base SHA | af96c613992c31d5d9081ee3cb51b9da1809387c |
 | Implementation Head | - |
 | Review Round | 0 |
-| Evidence | `docs/review-evidence/UXS-014.md` |
+| Evidence | `docs/review-evidence/UXS-015.md` |
 | Latest Review | - |
-| Next Task | UXS-015 |
+| Next Task | - |
 
 ## Reviewer Attention
 
-- UXS-012 must use the approved UXS-010 domain and UXS-011 storage adapter.
-- Principal must never be written as legacy income; only confirmed actual interest may be queued.
-- Settlement and rollover must be idempotent and recoverable across the deposit and yearly ledger documents.
+- This is a regression and acceptance task; do not add product features.
+- Validate browser and install-mode shell, online/offline recovery, update behavior, keyboard/screen-reader semantics, privacy and all primary flows.
+- Use only synthetic data; do not deploy or modify online Firebase configuration.
 
 ## History
 
