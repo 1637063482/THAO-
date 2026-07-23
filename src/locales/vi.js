@@ -35,6 +35,8 @@ export default {
   // Bottom nav
   overview: "Tổng quan",
   quick_add: "Ghi nhanh",
+  close: "Đóng",
+  main_navigation: "Điều hướng chính",
   stats: "Phân tích",
 
   // Quick add

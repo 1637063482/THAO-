@@ -2,12 +2,15 @@
 <html lang="vi" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title data-i18n="app_name">Thao的账本</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title data-i18n="app_name">Sổ thu chi của Thao</title>
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#d97706">
     <meta name="color-scheme" content="light dark">
-    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Sổ của Thao">
+    <link rel="apple-touch-icon" href="/app-icon-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800;900&family=Varela+Round&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -37,7 +40,7 @@
                         </label>
                         <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="" onkeydown="if(event.key==='Enter')window.handleLogin()">
                     </div>
-                    <div id="auth-error" class="hidden text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
+                    <div id="auth-error" role="alert" aria-live="assertive" class="hidden text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
                 </div>
                 <div class="flex flex-col gap-2">
                     <button onclick="window.handleLogin()" class="btn-primary w-full text-base py-3" data-i18n="login"></button>
@@ -45,11 +48,11 @@
                 </div>
             </div>
         </div>
-        <div id="timeout-msg" style="display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:14px;padding:8px 16px;border-radius:12px;" data-i18n="timeout_message"></div>
+        <div id="timeout-msg" role="alert" aria-live="assertive" style="display:none;position:absolute;bottom:32px;left:50%;transform:translateX(-50%);background:#fef2f2;border:1px solid #fecaca;color:#dc2626;font-size:14px;padding:8px 16px;border-radius:12px;" data-i18n="timeout_message"></div>
     </div>
 
     <!-- Loading overlay -->
-    <div id="loading-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(254,251,246,0.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity 0.3s;">
+    <div id="loading-overlay" role="status" aria-live="polite" style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:100;display:flex;align-items:center;justify-content:center;pointer-events:none;background:rgba(254,251,246,0.9);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity 0.3s;">
         <div class="text-center space-y-4 animate-slide-up">
             <div class="loading-spinner mx-auto"></div>
             <p class="text-slate-500 text-sm font-medium" data-i18n="loading_data"></p>
@@ -57,7 +60,7 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:16px;background:rgba(15,23,42,0.9);color:white;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.3s;pointer-events:none;">
+    <div id="toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;bottom:80px;left:50%;transform:translateX(-50%);z-index:2000;display:flex;align-items:center;gap:8px;padding:12px 20px;border-radius:16px;background:rgba(15,23,42,0.9);color:white;font-size:14px;font-weight:500;box-shadow:0 8px 32px rgba(0,0,0,0.2);opacity:0;transition:opacity 0.3s;pointer-events:none;">
         <span id="toast-icon"></span>
         <span id="toast-msg"></span>
     </div>
@@ -319,7 +322,7 @@
                 <h3 id="quick-add-title" class="text-lg font-black text-slate-800 font-heading">
                     <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-amber-500"></span><span data-i18n="quick_add_title"></span>
                 </h3>
-                <button onclick="window.closeQuickAdd()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors">
+                <button onclick="window.closeQuickAdd()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors" data-i18n-aria-label="close">
                     <span data-icon="xMark" data-icon-class="w-4 h-4 text-slate-500"></span>
                 </button>
             </div>
@@ -336,7 +339,7 @@
     </div>
 
     <!-- Bottom Navigation (Mobile) -->
-    <nav id="bottom-nav" class="md:hidden" role="navigation" aria-label="Main navigation">
+    <nav id="bottom-nav" class="md:hidden" role="navigation" data-i18n-aria-label="main_navigation">
         <button class="bottom-nav-item active" data-nav="overview" tabindex="0">
             <span data-icon="home" data-icon-class="w-5 h-5"></span>
             <span data-i18n="overview"></span>
@@ -352,7 +355,7 @@
     </nav>
 
     <!-- Update toast -->
-    <div id="update-toast" style="position:fixed;top:0;right:16px;z-index:400;display:none;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e2e8f0;padding:16px;max-width:360px;transform:translateY(-120%);transition:transform 0.3s;">
+    <div id="update-toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;top:env(safe-area-inset-top, 0);right:16px;z-index:400;display:none;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e2e8f0;padding:16px;max-width:360px;transform:translateY(-120%);transition:transform 0.3s;">
         <div style="display:flex;align-items:flex-start;gap:12px;">
             <span data-icon="info" data-icon-class="w-6 h-6 text-amber-500"></span>
             <div style="flex:1;">
@@ -364,23 +367,27 @@
     </div>
 
     <script>
-      // Service Worker registration
+      // Service Worker registration with explicit user-controlled activation.
       if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+        var reloadingForServiceWorker = false;
+        function showAvailableUpdate() {
+          var toast = document.getElementById('update-toast');
+          if (toast) { toast.style.display = 'block'; toast.style.transform = 'translateY(16px)'; }
+        }
+        navigator.serviceWorker.addEventListener('controllerchange', function() {
+          if (reloadingForServiceWorker) return;
+          reloadingForServiceWorker = true;
+          window.location.reload();
+        });
         window.addEventListener('load', function() {
           navigator.serviceWorker.register('/sw.js').then(function(reg) {
+            if (reg.waiting && navigator.serviceWorker.controller) showAvailableUpdate();
             reg.addEventListener('updatefound', function() {
               var newWorker = reg.installing;
               if (newWorker) {
                 newWorker.addEventListener('statechange', function() {
                   if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                    navigator.serviceWorker.addEventListener('message', function(event) {
-                      if (event.data && event.data.type === 'UPDATE_LOG') {
-                        var logEl = document.getElementById('update-log');
-                        if (logEl) { logEl.innerText = event.data.log; logEl.style.display = 'block'; }
-                      }
-                    });
-                    var toast = document.getElementById('update-toast');
-                    if (toast) { toast.style.display = 'block'; toast.style.transform = 'translateY(16px)'; }
+                    showAvailableUpdate();
                   }
                 });
               }
@@ -388,7 +395,11 @@
           }).catch(function(err) { console.log('SW skipped:', err); });
         });
       }
-      document.getElementById('btn-update-refresh')?.addEventListener('click', function() { window.location.reload(true); });
+      document.getElementById('btn-update-refresh')?.addEventListener('click', function() {
+        navigator.serviceWorker.getRegistration().then(function(registration) {
+          if (registration && registration.waiting) registration.waiting.postMessage({ action: 'skipWaiting' });
+        });
+      });
     </script>
 </body>
 </html>

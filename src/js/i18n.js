@@ -65,6 +65,9 @@ export function setLocale(locale) {
  * For elements that need interpolation, set data-i18n-params to a JSON object.
  */
 export function applyI18n() {
+  document.querySelectorAll("[data-i18n-aria-label]").forEach(function (el) {
+    el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
+  });
   document.querySelectorAll("[data-i18n]").forEach(function (el) {
     var key = el.getAttribute("data-i18n");
     var params = null;

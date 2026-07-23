@@ -35,6 +35,8 @@ export default {
   // Bottom nav
   overview: "总览",
   quick_add: "记账",
+  close: "关闭",
+  main_navigation: "主导航",
   stats: "分析",
 
   // Quick add

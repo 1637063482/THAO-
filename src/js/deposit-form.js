@@ -79,6 +79,7 @@ export function bindDepositForm(root, { onSubmit, onClose } = {}) {
   const form = root?.querySelector?.("[data-deposit-form]"); if (!form) return;
   root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
   root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
+  bindDialogKeyboard(root, onClose);
   form.addEventListener("submit", async event => {
     event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");
     if (errorNode) errorNode.textContent = ""; submit.disabled = true;
@@ -90,6 +91,19 @@ export function bindDepositForm(root, { onSubmit, onClose } = {}) {
     finally { submit.disabled = false; }
   });
   form.elements.institutionName?.focus();
+}
+
+function bindDialogKeyboard(root, onClose) {
+  root.addEventListener("keydown", event => {
+    if (event.key === "Escape") { event.preventDefault(); onClose?.(); return; }
+    if (event.key !== "Tab") return;
+    const focusable = [...root.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])")]
+      .filter(element => !element.disabled && element.getAttribute("aria-hidden") !== "true");
+    if (!focusable.length) return;
+    const first = focusable[0]; const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+  });
 }
 
 export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "redeem", today }) {
@@ -125,6 +139,7 @@ export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClo
   const form = root?.querySelector?.("[data-deposit-settlement-form]"); if (!form) return;
   root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
   root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
+  bindDialogKeyboard(root, onClose);
   form.addEventListener("submit", async event => {
     event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");
     if (errorNode) errorNode.textContent = ""; submit.disabled = true;

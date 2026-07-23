@@ -45,6 +45,16 @@ describe("deposit form", () => {
     expect(form.elements.institutionName.value).toBe("Draft Bank");
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
   });
+
+  it("traps keyboard focus and closes with Escape", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("host"); const onClose = vi.fn(); bindDepositForm(host, { onClose });
+    const focusable = host.querySelectorAll("button, input, textarea"); const last = focusable[focusable.length - 1];
+    last.focus(); last.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true, cancelable: true }));
+    expect(document.activeElement).toBe(focusable[0]);
+    host.querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+    expect(onClose).toHaveBeenCalledOnce();
+  });
 });
 
 describe("deposit settlement form", () => {
