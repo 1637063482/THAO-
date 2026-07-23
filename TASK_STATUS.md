@@ -8,11 +8,11 @@
 |---|---|
 | Task ID | UXS-013 |
 | Title | Add in-app deposit maturity reminders |
-| State | IMPLEMENTING |
+| State | READY_FOR_REVIEW |
 | Branch | task/uxs-013-deposit-reminders |
 | Base SHA | 4a0379d57048627990de360eeb2d1e1adb3bfda1 |
-| Implementation Head | - |
-| Review Round | 0 |
+| Implementation Head | 9ac53aee418990019dd6bfa4dfd371571f24cbaf |
+| Review Round | 1 |
 | Evidence | `docs/review-evidence/UXS-013.md` |
 | Latest Review | - |
 | Next Task | UXS-014 |
@@ -20,8 +20,7 @@
 ## Reviewer Attention
 
 - UXS-012 must use the approved UXS-010 domain and UXS-011 storage adapter.
-- Build only in-app reminder checks after authenticated deposit data is ready.
-- Do not introduce Push, Notification API, Cron, email, SMS or background delivery claims.
+- Review lifecycle gates, most-urgent-stage selection, acknowledgement/snooze semantics, cached-snapshot warning and merged dialog evidence.
 
 ## History
 
