@@ -6,7 +6,7 @@ import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter
 import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd } from "./currency-view.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
-import { initCharts } from "./charts.js";
+import { initCharts, updateCharts } from "./charts.js";
 import { fullRebuildDOM, softUpdateDOM, renderMonthTable, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
 import { setLedgerView, getLedgerView } from "./day-ledger.js";
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
@@ -434,8 +434,9 @@ function switchLanguage(locale) {
     document.title = state.activeYear + " " + t("app_name");
     var budgetMonth = document.getElementById("budget-label-month");
     if (budgetMonth) budgetMonth.textContent = t("month_display", { month: state.activeMonthId });
-    fullRebuildDOM();
+    window.fullRebuildDOM();
     renderStreakPanel();
+    updateCharts();
     depositReminderController.check();
   }
 }
@@ -538,6 +539,10 @@ function switchMobileView(view) {
   var mainCol = document.querySelector(".flex-1.min-w-0");
   var sidebar = document.querySelector(".w-full.xl\\:w-96");
   if (!mainCol || !sidebar) return;
+
+  // Desktop (>=768px): both columns always visible — do not toggle,
+  // so sidebar items don't hide the analysis panel on the right.
+  if (window.innerWidth >= 768) return;
 
   if (view === "overview") {
     mainCol.style.display = "";
