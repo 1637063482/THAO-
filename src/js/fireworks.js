@@ -562,6 +562,28 @@ var BARRAGE_TEXTS = [
   'Trí nhớ tốt không bằng viết kém! ✏️', 'THAO mỗi khoản đều xứng đáng! 💯', 'Tiêu dùng lý trí cuộc sống vui vẻ! 🛒',
   'THAO sắp xếp từng đồng rõ ràng! 📐', 'Giàu có là một quá trình! 🛤️', 'THAO gieo gì gặt nấy! 🌾',
   'Ghi chép giúp tôi thấy rõ chi tiêu! 🔍', 'THAO ví ngày càng đầy! 👛', 'Tiết kiệm gây nghiện! 😍',
+  // --- More Vietnamese barrages ---
+  'Có công mài sắt có ngày nên kim! 📌', 'THAO tay hòm chìa khóa! 🔑', 'Kiểm soát chi tiêu là chìa khóa thành công! 🗝️',
+  'THAO mỗi đồng đều có giá trị! 💎', 'Chi tiêu thông minh sống khỏe mỗi ngày! 🧠', 'Tiết kiệm hôm nay sống sang ngày mai! 🏖️',
+  'THAO ghi chép siêu đều đặn! 📅', 'Làm chủ đồng tiền làm chủ cuộc sống! 👸', 'Đồng tiền đi trước là đồng tiền khôn! 🧠',
+  'THAO từng bước đến giàu sang! 🪜', 'Quản lý chi tiêu an toàn mỗi tháng! 🛡️', 'Tiết kiệm nhỏ thành tựu to! 🏗️',
+  'THAO nữ hoàng quản lý tài chính! 👑', 'Càng ghi chép càng giàu có! 📈', 'Tự do tài chính đang chờ đón! 🌅',
+  'THAO sống có kế hoạch thật đáng nể! 🙌', 'Nhìn xa trông rộng cho tương lai! 🔭', 'Đầu tư hôm nay gặt hái ngày mai! 🌱',
+  'THAO chi li từng đồng một! 🧮', 'Tằn tiện không phải keo kiệt mà là khôn ngoan! 🦉', 'Tiền bạc đi đôi với trí tuệ! 🏛️',
+  'THAO vun vén cho gia đình nhỏ! 🏠', 'Ích nước lợi nhà từ quyển sổ nhỏ! 📖', 'Tiết kiệm là quốc sách quốc gia! 🇻🇳',
+  'THAO chăm chỉ như chị ong thợ! 🐝', 'Đong đếm từng đồng yêu thương! ❤️', 'Ghi chép đều tay ấm no quanh năm! 🗓️',
+  'THAO ngày càng tiến bộ vượt bậc! 🚀', 'Làm giàu từ những điều nhỏ nhặt! 📿', 'Chi tiêu hợp lý cuộc đời ý nghĩa! 🌻',
+  'THAO rèn luyện thói quen tốt mỗi ngày! ⭐', 'Đồng tiền nhỏ mồ hôi công sức! 💦', 'Dù nhỏ nhưng đều đặn là vàng! 🥇',
+  'THAO siêu nhân ghi chép xuất hiện! 🦸', 'Quản lý chi tiêu như người Nhật! 🗾', 'Cân đối thu chi đời an nhiên! 🧘',
+  'THAO theo đuổi sự giàu có bền vững! 🌳', 'Nhẫn nại tiết kiệm thịnh vượng tương lai! 🔮', 'Tích lũy hôm nay phúc đức mai sau! 🙏',
+  'THAO bản lĩnh tài chính phi thường! 🦁', 'Giàu từ bên trong tỏa sáng bên ngoài! ✨', 'Đồng tiền là phương tiện không phải mục đích! 🛤️',
+  'THAO không ngừng học hỏi về tài chính! 📚', 'Chăm chút từng đồng như chăm cây! 🌿', 'Sổ ghi chép là kho báu của THAO! 🏆',
+  'THAO đang viết nên câu chuyện thành công! 📝', 'Dù nhỏ nhưng kiên trì sẽ lớn! 🌱', 'Càng tiết kiệm càng tự do lựa chọn! 🦋',
+  'THAO thông minh tài chính xuất sắc! 🎓', 'Chi tiêu thông minh là nghệ thuật! 🎨', 'Ghi chép là thói quen của người thành đạt! 🏅',
+  'THAO kiểm soát dòng tiền thật tốt! 🌊', 'Đầu tư cho kiến thức là đầu tư khôn ngoan! 📘', 'Vững vàng tài chính trước mọi sóng gió! ⚓',
+  'THAO tương lai giàu có trong tầm tay! 🤲', 'Học cách tiêu tiền là học cách sống! 🌈', 'Ít thôi nhưng đều là vàng cốm! 🪙',
+  'THAO vững bước trên con đường làm giàu! 🚶', 'Biết đủ là đủ đủ là sang! 🧘', 'Đam mê ghi chép đam mê làm giàu! 💖',
+  'THAO làm điều khác biệt mỗi ngày! 🌟', 'Đồng tiền ra đi có hẹn ngày về! 🔄', 'Sống đơn giản sống giàu có! 🏡',
 ];
 
 // 弹幕泳道管理，避免重叠
