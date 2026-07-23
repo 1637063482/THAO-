@@ -1,11 +1,19 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { deleteDoc, doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 
 const projectId = "demo-no-project";
-const ledgerPath = "artifacts/my-expense-app-test/public/data/ledgers/shared_ledger_2026";
+const appId = "my-expense-app-test";
+const ledgerPath = `artifacts/${appId}/public/data/ledgers/shared_ledger_2026`;
+const nextLedgerPath = `artifacts/${appId}/public/data/ledgers/shared_ledger_2027`;
+const girlfriendEmail = "girlfriend.fixture@example.invalid";
+const ownerEmail = "owner.fixture@example.invalid";
 let env;
+
+function dbFor(uid, email) {
+  return env.authenticatedContext(uid, { email }).firestore();
+}
 
 describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () => {
   beforeAll(async () => {
@@ -18,30 +26,52 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
   beforeEach(async () => {
     await env.clearFirestore();
     await env.withSecurityRulesDisabled(async (context) => {
-      await setDoc(doc(context.firestore(), "artifacts/my-expense-app-test/public/data/members/authorized-a"), { access: "shared-ledger" });
-      await setDoc(doc(context.firestore(), "artifacts/my-expense-app-test/public/data/members/authorized-b"), { access: "shared-ledger" });
       await setDoc(doc(context.firestore(), ledgerPath), { balances: {}, entries: {}, settings: {} });
     });
   });
 
   afterAll(async () => env?.cleanup());
-  it("denies unauthenticated and non-member reads", async () => {
-    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), ledgerPath)));
-    await assertFails(getDoc(doc(env.authenticatedContext("outsider").firestore(), ledgerPath)));
-  });
 
-  it("allows both configured accounts to read and update the shared ledger", async () => {
-    for (const uid of ["authorized-a", "authorized-b"]) {
-      const db = env.authenticatedContext(uid).firestore();
+  it("allows girlfriend and owner fixture emails to read, create, and update ledger documents", async () => {
+    for (const [uid, email] of [
+      ["girlfriend-fixture-uid", girlfriendEmail],
+      ["owner-fixture-uid", ownerEmail.toUpperCase()],
+    ]) {
+      const db = dbFor(uid, email);
+
       await assertSucceeds(getDoc(doc(db, ledgerPath)));
-      await assertSucceeds(setDoc(doc(db, ledgerPath), { balances: {}, entries: { [`1_1_${uid}`]: "10" }, settings: {} }));
+      await assertSucceeds(setDoc(doc(db, nextLedgerPath), { balances: {}, entries: {}, settings: {} }));
+      await assertSucceeds(updateDoc(doc(db, ledgerPath), { entries: { [`1_1_${uid}`]: "10" } }));
     }
   });
 
-  it("denies unknown fields and deletes", async () => {
-    const db = env.authenticatedContext("authorized-a").firestore();
-    await assertFails(setDoc(doc(db, ledgerPath), { balances: {}, entries: {}, settings: {}, admin: true }));
-    const { deleteDoc } = await import("firebase/firestore");
-    await assertFails(deleteDoc(doc(db, ledgerPath)));
+  it("denies anonymous, missing-email, and third-email ledger reads, creates, and updates", async () => {
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), ledgerPath)));
+    await assertFails(setDoc(doc(env.unauthenticatedContext().firestore(), nextLedgerPath), { balances: {}, entries: {}, settings: {} }));
+
+    for (const db of [
+      env.authenticatedContext("missing-email").firestore(),
+      dbFor("third-fixture-uid", "third.fixture@example.invalid"),
+    ]) {
+      await assertFails(getDoc(doc(db, ledgerPath)));
+      await assertFails(setDoc(doc(db, nextLedgerPath), { balances: {}, entries: {}, settings: {} }));
+      await assertFails(updateDoc(doc(db, ledgerPath), { entries: { "1_1_food": "10" } }));
+    }
+  });
+
+  it("denies ledger deletes even for the two authorized fixture emails", async () => {
+    for (const [uid, email] of [
+      ["girlfriend-fixture-uid", girlfriendEmail],
+      ["owner-fixture-uid", ownerEmail],
+    ]) {
+      await assertFails(deleteDoc(doc(dbFor(uid, email), ledgerPath)));
+    }
+  });
+
+  it("denies access to non-ledger paths for authorized fixture emails", async () => {
+    const db = dbFor("girlfriend-fixture-uid", girlfriendEmail);
+
+    await assertFails(getDoc(doc(db, `artifacts/${appId}/public/data/members/girlfriend-fixture-uid`)));
+    await assertFails(setDoc(doc(db, `artifacts/${appId}/public/data/members/girlfriend-fixture-uid`), { access: "shared-ledger" }));
   });
 });

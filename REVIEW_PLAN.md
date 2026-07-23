@@ -2,6 +2,8 @@
 
 > 角色：Terra 是独立审查者，不替施工 Agent 补需求，也不因“构建成功”批准。每个 Task 必须按其 commit 单独审查；先读取 `PROJECT_ANALYSIS.md`、`BUG_REPORT.md`、`FRD.md`、`ARCHITECTURE_PLAN.md` 和对应 Task，再看 diff 与新鲜测试输出。
 
+> 审查交接遵循 `AGENT_WORKFLOW.md`：Terra 禁止修改业务代码，但必须把结论写入 `docs/task-reviews/<TASK>-R<轮次>.md`、更新 `TASK_STATUS.md` 并提交，不能只在聊天中返回 PASS/FAIL。
+
 最新产品边界：女朋友是唯一日常记账者，VND 是事实币种；项目所有者第二账号主要查看/维护，CNY 仅展示；无注册、成员管理或多家庭。任何引入通用多币账、角色系统或默认迁移 T011/T012 的提交都属于越界。
 
 ## 1. 审查结论格式
@@ -49,7 +51,7 @@ Task ID:
 
 - 依赖方向 `ui → application → domain`，infrastructure 实现 port。
 - 所有业务资源必须落在固定共享账本命名空间；uid 只能来自认证上下文，不能由表单伪造。
-- 当前运行系统以 VND `entries` 为事实源；streak 是可重建派生值。只有 T019 批准迁移后 transaction 才能成为事实源。
+- 当前运行系统以 VND `entries` 为事实源；streak 是可重建派生值。T019/ADR-003 已明确不迁移到 Transaction，任何 UXS Task 都不得接回 T011/T012。
 - legacy 代码只存在于明确 adapter/feature flag，不扩散到新模型。
 - schema 变更是否同步更新 converter、Rules、indexes、migration 和 ADR。
 
@@ -83,6 +85,9 @@ Task ID:
 
 | Task | Terra 必查功能点 | 重点风险与拒绝条件 | 最低验证证据 |
 |---|---|---|---|
+| OPS-001 | 默认上下文只包含稳定规则、当前状态和相关 Task；完整规则仍可按需追溯 | 精简后丢失安全边界；错误状态选错 Task；把 review/evidence 无条件全部输出；修改全局 Skill | 状态矩阵 unit tests、两个 CLI smoke、前后字符数、full gates |
+| BUG-LOGIN-001 | snapshot 成功和失败都结束首载遮罩；失败保持 error | 只在登录 promise catch 隐藏；Firestore error 仍卡住；错误被标记 synced；修改线上 Firebase | snapshot error/success DOM 状态测试 + auth/sync 回归 + full gates |
+| BUG-LOGIN-002 | localhost 快照渲染异常仍结束首载；小数派生 VND 在 ViewModel 边界舍入；Auth/监听无响应可恢复 | 放宽领域整数规则；修改真实账务；catch 后伪报 synced；timer 未清理；只用单测不复验本地运行 | 四条 RED/GREEN 路径 + full gates + 干净 localhost 标签页无控制台错误 |
 | T001 | Vitest/jsdom/TS strict 基线可在干净安装运行 | 一次性把 legacy JS 纳入 strict 造成噪音；脚本在 Windows 不可用 | `npm ci` 后 test/typecheck/build 全绿 |
 | T002 | characterization 与当前 `safeEval` 完全一致 | 测试偷偷把错误现状写成未来规范；漏非法文本/非有限数 | 15+ 表驱动用例，未改生产代码 |
 | T003 | raw/remark 只作为文本值，不形成节点或属性 | 仅替换 `<`、漏引号/换行；仍在别处拼用户数据 innerHTML | 恶意 payload DOM 断言 + 月切换回归 |
@@ -105,6 +110,39 @@ Task ID:
 | T020 | FX 故障不阻塞 VND 记账 | 失败写 0；缓存无时间；改动历史 entries | timeout/bad JSON/cache + VND 不变 |
 | T021 | CI test/type/rules/build 均阻断且不部署 | secret/真实 UID 泄漏；失败被 `continue-on-error` 吞掉 | 一次红→绿 CI 证据 |
 
+### 3.1 UXS 通用视觉审查门禁
+
+Terra 不得只看 DOM snapshot 或 Coder 的聊天摘要。凡 Task 改变可见 UI，必须读取仓库 evidence 和合成数据截图，并亲自核对适用尺寸：360×800、390×844、430×932、768×1024、1440×900、1920×1080。至少检查：
+
+- 越南语默认且无截断，中文切换无缺键，无英语选择入口；
+- 手机无页面级横向滚动，Bottom Navigation、键盘和 safe area 不遮挡内容；
+- 桌面信息密度合理，完整表格和所有编辑入口仍可达；
+- Apple Warm Token 一致，正文对比、焦点、触控目标和 reduced-motion 合格；
+- 截图/fixture/evidence 只含合成数据，不含真实邮箱、UID、余额、存款或银行名；
+- 视觉变化没有改写 `appState`、pendingUpdates、legacy key 或 Firebase 路径。
+
+缺少应有截图时不得凭描述 APPROVE；若执行环境确实无法截图，review 必须标记缺失证据和明确阻断项，而不是把限制解释成通过。
+
+### 3.2 UXS-001～UXS-015 专项检查
+
+| Task | Terra 必查功能点 | 重点风险与拒绝条件 | 最低验证证据 |
+|---|---|---|---|
+| UXS-001 | ADR-004 与 PRD/FRD/架构统一 | 仍等待 T019；引入 Transaction/多币账/外部通知；存款路径含糊 | 定向 `rg`、五文档一致性、`git diff --check` |
+| UXS-002 | vi 默认、zh-CN 切换、动态文案全覆盖 | 字典值充当数据 key；切换触发云写；Firebase 英文原错直出 | 缺键/插值/lang/persistence/state 不变测试 + 硬编码扫描 |
+| UXS-003 | Token、Sidebar/Bottom Nav、safe area、键盘 | 两套导航同时可聚焦；业务 DOM/事件丢失；页面横向溢出 | 六尺寸截图 + navigation/app-shell tests |
+| UXS-004 | hero 为本月预算剩余；分类/streak/日聚合可追溯 | 把日分类单元格称为逐笔交易；复制/改变预算规则；假数据 | ViewModel 边界 tests + 六尺寸截图 |
+| UXS-005 | 收入/支出 Bottom Sheet 复用 legacy 写入 | 新建 transaction；重复提交；失败清空输入；键盘遮挡 | 收入/支出/失败/离线/焦点 tests + 手机/桌面截图 |
+| UXS-006 | 日视图和完整表格编辑同一 legacy cell | 合成伪 ID；完整表格退化；切换丢输入；页面级溢出 | 映射/双入口/远端快照 tests + 横屏/多尺寸截图 |
+| UXS-007 | `income-expense`、月年独立、VND 整数 | 存款本金/预计利息计入实际；Domain 依赖 DOM/Firebase；NaN | 0/负/超额/safe integer/年月边界 domain tests |
+| UXS-008 | 13 个 settings key round-trip、切年、旧文档 | 自建 goals collection；改 Rules；CNY/locale 触发写；导入破坏兼容 | store/schema/旧快照 tests + full gates |
+| UXS-009 | 首页/储蓄页目标编辑、清空、同步状态 | UI 重算领域逻辑；历史年被覆盖；失败伪成功 | 状态/render tests + 390/768/1440 截图 |
+| UXS-010 | ppm/BigInt 利息、状态、日期、汇总 | 浮点持久事实；MATURING 被存储；本金计收入；日期按设备漂移 | 利息/舍入/闰年/override/状态/汇总 domain tests |
+| UXS-011 | 固定 savings 文档、schema、版本、Rules deny | 写年度 doc；宽松 auth-only；部署线上；泄露真实账号/数据 | unit/integration/rules、每 allow 对应 deny、emulator exit code |
+| UXS-012 | 手机卡片/桌面表格 CRUD、汇总、隐私 | UI 自算利息；归档即硬删除；错误丢表单；隐私漏金额 | form/view tests + 六尺寸/隐私截图 |
+| UXS-013 | 打开/恢复提醒、最紧迫阶段、去重、snooze | 引入 Push/Cron；错过阶段连环弹；数据未加载先弹；离线冒充最新 | fake clock/lifecycle tests + dialog 截图 |
+| UXS-014 | 赎回、续存、实际利息幂等收入 | 本金算收入；覆写旧存款；重复写 income；部分失败伪完成 | 重复点击/失败注入/版本冲突/use-case tests |
+| UXS-015 | PWA、全尺寸、offline/update、a11y、隐私回归 | 用真实数据截图；新增功能掩盖缺陷；未经授权部署；Critical/High 遗留 | 完整截图索引、PWA smoke、全量门禁及已知限制 |
+
 ## 4. 关键跨任务审查
 
 ### 4.1 T003–T007 止血发布
@@ -126,7 +164,7 @@ T011/T012 当前只允许保持隔离和测试绿色，不允许继续接 reposi
 
 ### 4.4 T017–T021 权限、恢复与决策
 
-线上权限无法从仓库猜测；缺少现行 Rules 时 T017 应 BLOCKED。T019 之前任何 Transaction repository/迁移提交都应拒绝。任何生产 Firebase 写入或部署仍需用户另行授权。
+线上权限无法从仓库猜测；缺少现行 Rules 时 T017 应 BLOCKED。T019/ADR-003 已拒绝 Transaction 迁移，因此任何 UXS 中接回 Transaction repository/迁移的提交都应拒绝。任何生产 Firebase 写入或部署仍需用户另行授权。
 
 ## 5. 缺陷严重度与处置时限
 

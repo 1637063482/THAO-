@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>UXS-012 synthetic deposit renderer</title>
+  <link rel="stylesheet" href="/src/css/app.css">
+  <style>
+    body { margin: 0; padding: 24px; background: var(--color-bg); }
+    #fixture-root { width: min(1180px, 100%); margin: 0 auto; }
+    @media (max-width: 767px) { body { padding: 12px; } }
+  </style>
+</head>
+<body>
+  <main id="fixture-root"></main>
+  <div id="deposit-form-root" data-deposit-form-host></div>
+  <script type="module">
+    import { buildDepositViewModel, renderDepositManagement } from "/src/js/deposit-view.js";
+    import { renderDepositForm } from "/src/js/deposit-form.js";
+
+    const params = new URLSearchParams(location.search);
+    const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
+    document.documentElement.lang = locale === "zh-CN" ? "zh-Hans" : "vi";
+    document.body.classList.toggle("privacy-mode", params.get("privacy") === "1");
+    const record = (overrides = {}) => ({
+      institutionName: "Ngân hàng Mẫu", productName: "Tiền gửi 12 tháng",
+      principalVnd: 25000000, annualRatePpm: 55000, openedOn: "2026-01-15", maturesOn: "2027-01-15",
+      expectedInterestVnd: null, actualInterestVnd: null, reminderDays: [30, 7, 1], remindersEnabled: true,
+      status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: "Dữ liệu tổng hợp",
+      version: 1, createdAt: new Date("2026-01-15T00:00:00Z"), updatedAt: new Date("2026-01-15T00:00:00Z"),
+      createdBy: "fixture", updatedBy: "fixture", archivedAt: null, ...overrides,
+    });
+    const depositDocument = {
+      schemaVersion: 1,
+      depositsById: {
+        "fixture-matured": record({ institutionName: "Ngân hàng Bình Minh", productName: "Tiền gửi 6 tháng", principalVnd: 12000000, openedOn: "2025-12-01", maturesOn: "2026-06-01" }),
+        "fixture-soon": record({ institutionName: "Ngân hàng An Tâm", productName: "Tiết kiệm linh hoạt", principalVnd: 18000000, openedOn: "2026-01-10", maturesOn: "2026-07-30", expectedInterestVnd: 620000 }),
+        "fixture-later": record({ institutionName: "Ngân hàng Hạnh Phúc", principalVnd: 30000000, maturesOn: "2027-01-15" }),
+      },
+      acknowledgementsByKey: {}, lastMutation: null,
+    };
+    const vm = buildDepositViewModel({ document: depositDocument, today: "2026-07-23", locale, status: params.get("status") || "synced", filter: "all" });
+    const root = document.getElementById("fixture-root");
+    root.innerHTML = renderDepositManagement(vm);
+    if (params.get("form") === "1") {
+      const formRoot = document.getElementById("deposit-form-root");
+      formRoot.dataset.locale = locale;
+      formRoot.innerHTML = renderDepositForm({ locale, id: "fixture-new" });
+    }
+  </script>
+</body>
+</html>

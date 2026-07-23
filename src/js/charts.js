@@ -2,6 +2,7 @@ import Chart from "chart.js/auto";
 import { state } from "./state.js";
 import { expenseCategories } from "./config.js";
 import { formatSymbol, getActiveRate } from "./utils.js";
+import { t } from "./i18n.js";
 
 let yearlyChart = null;
 let monthlyChart = null;
@@ -44,7 +45,7 @@ function makeOptions(title) {
         callbacks: {
           label: function (ctx) {
             var val = ctx.parsed.x;
-            if (!val || val <= 0) return "  暂无数据";
+            if (!val || val <= 0) return "  " + t("no_data");
             var total = 0;
             ctx.dataset.data.forEach(function (v) { total += v; });
             var p = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
@@ -82,7 +83,7 @@ export function initCharts() {
   var ctxM = document.getElementById("monthlyChart")?.getContext("2d");
   if (!ctxY || !ctxM) return;
 
-  var labels = expenseCategories.map(function (c) { return c.name; });
+  var labels = expenseCategories.map(function (c) { return t(c.nameKey); });
 
   yearlyChart = new Chart(ctxY, {
     type: "bar",
@@ -105,7 +106,7 @@ function drawLegend(id) {
   if (!el) return;
   var h = '<div class="flex flex-wrap gap-1.5 justify-center">';
   expenseCategories.forEach(function (c, i) {
-    var name = c.name.replace(/[^一-龥]/g, "");
+    var name = t(c.nameKey);
     h += '<span class="inline-flex items-center gap-1 text-[11px] text-slate-600 font-medium">';
     h += '<span style="width:10px;height:10px;border-radius:3px;background:' + COLORS[i] + ';flex-shrink:0;"></span>';
     h += name + "</span>";
@@ -122,7 +123,7 @@ export function updateCharts() {
     // Build year data with labels, sorted desc
     var yearEntries = expenseCategories.map(function (c) {
       var v = state.yearlyCatSums[c.id] || 0;
-      return { label: c.name, value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
+      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
     });
     yearEntries.sort(function (a, b) { return b.value - a.value; });
 
@@ -136,7 +137,7 @@ export function updateCharts() {
     var mobj = state.monthlyCatSums[state.activeMonthId] || {};
     var monthEntries = expenseCategories.map(function (c) {
       var v = mobj[c.id] || 0;
-      return { label: c.name, value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
+      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
     });
     monthEntries.sort(function (a, b) { return b.value - a.value; });
 

@@ -41,5 +41,5 @@ export function buildLegacyCsv({ year, balances, entries, categories, daysInMont
     ["银行卡", "end-bal-bank"], ["支付宝", "end-bal-alipay"], ["微信钱包", "end-bal-wechat"], ["现金及其他", "end-bal-other"],
   ];
   endingRows.forEach(([name, key]) => lines.push(row([name, evaluate(balances[key])])));
-  return "\uFEFF" + lines.join("\r\n") + "\r\n";
+  return "﻿" + lines.join("\r\n") + "\r\n";
 }

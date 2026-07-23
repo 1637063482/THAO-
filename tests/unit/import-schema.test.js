@@ -4,7 +4,7 @@ import { validateLegacyImport } from "../../src/js/import-schema.js";
 const valid = () => ({
   balances: { "bal-bank": "=100+200" },
   entries: { "1_1_dining": "=10+20", "1_1_remark": "早餐,午餐" },
-  settings: { budget_1: 15000000, expense_last_date: "2026-07-17" },
+    settings: { budget_1: 15000000, savings_goal_month_1: 500000, savings_goal_annual: null, expense_last_date: "2026-07-17" },
 });
 
 describe("legacy import schema", () => {
@@ -22,6 +22,8 @@ describe("legacy import schema", () => {
     [{ ...valid(), entries: { "1_1_remark": "x".repeat(1001) } }, "TEXT_TOO_LONG"],
     [{ ...valid(), balances: { "other-key": "1" } }, "INVALID_BALANCE_KEY"],
     [{ ...valid(), settings: { admin: true } }, "INVALID_SETTING_KEY"],
+    [{ ...valid(), settings: { savings_goal_month_1: 1.5 } }, "INVALID_SETTING"],
+    [{ ...valid(), settings: { savings_goal_month_13: 1 } }, "INVALID_SETTING_KEY"],
   ])("rejects invalid input with %s", (input, code) => {
     expect(validateLegacyImport(input)).toMatchObject({ ok: false, code });
   });

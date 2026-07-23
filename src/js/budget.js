@@ -1,4 +1,5 @@
 import { state } from "./state.js";
+import { t } from "./i18n.js";
 import { expenseCategories, DEFAULT_BUDGET_VND } from "./config.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate } from "./utils.js";
 import { updateCharts } from "./charts.js";
@@ -82,11 +83,11 @@ export function updateBudgetProgress() {
 
   var pctVal = pct.toFixed(1);
   var pctColor = pct >= 90 ? "#dc2626" : pct >= 75 ? "#d97706" : "#059669";
-  var tipHtml = '已用 <span class="budget-num" style="color:' + pctColor + '">' + pctVal + '%</span>';
+  var tipHtml = t("used") + ' <span class="budget-num" style="color:' + pctColor + '">' + pctVal + '%</span>';
   if (remainingDays > 0 && pct < 100) {
-    tipHtml += ' · 剩<span class="budget-num" style="color:#6366f1">' + remainingDays + '</span>天';
+    tipHtml += ' · ' + t("remaining_days", { days: remainingDays });
     if (dailyBudget > 0) {
-      tipHtml += ' · 日均可用 <span class="budget-num" style="color:#d97706">' + currencySymbol + dailyStr + '</span>';
+      tipHtml += ' · ' + t("daily_available", { amount: currencySymbol + dailyStr });
     }
   }
   txt.innerHTML = tipHtml;
@@ -184,13 +185,13 @@ function updateGlobalStats(inc, exp) {
     elDiff.innerText = formatSymbol(reconDiff);
     if (reconDiff > 0) {
       elDiff.style.color = "#dc2626";
-      if (elLabel) elLabel.innerText = "盘盈 · 实际多于账面";
+      if (elLabel) elLabel.innerText = t("surplus");
     } else if (reconDiff < 0) {
       elDiff.style.color = "#059669";
-      if (elLabel) elLabel.innerText = "盘亏 · 可能有漏记";
+      if (elLabel) elLabel.innerText = t("deficit");
     } else {
       elDiff.style.color = "#64748b";
-      if (elLabel) elLabel.innerText = "完全平账 ✓";
+      if (elLabel) elLabel.innerText = t("balanced");
     }
   }
 }

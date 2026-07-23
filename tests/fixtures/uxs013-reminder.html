@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>UXS-013 synthetic reminder renderer</title>
+  <link rel="stylesheet" href="/src/css/app.css">
+  <style>body { margin: 0; min-height: 100vh; background: var(--color-bg); } .fixture-shell { padding: 24px; color: #64748b; }</style>
+</head>
+<body>
+  <main class="fixture-shell"><h1>Thao Expense App</h1><p>Synthetic lifecycle fixture</p></main>
+  <div id="reminder-root"></div>
+  <script type="module">
+    import { createDepositReminderController } from "/src/js/deposit-reminder-controller.js";
+    const params = new URLSearchParams(location.search);
+    const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
+    document.documentElement.lang = locale === "zh-CN" ? "zh-Hans" : "vi";
+    const record = (institutionName, maturesOn) => ({ institutionName, productName: "Tiền gửi tổng hợp", maturesOn, reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", archivedAt: null });
+    const depositDocument = { schemaVersion: 1, depositsById: { first: record("Ngân hàng An Tâm", "2026-07-24"), second: record("Ngân hàng Hạnh Phúc", "2026-07-30") }, acknowledgementsByKey: {}, lastMutation: null };
+    const memoryStorage = { value: null, getItem() { return this.value; }, setItem(_key, value) { this.value = value; } };
+    const controller = createDepositReminderController({
+      root: document.getElementById("reminder-root"), getDocument: () => depositDocument,
+      getToday: () => "2026-07-24", getLocale: () => locale, isAuthenticated: () => true,
+      isReady: () => true, isOffline: () => params.get("offline") === "1", acknowledge: async () => {},
+      storage: memoryStorage, now: () => 1_000,
+    });
+    controller.check();
+  </script>
+</body>
+</html>

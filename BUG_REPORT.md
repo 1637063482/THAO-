@@ -183,3 +183,13 @@
 - 影响：金额、安全和同步逻辑无法回归证明；任何重构都可能静默破坏财务数据；线上错误无法量化或定位。
 - 建议方案：先建立 Vitest + jsdom、Firebase Emulator、Playwright 和 CI 四层最小基线；核心门禁覆盖金额、权限、并发、导入导出和跨日。
 - 修复优先级：P0
+
+## BUG-021 登录后储蓄渲染异常导致首次加载遮罩永久停留
+
+- 严重等级：High
+- 状态：已由 BUG-LOGIN-002 修复。
+- 位置：`src/js/main.js` 的储蓄刷新链路、`src/js/savings-view.js` 的 ViewModel 边界、`src/js/sync.js` 的当前年度 snapshot 回调。
+- 问题：账务公式可产生小数派生汇总，而储蓄领域只接受整数 VND。localhost 真实快照返回后，储蓄刷新抛出 `INVALID_SAVINGS_AMOUNT`；异常中断 snapshot 回调，使 BUG-LOGIN-001 添加的首载完成调用仍无法执行。Auth promise 和监听本身也没有无响应超时。
+- 影响：Firebase 已登录且数据已读取，用户仍只看到“正在加载数据”，无法正常进入应用；异常数据无需损坏或丢失即可触发。
+- 建议方案：在只读 ViewModel 边界把派生汇总舍入到 VND 最小单位；snapshot UI 刷新用 `finally` 保证首载完成；Auth/首次监听增加可清理的有限等待守卫。
+- 修复优先级：P0（已完成）

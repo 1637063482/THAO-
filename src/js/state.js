@@ -1,4 +1,8 @@
+import { getLedgerToday } from "./clock.js";
+import { createEmptyDepositDocument } from "./deposit-schema.js";
+
 const listeners = new Map();
+const initialLedgerDate = getLedgerToday();
 
 export function on(event, fn) {
   if (!listeners.has(event)) listeners.set(event, new Set());
@@ -7,16 +11,18 @@ export function on(event, fn) {
 }
 
 export const state = {
-  activeYear: new Date().getFullYear(),
-  activeMonthId: new Date().getMonth() + 1,
+  activeYear: initialLedgerDate.year,
+  activeMonthId: initialLedgerDate.month,
   currentCurrency: "VND",
   fxMode: "auto",
-  fxRateAuto: 3500,
+  fxRateAuto: null,
   fxRateManual: 3500,
   isSaving: false,
   isFirstLoad: true,
   currentUser: null,
   appState: { balances: {}, entries: {}, settings: {} },
+  depositDocument: createEmptyDepositDocument(),
+  previousYearEntries: {},
   pendingUpdates: { balances: {}, entries: {}, settings: {} },
   yearlyCatSums: {},
   monthlyCatSums: {},

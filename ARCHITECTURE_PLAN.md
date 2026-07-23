@@ -2,6 +2,10 @@
 
 > 目标是优先修好女朋友实际使用的 VND 私人账本，而不是建设通用财务平台。项目所有者的第二账号和 CNY 切换服务于查看/维护。账号、登录规则和数据已在 Firebase；任何线上 Rules 修改或迁移仍需单独授权。
 
+> T019 决策更新：项目所有者已选择 ADR-003 的方案 A。当前路线稳定现有 legacy 年度矩阵；T011/T012 Account/Transaction 模型不进入交付主线，不得默认迁移、接入 UI、扩展 Firestore schema 或写生产数据。
+>
+> **⚠ UXS 阶段范围（ADR-004）：** 本架构文档包含部分面向通用 Account/Transaction 模型的远期设计，这些内容属于被 ADR-003 拒绝或延期至新 ADR 的范围。当前施工以 `UI_SAVINGS_REDESIGN_PLAN.md`、`TASK_PLAN.md`、ADR-003 和 ADR-004 为唯一依据。以下标注为 **Superseded** 的章节仅作为历史参考保留。
+
 ## 1. 当前架构问题
 
 ### 1.1 边界问题
@@ -34,6 +38,8 @@
 
 采用 **Firebase 上的模块化单体前端 + 受控 Serverless 能力**，不立即建设传统常驻后端。
 
+> **当前实施范围：** UXS 阶段以 legacy `entries` 矩阵为事实源，不引入独立 Account/Transaction 领域模型。以下第 2.1 节中关于 Account/Transaction 领域的描述属于远期目标，当前不实施。
+
 - 客户端：保留 Vite，逐步迁移为 TypeScript；先不强制引入大型 UI 框架，避免在数据迁移期同时重写全部页面。
 - 领域层：纯 TypeScript，定义 Money、Transaction、Account、Budget 等，不依赖 DOM/Firebase；不建立 Household/Membership/角色模型。
 - 应用层：用例/命令处理器，统一验证、权限前置、幂等、同步状态。
@@ -61,6 +67,8 @@ flowchart TB
 依赖规则：`ui → application → domain`；`infrastructure → application/domain ports`。Domain 不得 import Firebase、DOM、Chart.js 或 localStorage。
 
 ## 3. 模块重新划分
+
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 本节描述的完整模块目录（含 transactions/、accounts/）属于被拒绝的迁移方案。UXS 阶段不建立独立 transaction/account 应用层或 repository。目录结构作为历史参考保留。
 
 建议目标目录：
 
@@ -124,6 +132,8 @@ tests/
 
 ### 4.1 建议 Firestore 模型
 
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 以下 Firestore 模型（accounts/、transactions/、categories/、reconciliations/ 等集合）属于被拒绝的迁移方案。当前事实源为 legacy `shared_ledger_<year>` 文档。仅保留为未来参考。
+
 ```text
 artifacts/{projectId}/private/data/sharedLedger/config
   baseCurrency, timezone, schemaVersion, createdAt, updatedAt
@@ -156,16 +166,18 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
   rebuildable aggregates, sourceWatermark, schemaVersion
 ```
 
-上述是迁移目标命名空间草案；正式采用前必须以实际 Firebase 路径限制和 Rules 可维护性做 emulator 验证。现有 `shared_ledger_<year>` 在迁移完成前仍是事实源。
+上述仅保留为被拒绝迁移方案的历史草案和未来参考。ADR-003 选择继续稳定现有 legacy 年度矩阵；现有 `shared_ledger_<year>` 继续作为事实源，不因 T011/T012 存在而默认迁移。
 
 ### 4.2 金额与汇率
 
 - 当前事实金额固定为 VND 整数；预算、余额、entries 和报表都以 VND 为准。
 - CNY 是 ViewModel 的辅助显示，可按当前汇率重算，不持久化为交易事实。
 - 展示切换不得写入 raw state、pendingUpdates 或 Firestore。
-- T011/T012 中的多币字段属于冻结探索；若 T019 决定继续，必须先改为符合 VND-only 产品边界。
+- T011/T012 中的多币字段属于冻结探索；ADR-003 已决定不继续迁移。若未来重新考虑，必须先新建 owner-approved ADR，并删除非 VND 事实字段。
 
 ### 4.3 索引与查询
+
+> **当前实施：** UXS 阶段不建立 transactions 集合，不创建对应索引。以下索引仅适用于未来迁移场景。
 
 首批复合索引按实际页面建立：
 
@@ -183,6 +195,8 @@ artifacts/{projectId}/private/data/sharedLedger/reportProjections/{periodKey}
 - 不把 projection 当事实源；投影错误不允许修改原交易。
 
 ### 4.5 迁移策略
+
+> **⛔ SUPERSEDED per ADR-003/ADR-004。** 本节描述的从 legacy 矩阵到新交易模型的迁移策略已被 ADR-003 拒绝。当前不移入独立 Transaction 模型，不执行迁移。
 
 1. 冻结并备份每个 `shared_ledger_<year>` 原文档，记录哈希与大小。
 2. 实现 legacy parser，把 `<month>_<day>_<category>` 公式解析成迁移交易。由于旧数据把多笔金额合在公式中且只有整日备注，无法可靠恢复每笔真实交易；迁移规则必须向用户展示。
@@ -278,9 +292,9 @@ UI 只展示稳定本地化文案；原始第三方错误进入脱敏日志。
 
 从现有年度 `entries` 派生连续天数，统一直接录入/快速录入/云端快照刷新，修复 7/30 天奖励；验证 VND 保存与 CNY 仅展示；核对线上 Firebase Rules。T011/T012 新模型保持未接线状态。
 
-### Phase 2：决定是否需要新模型
+### Phase 2：T019 已决定不迁移新模型
 
-基于真实使用痛点评估独立 Account/Transaction 是否值得迁移。只有项目所有者再次批准，才进行备份、dry-run、双读校验和 UI 切换。
+ADR-003 已选择稳定 legacy 年度矩阵。独立 Account/Transaction 不再是默认后续路线；T011/T012 保持未接线，并应在后续单独 cleanup 任务中删除或隔离。只有新的项目所有者批准 ADR 才能重新评估备份、dry-run、双读校验和 UI 切换。
 
 ### Phase 3：可靠离线与恢复
 

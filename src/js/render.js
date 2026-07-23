@@ -1,17 +1,58 @@
 import { state } from "./state.js";
-import { expenseCategories, getDaysInMonth, TODAY, CURRENT_MONTH, CURRENT_DAY } from "./config.js";
+import { expenseCategories, getDaysInMonth } from "./config.js";
+import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
 import { Fireworks } from "./fireworks.js";
-import { triggerCloudSave } from "./sync.js";
+import { buildLegacyStreak } from "./streak.js";
+import { t } from "./i18n.js";
+import { buildDailyLedger, getLedgerView } from "./day-ledger.js";
+
+export function renderDailyLedger(monthId) {
+  var container = document.getElementById("daily-ledger-container");
+  var tableContainer = document.getElementById("months-container");
+  if (!container) return;
+  var activeElement = document.activeElement;
+  var activeKey = container.contains(activeElement) && activeElement.dataset ? activeElement.dataset.key : null;
+  var activeDraft = activeKey ? { value: activeElement.value, raw: activeElement.dataset.raw } : null;
+  var categories = expenseCategories.map(function(cat) { return { id: cat.id, label: t(cat.nameKey || cat.name) }; });
+  var result = buildDailyLedger({ year: state.activeYear, month: monthId, entries: state.appState.entries, categories: categories, daysInMonth: getDaysInMonth(state.activeYear, monthId) });
+  var view = getLedgerView();
+  container.classList.toggle("ledger-view-active", view === "daily");
+  if (tableContainer) tableContainer.classList.toggle("ledger-table-hidden", view === "daily");
+  if (result.empty) { container.innerHTML = '<div class="card p-6 text-center text-slate-400 text-sm">' + t("no_data") + '</div>'; return; }
+  var html = '';
+  result.days.forEach(function(day) {
+    html += '<article class="daily-ledger-card card p-4"><div class="flex items-center justify-between mb-3"><h3 class="font-bold text-slate-700">' + day.dateKey + '</h3><span class="text-xs text-slate-500">' + t("expense") + ' ' + formatDisplay(day.expenseTotal) + '</span></div><div class="grid grid-cols-2 gap-2">';
+    day.cells.forEach(function(cell) { html += '<label class="daily-ledger-cell"><span class="text-xs text-slate-500">' + cell.label + '</span><input class="cell-input daily-ledger-input" data-type="entry" data-key="' + cell.sourceKey + '" value="' + formatDisplay(cell.value) + '" data-raw="' + cell.value + '"></label>'; });
+    html += '<label class="daily-ledger-cell"><span class="text-xs text-slate-500">' + t("income_total") + '</span><input class="cell-input daily-ledger-input income-input" data-type="entry" data-key="' + monthId + '_' + day.day + '_income" value="' + (day.income ? formatDisplay(day.income) : '') + '" data-raw="' + (day.income || '') + '"></label></div>';
+    if (day.remark) html += '<p data-day="' + day.day + '" class="daily-ledger-remark text-xs text-slate-500 mt-3"></p>';
+    html += '</article>';
+  });
+  container.innerHTML = html;
+  result.days.forEach(function(day) {
+    if (!day.remark) return;
+    var remark = container.querySelector('.daily-ledger-remark[data-day="' + day.day + '"]');
+    if (remark) remark.textContent = day.remark;
+  });
+  if (activeKey) {
+    var activeInput = container.querySelector('[data-key="' + activeKey + '"]');
+    if (activeInput) {
+      if (activeDraft) { activeInput.value = activeDraft.value; activeInput.dataset.raw = activeDraft.raw || activeDraft.value; }
+      activeInput.focus(); activeInput.selectionStart = activeInput.value.length;
+    }
+  }
+}
 
 export function fullRebuildDOM() {
   ["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"].forEach(function(id) {
     updateDOMFromState(id, state.appState.balances[id]);
   });
   renderMonthTable(state.activeMonthId);
+  renderDailyLedger(state.activeMonthId);
   calculateAll();
+  renderDailyLedger(state.activeMonthId);
 }
 
 export function softUpdateDOM() {
@@ -27,6 +68,7 @@ export function softUpdateDOM() {
     updateDOMFromState("entry-" + state.activeMonthId + "-" + d + "-remark", state.appState.entries[state.activeMonthId + "_" + d + "_remark"], false);
   }
   calculateAll();
+  renderDailyLedger(state.activeMonthId);
 }
 
 export function updateDOMFromState(id, rawVNDVal, isMath) {
@@ -44,13 +86,14 @@ export function renderMonthTable(monthId) {
   var container = document.getElementById("months-container");
   if (!container) return;
   var monthDays = getDaysInMonth(state.activeYear, monthId);
-  var isCurrentMonth = TODAY.getFullYear() === state.activeYear && TODAY.getMonth() + 1 === monthId;
-  var currentDay = TODAY.getDate();
+  var today = getLedgerToday();
+  var isCurrentMonth = today.year === state.activeYear && today.month === monthId;
+  var currentDay = today.day;
 
   // Category column headers — emoji icon + abbreviated name
   var catHeaders = "";
   expenseCategories.forEach(function(c) {
-    catHeaders += '<th>' + c.emoji + ' ' + c.name + '</th>';
+    catHeaders += '<th>' + c.emoji + ' ' + t(c.nameKey) + '</th>';
   });
 
   // Build data rows
@@ -88,36 +131,36 @@ export function renderMonthTable(monthId) {
     + '<div class="budget-inline-bar">'
     + '<div class="budget-inline-left">'
     + '<span data-icon="target" data-icon-class="w-4 h-4 text-amber-500"></span>'
-    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span>月预算</span>'
+    + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span> ' + t("budget") + '</span>'
     + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" onchange="window.saveBudgetAndCalculate()">'
     + '<span class="text-xs text-slate-400 font-medium shrink-0" id="qa-currency-badge">VND</span>'
     + '</div>'
     + '<div class="budget-inline-right">'
     + '<div class="bg-slate-100 rounded-full h-2.5 overflow-hidden flex-1" style="min-width:80px;"><div id="budget-progress-bar" class="progress-bar h-full" style="width:0%"></div></div>'
-    + '<div id="budget-text" class="text-xs text-slate-500 font-medium whitespace-nowrap">已用 0%</div>'
+    + '<div id="budget-text" class="text-xs text-slate-500 font-medium whitespace-nowrap">' + t("used") + ' 0%</div>'
     + '</div>'
     + '</div>'
     // Table header bar
     + '<div class="table-header-bar">'
-    + '<h2 class="table-title">' + state.activeYear + '年' + monthId + '月</h2>'
-    + '<div class="table-balance-badge">结余 <span id="summary-balance-' + monthId + '" class="blur-sensitive">0</span></div>'
+    + '<h2 class="table-title">' + t("year_month_title", { year: state.activeYear, month: monthId }) + '</h2>'
+    + '<div class="table-balance-badge">' + t("balance") + ' <span id="summary-balance-' + monthId + '" class="blur-sensitive">0</span></div>'
     + '</div>'
     // Scrollable table body
     + '<div class="table-scroll" id="table-scroll-container-' + monthId + '">'
     + '<table>'
     + '<thead><tr>'
-    + '<th class="sticky-col date-col">日期</th>'
+    + '<th class="sticky-col date-col">' + t("date") + '</th>'
     + catHeaders
-    + '<th class="total-th">支出</th>'
-    + '<th class="income-th">收入</th>'
-    + '<th class="remark-th">备注</th>'
+    + '<th class="total-th">' + t("expense") + '</th>'
+    + '<th class="income-th">' + t("income") + '</th>'
+    + '<th class="remark-th">' + t("remark") + '</th>'
     + '</tr></thead>'
     + '<tbody>' + rowsHtml + '</tbody>'
     + '<tfoot><tr>'
-    + '<td class="sticky-col">合计</td>'
+    + '<td class="sticky-col">' + t("total") + '</td>'
     + sumCellsHtml
-    + '<td class="total-col"><span id="sum-' + monthId + '-exp" style="color:#10b981;font-weight:700;">0</span></td>'
-    + '<td class="income-col"><span id="sum-' + monthId + '-inc" style="color:#ef4444;font-weight:700;">0</span></td>'
+    + '<td class="total-col"><span id="sum-' + monthId + '-exp" class="blur-sensitive" style="color:#10b981;font-weight:700;">0</span></td>'
+    + '<td class="income-col"><span id="sum-' + monthId + '-inc" class="blur-sensitive" style="color:#ef4444;font-weight:700;">0</span></td>'
     + '<td></td>'
     + '</tr></tfoot>'
     + '</table>'
@@ -136,7 +179,7 @@ export function renderMonthTable(monthId) {
   }
 
   var monthlyChartTitle = document.getElementById("monthly-chart-title");
-  if (monthlyChartTitle) monthlyChartTitle.innerText = monthId + "月";
+  if (monthlyChartTitle) monthlyChartTitle.innerText = t("monthly", { month: monthId });
 
   // Auto-scroll to today's row (只对当前月份生效)
   if (isCurrentMonth) {
@@ -152,89 +195,20 @@ export function renderMonthTable(monthId) {
 
 // ---- streak helpers ----
 
-function getDateStrings() {
-  var today = new Date();
-  var todayStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, "0") + "-" + String(today.getDate()).padStart(2, "0");
-  var yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
-  var yesterdayStr = yesterday.getFullYear() + "-" + String(yesterday.getMonth() + 1).padStart(2, "0") + "-" + String(yesterday.getDate()).padStart(2, "0");
-  return { todayStr: todayStr, yesterdayStr: yesterdayStr };
+function getDerivedStreak() {
+  return buildLegacyStreak(state.appState.entries, state.activeYear, new Date(), "Asia/Ho_Chi_Minh", {
+    previousYearEntries: state.previousYearEntries,
+  });
 }
 
-/**
- * 读取并校准 streak 状态（读写 localStorage，保证一致性）
- * 返回 { streak, hasRecordedToday }
- */
-function getCalibratedStreak() {
-  var dates = getDateStrings();
-  var settings = state.appState.settings;
-  var lastDate = "";
-  var streak = 0;
-
-  // 优先读取云端同步的 streak 数据
-  if (settings && settings.expense_last_date !== undefined) {
-    lastDate = settings.expense_last_date;
-    streak = parseInt(settings.expense_streak || "0");
-  } else {
-    // 兜底：localStorage（旧数据兼容 / 离线）
-    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
-  }
-
-  if (lastDate !== dates.todayStr && lastDate !== dates.yesterdayStr) {
-    streak = 0;
-    try { localStorage.setItem("expense_streak", "0"); } catch (e) {}
-    // 仅本地校准显示，不写入云端（避免竞态覆盖其他终端的正确并发写入）
-  }
-
-  return {
-    streak: streak,
-    hasRecordedToday: lastDate === dates.todayStr
-  };
+function hasRewardFired(threshold, todayStr) {
+  try { return localStorage.getItem("expense_streak_reward_" + threshold + "_" + todayStr) === "1"; }
+  catch (e) { return false; }
 }
 
-function incrementStreak() {
-  var dates = getDateStrings();
-  var settings = state.appState.settings;
-  var lastDate = "";
-  var streak = 0;
-
-  // 优先读取云端同步的 streak
-  if (settings && settings.expense_last_date !== undefined) {
-    lastDate = settings.expense_last_date;
-    streak = parseInt(settings.expense_streak || "0");
-  } else {
-    // 兜底：localStorage
-    try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-    try { streak = parseInt(localStorage.getItem("expense_streak") || "0"); } catch (e) {}
-  }
-
-  // 今天已记过，不重复累加
-  if (lastDate === dates.todayStr) {
-    return streak;
-  }
-
-  if (lastDate === dates.yesterdayStr) {
-    streak += 1;
-  } else {
-    streak = 1;
-  }
-
-  // 同步写入 localStorage（离线缓存）
-  try {
-    localStorage.setItem("expense_streak", String(streak));
-    localStorage.setItem("expense_last_date", dates.todayStr);
-  } catch (e) {}
-
-  // 同步写入云端 settings
-  state.appState.settings.expense_streak = streak;
-  state.appState.settings.expense_last_date = dates.todayStr;
-  if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
-  state.pendingUpdates.settings.expense_streak = streak;
-  state.pendingUpdates.settings.expense_last_date = dates.todayStr;
-  triggerCloudSave();
-
-  return streak;
+function markRewardFired(threshold, todayStr) {
+  try { localStorage.setItem("expense_streak_reward_" + threshold + "_" + todayStr, "1"); }
+  catch (e) {}
 }
 
 // ---- render ----
@@ -242,44 +216,37 @@ function incrementStreak() {
 export function renderStreakPanel() {
   var panel = document.getElementById("streak-panel");
   if (!panel) return;
-  var s = getCalibratedStreak();
+  var s = getDerivedStreak();
 
   panel.innerHTML = '<div class="card p-4">'
     + '<div class="flex items-center justify-between">'
     + '<div class="flex items-center gap-3">'
     + '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-200/60">' + Icons.flame('w-7 h-7 text-white') + '</div>'
-    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">记账连续天数</div>'
-    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">天</span></div></div></div>'
+    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">' + t("streak_days") + '</div>'
+    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">' + t("streak_unit") + '</span></div></div></div>'
     + '<div class="text-right">'
-    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + '今日已打卡</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">THAO，今天还没记账哦~</span>')
+    + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + t("checked_in_today") + '</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">' + t("not_recorded_yet") + '</span>')
     + '</div></div>'
-    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + '太棒了！THAO！你已经坚持了 ' + s.streak + ' 天，继续保持！</p></div>' : '')
+    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + t("streak_encouragement", { days: s.streak }) + '</p></div>' : '')
     + '</div>';
 
   state.currentStreak = s.streak;
+  return s;
 }
 
-export function updateStreakAfterRecord() {
-  var dates = getDateStrings();
-  var lastDate = "";
-  try { lastDate = localStorage.getItem("expense_last_date") || ""; } catch (e) {}
-
-  // 今天已记过，不重复累加
-  if (lastDate === dates.todayStr) {
-    // 今天非首次记账，烟花照放
-    Fireworks.launch({ duration: 6000 });
+export function updateStreakAfterRecord(options) {
+  options = options || {};
+  var launchDefaultFireworks = options.launchDefaultFireworks !== false;
+  var s = renderStreakPanel();
+  if (!s || !s.hasRecordedToday) {
     return;
   }
 
-  var newStreak = incrementStreak();
-  state.currentStreak = newStreak;
-  renderStreakPanel();
-
-  // 🎆 烟花触发
-  if (newStreak === 7 || newStreak === 30) {
-    showToast("恭喜！连续记账" + newStreak + "天成就达成！");
+  if ((s.streak === 7 || s.streak === 30) && !hasRewardFired(s.streak, s.todayStr)) {
+    markRewardFired(s.streak, s.todayStr);
+    showToast(t("streak_achieved", { days: s.streak }));
     Fireworks.launch({ duration: 12000 });
-  } else {
+  } else if (launchDefaultFireworks) {
     Fireworks.launch({ duration: 6000 });
   }
 }
