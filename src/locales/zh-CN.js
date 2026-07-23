@@ -103,6 +103,7 @@ export default {
   // Messages
   login_success: "登录成功",
   login_failed: "登录失败: 账号或密码错误",
+  login_timeout: "登录等待超时，请检查网络后重试。",
   logout_success: "已安全退出",
   manual_rate_prompt: "请先输入有效的手动汇率数值！",
   manual_rate_applied: "手动汇率已应用",

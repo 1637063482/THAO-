@@ -19,6 +19,31 @@ const auth = getAuth(app);
 const SESSION_KEY = "family_expense_app_last_active";
 const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
 let sessionCheckIntervalId = null;
+let loginGuardTimerId = null;
+
+function clearLoginGuard() {
+  if (loginGuardTimerId !== null) {
+    clearTimeout(loginGuardTimerId);
+    loginGuardTimerId = null;
+  }
+}
+
+function recoverLoginUiAfterTimeout() {
+  loginGuardTimerId = null;
+  if (state.currentUser) return;
+  const loadingOverlay = document.getElementById("loading-overlay");
+  const authOverlay = document.getElementById("auth-overlay");
+  const errEl = document.getElementById("auth-error");
+  if (loadingOverlay) loadingOverlay.style.display = "none";
+  if (authOverlay) {
+    authOverlay.style.display = "flex";
+    authOverlay.style.opacity = "1";
+  }
+  if (errEl) {
+    errEl.textContent = t("login_timeout");
+    errEl.classList.remove("hidden");
+  }
+}
 
 export { auth };
 
@@ -29,6 +54,7 @@ export function initAuth(onLoginCallback, onLogoutCallback) {
   sessionCheckIntervalId = setInterval(checkSessionTimeout, 60000);
 
   onAuthStateChanged(auth, (user) => {
+    clearLoginGuard();
     state.currentUser = user;
     emitAuthChange(user);
 
@@ -87,19 +113,22 @@ export function updateActivityTime() {
   lsSet(SESSION_KEY, Date.now().toString());
 }
 
-export async function handleLogin() {
+export async function handleLogin({ timeoutMs = 15000 } = {}) {
   const email = document.getElementById("auth-email")?.value;
   const pwd = document.getElementById("auth-password")?.value;
   if (!email || !pwd) return;
   const loadingOverlay = document.getElementById("loading-overlay");
   if (loadingOverlay) { loadingOverlay.style.display = "flex"; loadingOverlay.style.opacity = "1"; }
+  clearLoginGuard();
+  loginGuardTimerId = setTimeout(recoverLoginUiAfterTimeout, timeoutMs);
   try {
     await signInWithEmailAndPassword(auth, email, pwd);
     showToast(t("login_success"));
   } catch (e) {
+    clearLoginGuard();
     if (loadingOverlay) loadingOverlay.style.display = "none";
     const errEl = document.getElementById("auth-error");
-    if (errEl) { errEl.innerText = t("login_failed"); errEl.classList.remove("hidden"); }
+    if (errEl) { errEl.textContent = t("login_failed"); errEl.classList.remove("hidden"); }
   }
 }
 

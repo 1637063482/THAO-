@@ -103,6 +103,7 @@ export default {
   // Messages
   login_success: "Đăng nhập thành công",
   login_failed: "Đăng nhập thất bại: sai tài khoản hoặc mật khẩu",
+  login_timeout: "Đăng nhập mất quá nhiều thời gian. Vui lòng kiểm tra kết nối và thử lại.",
   logout_success: "Đã đăng xuất an toàn",
   manual_rate_prompt: "Vui lòng nhập tỷ giá thủ công hợp lệ!",
   manual_rate_applied: "Đã áp dụng tỷ giá thủ công",

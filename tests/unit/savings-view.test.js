@@ -16,6 +16,19 @@ describe("savings view", () => {
     expect(renderSavingsPage(vm)).toContain("储蓄目标");
   });
 
+  it("rounds derived fractional VND totals before applying integer domain rules", () => {
+    const vm = buildSavingsViewModel({
+      ...input,
+      monthlyIncome: 500000,
+      monthlyExpense: 200000 / 3,
+      annualIncome: 5000000,
+      annualExpense: 2000000 / 3,
+    });
+
+    expect(vm.monthlyActual).toBe(433333);
+    expect(vm.annualActual).toBe(4333333);
+  });
+
   it("keeps draft values visible after validation failure", () => {
     document.body.innerHTML = '<div id="root"></div>';
     const root = document.getElementById("root");

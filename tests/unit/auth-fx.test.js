@@ -20,8 +20,10 @@ vi.mock("../../src/js/fx-display.js", () => ({
 }));
 
 import { initAuth } from "../../src/js/auth.js";
+import { handleLogin } from "../../src/js/auth.js";
 import { loadCnyVndRate } from "../../src/js/fx-display.js";
 import { state } from "../../src/js/state.js";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 describe("auth FX display integration", () => {
   beforeEach(() => {
@@ -47,5 +49,28 @@ describe("auth FX display integration", () => {
       expect(document.getElementById("auto-rate-display").innerText).toBe("(汇率不可用)");
     });
     expect(state.fxRateAuto).toBeNull();
+  });
+
+  it("recovers the login UI when Firebase Auth never settles", async () => {
+    vi.useFakeTimers();
+    document.documentElement.lang = "vi";
+    document.body.innerHTML = `
+      <div id="auth-overlay" style="display:none;opacity:0"></div>
+      <div id="loading-overlay" style="display:flex;opacity:1"></div>
+      <div id="auth-error" class="hidden"></div>
+      <input id="auth-email" value="fixture@example.invalid">
+      <input id="auth-password" value="fixture-password">
+    `;
+    state.currentUser = null;
+    signInWithEmailAndPassword.mockReturnValue(new Promise(() => {}));
+
+    void handleLogin({ timeoutMs: 1000 });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(document.getElementById("loading-overlay").style.display).toBe("none");
+    expect(document.getElementById("auth-overlay").style.display).toBe("flex");
+    expect(document.getElementById("auth-error").classList.contains("hidden")).toBe(false);
+    expect(document.getElementById("auth-error").textContent).toContain("Đăng nhập mất quá nhiều thời gian");
+    vi.useRealTimers();
   });
 });

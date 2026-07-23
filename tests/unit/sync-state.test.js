@@ -31,7 +31,7 @@ vi.mock("../../src/js/icons.js", () => ({
   initIcons: vi.fn(),
 }));
 
-import { createSyncQueue, setupRealtimeListener } from "../../src/js/sync.js";
+import { createSyncQueue, setupRealtimeListener, teardownListener } from "../../src/js/sync.js";
 import { mergeBackPending, state } from "../../src/js/state.js";
 import { Fireworks } from "../../src/js/fireworks.js";
 import { updateStreakAfterRecord } from "../../src/js/render.js";
@@ -185,6 +185,49 @@ describe("sync queue", () => {
     expect(document.getElementById("sync-status").className).toContain("red");
 
     consoleError.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("releases the initial loading overlay when snapshot rendering throws", async () => {
+    vi.useFakeTimers();
+    const consoleError = vi.spyOn(console, "error").mockImplementation(() => {});
+    document.body.innerHTML = '<div id="loading-overlay" style="display:flex;opacity:1"></div><div id="sync-status"></div>';
+    state.activeYear = 2026;
+    state.isFirstLoad = true;
+    window.softUpdateDOM = vi.fn(() => { throw new Error("render failed"); });
+    window.updateStreakAfterRecord = vi.fn();
+
+    setupRealtimeListener();
+    expect(() => firestoreMock.snapshotHandler({
+      exists: () => true,
+      data: () => ({ balances: {}, entries: { "7_1_dining": "100/3" }, settings: {} }),
+    })).not.toThrow();
+
+    expect(document.getElementById("loading-overlay").style.opacity).toBe("0");
+    expect(state.isFirstLoad).toBe(false);
+    expect(document.getElementById("sync-status").className).toContain("red");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(document.getElementById("loading-overlay").style.display).toBe("none");
+
+    consoleError.mockRestore();
+    vi.useRealTimers();
+  });
+
+  it("releases the loading overlay when the initial ledger listener never settles", async () => {
+    vi.useFakeTimers();
+    document.body.innerHTML = '<div id="loading-overlay" style="display:flex;opacity:1"></div><div id="sync-status"></div>';
+    state.activeYear = 2026;
+    state.isFirstLoad = true;
+
+    setupRealtimeListener({ initialLoadTimeoutMs: 1000 });
+    await vi.advanceTimersByTimeAsync(1000);
+
+    expect(document.getElementById("loading-overlay").style.opacity).toBe("0");
+    expect(state.isFirstLoad).toBe(false);
+    expect(document.getElementById("sync-status").className).toContain("red");
+    await vi.advanceTimersByTimeAsync(300);
+    expect(document.getElementById("loading-overlay").style.display).toBe("none");
+    teardownListener();
     vi.useRealTimers();
   });
 

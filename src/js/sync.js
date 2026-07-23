@@ -6,6 +6,7 @@ import { t } from "./i18n.js";
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
+let initialLedgerLoadTimerId = null;
 const IMPORT_RECOVERY_STORAGE_PREFIX = "myExpenseApp.importRecovery.";
 
 function refreshStreakFromSnapshot() {
@@ -14,6 +15,10 @@ function refreshStreakFromSnapshot() {
 }
 
 function completeInitialLedgerLoad() {
+  if (initialLedgerLoadTimerId !== null) {
+    clearTimeout(initialLedgerLoadTimerId);
+    initialLedgerLoadTimerId = null;
+  }
   const loadingOverlay = document.getElementById("loading-overlay");
   if (loadingOverlay) {
     loadingOverlay.style.opacity = "0";
@@ -121,9 +126,14 @@ export function triggerCloudSave() {
   cloudQueue.schedule();
 }
 
-export function setupRealtimeListener() {
+export function setupRealtimeListener({ initialLoadTimeoutMs = 15000 } = {}) {
   if (unsubscribeSnapshot) unsubscribeSnapshot();
   if (unsubscribePreviousYearSnapshot) unsubscribePreviousYearSnapshot();
+  if (initialLedgerLoadTimerId !== null) clearTimeout(initialLedgerLoadTimerId);
+  initialLedgerLoadTimerId = setTimeout(() => {
+    updateSyncStatus("error");
+    completeInitialLedgerLoad();
+  }, initialLoadTimeoutMs);
   const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
   const previousDocRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + (state.activeYear - 1));
   unsubscribePreviousYearSnapshot = onSnapshot(previousDocRef, (snapshot) => {
@@ -133,21 +143,27 @@ export function setupRealtimeListener() {
     console.error("拉取上一年度数据失败:", error);
   });
   unsubscribeSnapshot = onSnapshot(docRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const cloudData = snapshot.data();
-      state.appState.balances = cloudData.balances || {};
-      state.appState.entries = cloudData.entries || {};
-      state.appState.settings = cloudData.settings || {};
-    } else {
-      state.appState.balances = {};
-      state.appState.entries = {};
-      state.appState.settings = {};
+    try {
+      if (snapshot.exists()) {
+        const cloudData = snapshot.data();
+        state.appState.balances = cloudData.balances || {};
+        state.appState.entries = cloudData.entries || {};
+        state.appState.settings = cloudData.settings || {};
+      } else {
+        state.appState.balances = {};
+        state.appState.entries = {};
+        state.appState.settings = {};
+      }
+      if (window.softUpdateDOM) window.softUpdateDOM();
+      refreshStreakFromSnapshot();
+      updateSyncStatus("synced");
+    } catch (error) {
+      console.error("刷新云端账本界面失败:", error);
+      updateSyncStatus("error");
+    } finally {
+      // 快照已完成时，即使某个 UI 子模块渲染失败，也不能永久阻塞整个应用。
+      completeInitialLedgerLoad();
     }
-    if (window.softUpdateDOM) window.softUpdateDOM();
-    refreshStreakFromSnapshot();
-    updateSyncStatus("synced");
-    // 首次加载无论成功还是失败都必须退出全屏 loading，避免认证成功后永久遮挡 UI。
-    completeInitialLedgerLoad();
   }, (error) => {
     console.error("拉取数据失败:", error);
     updateSyncStatus("error");
@@ -158,6 +174,7 @@ export function setupRealtimeListener() {
 export function teardownListener() {
   if (unsubscribeSnapshot) { unsubscribeSnapshot(); unsubscribeSnapshot = null; }
   if (unsubscribePreviousYearSnapshot) { unsubscribePreviousYearSnapshot(); unsubscribePreviousYearSnapshot = null; }
+  if (initialLedgerLoadTimerId !== null) { clearTimeout(initialLedgerLoadTimerId); initialLedgerLoadTimerId = null; }
 }
 
 function normalizeLegacyLedger(data) {

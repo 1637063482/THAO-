@@ -8,11 +8,14 @@ const labels = {
 
 function text(locale, key) { return (labels[locale] || labels.vi)[key]; }
 function money(value) { return Number(value || 0).toLocaleString("en-US"); }
+function normalizeDerivedVnd(value) {
+  return Number.isFinite(value) && Math.abs(value) <= Number.MAX_SAFE_INTEGER ? Math.round(value) : value;
+}
 
 export function buildSavingsViewModel({ settings = {}, month, monthlyIncome = 0, monthlyExpense = 0, annualIncome = monthlyIncome, annualExpense = monthlyExpense, locale = "vi", status = "synced" }) {
   const goals = readSavingsGoals(settings);
-  const monthlyActual = calculateActualSavings(monthlyIncome, monthlyExpense);
-  const annualActual = calculateActualSavings(annualIncome, annualExpense);
+  const monthlyActual = calculateActualSavings(normalizeDerivedVnd(monthlyIncome), normalizeDerivedVnd(monthlyExpense));
+  const annualActual = calculateActualSavings(normalizeDerivedVnd(annualIncome), normalizeDerivedVnd(annualExpense));
   return { locale, month, goals, monthlyActual, annualActual, monthly: calculateSavingsProgress(monthlyActual, goals.monthly[month - 1]), annual: calculateSavingsProgress(annualActual, goals.annual), status };
 }
 
