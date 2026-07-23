@@ -30,6 +30,7 @@
 | BUG-L10N-001 | Fix language switching partial update & analysis panel disappearance | 293334a | `docs/review-evidence/BUG-L10N-001.md` |
 | BUG-L10N-001 | Fix income/expense color semantics (income=red, expense=green) | 04bfa2d | `docs/review-evidence/BUG-L10N-001.md` |
 | BUG-L10N-001 | Separate analysis view from home page | 6f197bc | `docs/review-evidence/BUG-L10N-001.md` |
+| BUG-L10N-001 | Fix savings/dashboard colors and month tab i18n | 01d3e09 | `docs/review-evidence/BUG-L10N-001.md` |
 
 ## History
 
