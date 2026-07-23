@@ -1,6 +1,6 @@
 import { safeEval } from "./utils.js";
 
-let ledgerView = null;
+let ledgerView = "table";
 
 function readEntry(entries, key) {
   const raw = entries[key];

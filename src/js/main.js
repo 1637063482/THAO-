@@ -419,9 +419,24 @@ export function switchMonthTab(monthId) {
   if (b) b.innerText = monthId;
 }
 
+var LEDGER_LABELS = {
+  vi: { table: "Bảng", daily: "Theo ngày" },
+  "zh-CN": { table: "表格", daily: "按日" },
+};
+
+function updateLedgerToggleLabel() {
+  var btn = document.getElementById("btn-toggle-ledger");
+  if (!btn) return;
+  var view = getLedgerView();
+  var locale = getCurrentLocale();
+  var labels = LEDGER_LABELS[locale] || LEDGER_LABELS.vi;
+  btn.textContent = labels[view] || "";
+}
+
 export function toggleLedgerView() {
   setLedgerView(getLedgerView() === "daily" ? "table" : "daily");
   renderDailyLedger(state.activeMonthId);
+  updateLedgerToggleLabel();
 }
 
 function updateYearLabels() {
@@ -453,6 +468,7 @@ function switchLanguage(locale) {
       var _tab = document.getElementById("btn-tab-" + _m);
       if (_tab) _tab.textContent = t("month_tab", { month: _m });
     }
+    updateLedgerToggleLabel();
     window.fullRebuildDOM();
     renderStreakPanel();
     updateCharts();
@@ -701,6 +717,7 @@ function exportToCSV() {
 // Init icons on first load
 setTimeout(initIcons, 50);
 setTimeout(initNavigation, 50);
+setTimeout(updateLedgerToggleLabel, 50);
 
 initAuth(
   function(user) {
