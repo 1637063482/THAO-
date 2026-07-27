@@ -1,5 +1,12 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
+vi.mock("../../src/js/auth.js", () => ({
+  initAuth: vi.fn(),
+  handleLogin: vi.fn(),
+  logoutApp: vi.fn(),
+  updateActivityTime: vi.fn(),
+}));
+
 // Note: file intentionally named dashbaord.test.js to match the naming
 // pattern of other test files. The dashboard module renders HTML from
 // the ViewModel and wires up event handlers.
@@ -89,16 +96,16 @@ describe("dashboard rendering", () => {
   });
 
   it("production switchMonthTab path refreshes the hero for the selected legacy month", async () => {
-    document.body.innerHTML = '<div id="dashboard-root"></div><div id="months-container"></div>';
+    document.body.innerHTML = '<button data-ledger-month="3"></button><button data-ledger-month="4"></button><div id="dashboard-root"></div><div id="months-container"></div>';
     const stateModule = await import("../../src/js/state.js");
     stateModule.state.activeYear = 2026;
     stateModule.state.activeMonthId = 3;
     stateModule.state.appState = { balances: {}, entries: { "3_15_dining": "120000", "4_15_dining": "800000" }, settings: { monthly_budget_3: "2000000", monthly_budget_4: "2000000" } };
     stateModule.state.pendingUpdates = { entries: { "3_15_dining": "120000" } };
-    const main = await import("../../src/js/main.js");
-    main.switchMonthTab(3);
+    await import("../../src/js/main.js");
+    document.querySelector('[data-ledger-month="3"]').click();
     const marchHero = document.querySelector(".dashboard-hero").textContent;
-    main.switchMonthTab(4);
+    document.querySelector('[data-ledger-month="4"]').click();
     expect(stateModule.state.activeMonthId).toBe(4);
     expect(document.querySelector(".dashboard-hero").textContent).not.toBe(marchHero);
     expect(stateModule.state.pendingUpdates.entries["3_15_dining"]).toBe("120000");
@@ -107,18 +114,18 @@ describe("dashboard rendering", () => {
   it("production local-save debounce refreshes the hero after a legacy edit", async () => {
     vi.useFakeTimers();
     try {
-      document.body.innerHTML = '<div id="dashboard-root"></div><div id="months-container"></div>';
+      document.body.innerHTML = '<button data-ledger-month="3"></button><div id="dashboard-root"></div><div id="months-container"></div><input id="entry" class="cell-input" data-type="entry" data-key="3_15_dining">';
       const stateModule = await import("../../src/js/state.js");
       stateModule.state.activeYear = 2026;
       stateModule.state.activeMonthId = 3;
       stateModule.state.appState = { balances: {}, entries: { "3_15_dining": "120000" }, settings: { monthly_budget_3: "2000000" } };
       stateModule.state.pendingUpdates = { entries: { "3_15_dining": "120000" } };
-      const main = await import("../../src/js/main.js");
-      main.switchMonthTab(3);
+      await import("../../src/js/main.js");
+      document.querySelector('[data-ledger-month="3"]').click();
       const before = document.querySelector(".dashboard-hero").textContent;
-      stateModule.state.appState.entries["3_15_dining"] = "900000";
-      stateModule.state.pendingUpdates.entries["3_15_dining"] = "900000";
-      main.scheduleInputSave();
+      const input = document.getElementById("entry");
+      input.value = "900000";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       await vi.advanceTimersByTimeAsync(150);
       expect(document.querySelector(".dashboard-hero").textContent).not.toBe(before);
       expect(stateModule.state.pendingUpdates.entries["3_15_dining"]).toBe("900000");

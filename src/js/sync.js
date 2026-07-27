@@ -9,9 +9,8 @@ let unsubscribePreviousYearSnapshot = null;
 let initialLedgerLoadTimerId = null;
 const IMPORT_RECOVERY_STORAGE_PREFIX = "myExpenseApp.importRecovery.";
 
-function refreshStreakFromSnapshot() {
-  if (window.updateStreakAfterRecord) window.updateStreakAfterRecord({ launchDefaultFireworks: false });
-  else if (window.renderStreakPanel) window.renderStreakPanel();
+function refreshStreakFromSnapshot(onStreakRefresh) {
+  onStreakRefresh();
 }
 
 function completeInitialLedgerLoad() {
@@ -126,7 +125,11 @@ export function triggerCloudSave() {
   cloudQueue.schedule();
 }
 
-export function setupRealtimeListener({ initialLoadTimeoutMs = 15000 } = {}) {
+export function setupRealtimeListener({
+  initialLoadTimeoutMs = 15000,
+  onSnapshotApplied = () => {},
+  onStreakRefresh = () => {},
+} = {}) {
   if (unsubscribeSnapshot) unsubscribeSnapshot();
   if (unsubscribePreviousYearSnapshot) unsubscribePreviousYearSnapshot();
   if (initialLedgerLoadTimerId !== null) clearTimeout(initialLedgerLoadTimerId);
@@ -138,7 +141,7 @@ export function setupRealtimeListener({ initialLoadTimeoutMs = 15000 } = {}) {
   const previousDocRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + (state.activeYear - 1));
   unsubscribePreviousYearSnapshot = onSnapshot(previousDocRef, (snapshot) => {
     state.previousYearEntries = snapshot.exists() ? (snapshot.data().entries || {}) : {};
-    refreshStreakFromSnapshot();
+    refreshStreakFromSnapshot(onStreakRefresh);
   }, (error) => {
     console.error("拉取上一年度数据失败:", error);
   });
@@ -154,8 +157,8 @@ export function setupRealtimeListener({ initialLoadTimeoutMs = 15000 } = {}) {
         state.appState.entries = {};
         state.appState.settings = {};
       }
-      if (window.softUpdateDOM) window.softUpdateDOM();
-      refreshStreakFromSnapshot();
+      onSnapshotApplied();
+      refreshStreakFromSnapshot(onStreakRefresh);
       updateSyncStatus("synced");
     } catch (error) {
       console.error("刷新云端账本界面失败:", error);

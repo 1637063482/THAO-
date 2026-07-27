@@ -50,6 +50,14 @@ export function clearPending() {
   state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
 }
 
+export function resetLedgerYearState() {
+  state.appState = { balances: {}, entries: {}, settings: {} };
+  state.previousYearEntries = {};
+  state.yearlyCatSums = {};
+  state.monthlyCatSums = {};
+  clearPending();
+}
+
 export function mergeBackPending(copy) {
   ["balances", "entries", "settings"].forEach((section) => {
     if (!copy[section]) return;

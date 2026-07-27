@@ -150,10 +150,10 @@ describe("sync queue", () => {
     state.activeYear = 2026;
     state.appState = { balances: {}, entries: {}, settings: {} };
     state.previousYearEntries = {};
-    window.softUpdateDOM = vi.fn();
-    window.updateStreakAfterRecord = vi.fn();
+    const onSnapshotApplied = vi.fn();
+    const onStreakRefresh = vi.fn();
 
-    setupRealtimeListener();
+    setupRealtimeListener({ onSnapshotApplied, onStreakRefresh });
     firestoreMock.snapshotHandler({
       exists: () => true,
       data: () => ({
@@ -164,8 +164,8 @@ describe("sync queue", () => {
     });
 
     expect(state.appState.entries).toEqual({ "3_31_dining": "100000" });
-    expect(window.updateStreakAfterRecord).toHaveBeenCalledTimes(1);
-    expect(window.updateStreakAfterRecord).toHaveBeenCalledWith({ launchDefaultFireworks: false });
+    expect(onSnapshotApplied).toHaveBeenCalledTimes(1);
+    expect(onStreakRefresh).toHaveBeenCalledTimes(1);
   });
 
   it("releases the initial loading overlay when the current ledger snapshot fails", async () => {
@@ -194,10 +194,8 @@ describe("sync queue", () => {
     document.body.innerHTML = '<div id="loading-overlay" style="display:flex;opacity:1"></div><div id="sync-status"></div>';
     state.activeYear = 2026;
     state.isFirstLoad = true;
-    window.softUpdateDOM = vi.fn(() => { throw new Error("render failed"); });
-    window.updateStreakAfterRecord = vi.fn();
 
-    setupRealtimeListener();
+    setupRealtimeListener({ onSnapshotApplied: () => { throw new Error("render failed"); } });
     expect(() => firestoreMock.snapshotHandler({
       exists: () => true,
       data: () => ({ balances: {}, entries: { "7_1_dining": "100/3" }, settings: {} }),
@@ -240,11 +238,12 @@ describe("sync queue", () => {
     state.activeMonthId = 3;
     state.appState = { balances: {}, entries: {}, settings: {} };
     state.previousYearEntries = {};
-    window.softUpdateDOM = vi.fn();
-    window.updateStreakAfterRecord = (options) => updateStreakAfterRecord(options);
     Fireworks.launch.mockClear();
 
-    setupRealtimeListener();
+    setupRealtimeListener({
+      onSnapshotApplied: vi.fn(),
+      onStreakRefresh: () => updateStreakAfterRecord({ launchDefaultFireworks: false }),
+    });
     const snapshot = {
       exists: () => true,
       data: () => ({

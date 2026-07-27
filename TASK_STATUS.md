@@ -6,16 +6,16 @@
 
 | Field | Value |
 |---|---|
-| Work ID | REM-008 |
-| Scope | 提取可挂载/卸载的存款功能控制器 |
-| State | APPROVED |
+| Work ID | REM-012 |
+| Scope | 隔离旧账本输入、月份/年份切换、越南日期刷新与同步生命周期 |
+| State | READY_FOR_REVIEW |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
-| Reviewer | 独立 Terra / high；`docs/task-reviews/REM-008-R1.md` |
-| Result | 已批准：存款 controller lifecycle 已独立，Auth 重登不叠加订阅 |
-| Verification | 定向 41/41；Rules 16/16（`demo-no-project`）；全量 334 passed / 20 skipped；typecheck、build、diff check 通过 |
-| Previous Work | REM-001 已完成，提交 `6ee88e8` |
+| Reviewer | 独立 Terra / high；待审 |
+| Result | 已完成实现：旧账本 controller lifecycle 已独立，移除账本相关 window/inline 接口，年度矩阵与 VND 持久化边界保持不变 |
+| Verification | 计划定向 48/48；相关集成 30/30；全量 350 passed / 20 skipped；typecheck、build、diff check 通过 |
+| Previous Work | REM-008 已批准；本任务实现基线 `69d0f04` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。

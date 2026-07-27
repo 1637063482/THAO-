@@ -9,7 +9,7 @@ export function renderHeader(host) {
           <span data-icon="wallet" data-icon-class="w-8 h-8 text-amber-500 animate-float"></span>
           <h1 class="text-xl font-black text-slate-800 font-heading flex items-center gap-2 min-w-0">
             <span class="relative inline-flex items-center bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors cursor-pointer group shadow-sm">
-              <select id="year-selector" onchange="window.changeYear(this.value)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="" data-i18n="switch_year"></select>
+              <select id="year-selector" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="" data-i18n="switch_year"></select>
               <span id="display-year-text" class="text-amber-700 font-black text-lg pointer-events-none px-1 tracking-tight"></span>
               <svg class="w-4 h-4 text-amber-500 pointer-events-none group-hover:translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
             </span>

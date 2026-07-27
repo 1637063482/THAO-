@@ -8,7 +8,6 @@ import {
   onAuthStateChanged,
 } from "firebase/auth";
 import { app } from "./firebase.js";
-import { getLedgerToday } from "./clock.js";
 import { loadCnyVndRate } from "./fx-display.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
@@ -84,14 +83,8 @@ function initDOM() {
   const tabsContainer = document.getElementById("month-tabs");
   if (!tabsContainer) return;
   for (let i = 1; i <= 12; i++) {
-    tabsContainer.innerHTML += '<button id="btn-tab-' + i + '" onclick="window.switchMonthTab(' + i + ')" class="month-tab">' + t("month_tab", { month: i }) + '</button>';
+    tabsContainer.innerHTML += '<button type="button" id="btn-tab-' + i + '" data-ledger-month="' + i + '" class="month-tab">' + t("month_tab", { month: i }) + '</button>';
   }
-  setTimeout(() => {
-    if (window.switchMonthTab) {
-      const today = getLedgerToday();
-      window.switchMonthTab(state.activeYear === today.year ? today.month : 1);
-    }
-  }, 100);
 }
 
 async function fetchReliableAutoRate() {
