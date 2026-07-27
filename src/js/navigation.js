@@ -1,7 +1,7 @@
 /**
  * Navigation — responsive app shell controller.
  *
- * Provides 5 navigation destinations, single active-state tracking,
+ * Provides 3 navigation destinations, single active-state tracking,
  * keyboard navigation support, and breakpoint-aware layout helpers.
  */
 
@@ -9,8 +9,6 @@ export var NAV_ITEMS = [
   { id: "overview", labelKey: "overview", icon: "home", route: "overview" },
   { id: "savings",  labelKey: "savings", icon: "piggyBank", route: "savings" },
   { id: "stats",    labelKey: "stats", icon: "chartBar", route: "stats" },
-  { id: "import",   labelKey: "import_label", icon: "download", route: "import" },
-  { id: "export",   labelKey: "export_csv", icon: "download", route: "export" },
 ];
 
 var VALID_IDS = NAV_ITEMS.map(function (item) { return item.id; });
@@ -66,13 +64,6 @@ export function navigateTo(id) {
     case "stats":
       window.switchMobileView("stats");
       setActive("stats");
-      break;
-    case "import":
-      var fileInput = document.getElementById("import-file");
-      if (fileInput) fileInput.click();
-      break;
-    case "export":
-      window.exportToCSV();
       break;
   }
 }

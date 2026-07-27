@@ -15,6 +15,7 @@ import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 import { initNavigation } from "./navigation.js";
+import { bindCommands } from "./commands.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
 import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
@@ -744,6 +745,16 @@ function exportToCSV() {
 // Init icons on first load
 setTimeout(initIcons, 50);
 setTimeout(initNavigation, 50);
+setTimeout(function () {
+  bindCommands(document, {
+    importFile: function () { document.getElementById("import-file")?.click(); },
+    exportData: exportToCSV,
+    share: shareApp,
+    setLanguage: switchLanguage,
+    toggleTheme: toggleDarkMode,
+    togglePrivacy: togglePrivacy,
+  });
+}, 50);
 setTimeout(updateLedgerToggleLabel, 50);
 
 initAuth(
