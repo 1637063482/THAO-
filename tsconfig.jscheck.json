@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "allowImportingTsExtensions": true,
+    "checkJs": true
+  },
+  "include": [
+    "src/app/**/*.js",
+    "src/components/**/*.js",
+    "src/features/deposits/**/*.js",
+    "src/features/savings/**/*.js",
+    "src/features/ledger/**/*.js",
+    "src/types/**/*.d.ts"
+  ]
+}

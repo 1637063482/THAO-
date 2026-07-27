@@ -66,6 +66,7 @@ npx vitest run <related tests>
 # 完成前
 npm test -- --run
 npm run typecheck
+npm run typecheck:js
 npm run build
 git diff --check
 ```

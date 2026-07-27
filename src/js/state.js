@@ -1,15 +1,25 @@
 import { getLedgerToday } from "./clock.js";
 import { createEmptyDepositDocument } from "./deposit-schema.js";
 
+/** @type {Map<string, Set<(payload: unknown) => void>>} */
 const listeners = new Map();
 const initialLedgerDate = getLedgerToday();
 
+/**
+ * @param {string} event
+ * @param {(payload: unknown) => void} fn
+ */
 export function on(event, fn) {
-  if (!listeners.has(event)) listeners.set(event, new Set());
-  listeners.get(event).add(fn);
+  let eventListeners = listeners.get(event);
+  if (!eventListeners) {
+    eventListeners = new Set();
+    listeners.set(event, eventListeners);
+  }
+  eventListeners.add(fn);
   return () => listeners.get(event)?.delete(fn);
 }
 
+/** @type {import("../types/app-state").ApplicationState} */
 export const state = {
   activeYear: initialLedgerDate.year,
   activeMonthId: initialLedgerDate.month,
@@ -38,6 +48,7 @@ export function getActiveRate() {
 }
 
 export function copyPending() {
+  /** @type {import("../types/app-state").PendingLedgerUpdates} */
   const copy = { balances: {}, entries: {}, settings: {} };
   const p = state.pendingUpdates;
   if (Object.keys(p.balances).length) copy.balances = { ...p.balances };
@@ -58,12 +69,16 @@ export function resetLedgerYearState() {
   clearPending();
 }
 
+/** @param {Partial<import("../types/app-state").PendingLedgerUpdates>} copy */
 export function mergeBackPending(copy) {
-  ["balances", "entries", "settings"].forEach((section) => {
-    if (!copy[section]) return;
-    Object.entries(copy[section]).forEach(([key, value]) => {
-      if (!(key in state.pendingUpdates[section])) state.pendingUpdates[section][key] = value;
-    });
+  Object.entries(copy.balances || {}).forEach(([key, value]) => {
+    if (!(key in state.pendingUpdates.balances)) state.pendingUpdates.balances[key] = value;
+  });
+  Object.entries(copy.entries || {}).forEach(([key, value]) => {
+    if (!(key in state.pendingUpdates.entries)) state.pendingUpdates.entries[key] = value;
+  });
+  Object.entries(copy.settings || {}).forEach(([key, value]) => {
+    if (!(key in state.pendingUpdates.settings)) state.pendingUpdates.settings[key] = value;
   });
 }
 
@@ -74,6 +89,7 @@ export function hasPending() {
          Object.keys(p.settings).length > 0;
 }
 
+/** @param {import("../types/app-state").AuthUser | null} user */
 export function emitAuthChange(user) {
   listeners.get("auth-change")?.forEach(fn => fn(user));
 }

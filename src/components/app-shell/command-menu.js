@@ -1,3 +1,6 @@
+/**
+ * @param {import("../../types/dom-contracts").DomHost} host
+ */
 export function renderCommandMenu(host) {
   if (!host) throw new Error("App command menu host is required");
   host.innerHTML = `
@@ -48,43 +51,59 @@ export function renderCommandMenu(host) {
   return host;
 }
 
+/**
+ * @param {Document} [root]
+ */
 export function bindCommandMenu(root = document) {
   const panel = root.getElementById("nav-secondary");
   const button = root.getElementById("nav-more-btn");
   if (!panel || !button) return () => {};
+  const panelElement = panel;
+  const buttonElement = button;
 
+  /**
+   * @param {boolean} open
+   * @param {boolean} [restoreFocus]
+   */
   function setOpen(open, restoreFocus = false) {
-    panel.classList.toggle("open", open);
-    button.setAttribute("aria-expanded", String(open));
-    if (open) panel.querySelector("button")?.focus();
-    if (restoreFocus) button.focus();
+    panelElement.classList.toggle("open", open);
+    buttonElement.setAttribute("aria-expanded", String(open));
+    if (open) panelElement.querySelector("button")?.focus();
+    if (restoreFocus) buttonElement.focus();
   }
 
+  /** @param {MouseEvent} event */
   function toggle(event) {
     event.stopPropagation();
-    setOpen(!panel.classList.contains("open"));
+    setOpen(!panelElement.classList.contains("open"));
   }
 
+  /** @param {MouseEvent} event */
   function closeFromOutside(event) {
-    if (!panel.classList.contains("open")) return;
-    if (!panel.contains(event.target) && !button.contains(event.target)) {
+    if (!panelElement.classList.contains("open")) return;
+    if (
+      event.target instanceof Node
+      && !panelElement.contains(event.target)
+      && !buttonElement.contains(event.target)
+    ) {
       setOpen(false);
     }
   }
 
+  /** @param {KeyboardEvent} event */
   function closeFromEscape(event) {
-    if (event.key === "Escape" && panel.classList.contains("open")) {
+    if (event.key === "Escape" && panelElement.classList.contains("open")) {
       event.preventDefault();
       setOpen(false, true);
     }
   }
 
-  button.addEventListener("click", toggle);
+  buttonElement.addEventListener("click", toggle);
   root.addEventListener("click", closeFromOutside);
   root.addEventListener("keydown", closeFromEscape);
 
   return function unbindCommandMenu() {
-    button.removeEventListener("click", toggle);
+    buttonElement.removeEventListener("click", toggle);
     root.removeEventListener("click", closeFromOutside);
     root.removeEventListener("keydown", closeFromEscape);
   };

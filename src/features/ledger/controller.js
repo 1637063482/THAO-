@@ -1,3 +1,4 @@
+/** @param {import("../../types/app-state").LedgerControllerDependencies} dependencies */
 export function createLedgerController({
   state,
   documentRoot,
@@ -20,11 +21,14 @@ export function createLedgerController({
   clearTimer = timer => windowRoot.clearTimeout(timer),
 }) {
   let mounted = false;
+  /** @type {number | null} */
   let midnightTimer = null;
   let lastLedgerDate = clock.getToday();
 
   function updateMonthChrome() {
-    documentRoot.querySelectorAll("[data-ledger-month]").forEach(button => {
+    /** @type {NodeListOf<HTMLElement>} */
+    const monthButtons = documentRoot.querySelectorAll("[data-ledger-month]");
+    monthButtons.forEach(button => {
       const month = Number(button.dataset.ledgerMonth);
       button.className = month === state.activeMonthId ? "month-tab active" : "month-tab";
       button.textContent = translate("month_tab", { month });
@@ -35,6 +39,7 @@ export function createLedgerController({
     if (budgetMonth) budgetMonth.textContent = String(state.activeMonthId);
   }
 
+  /** @param {string | number | undefined} value */
   function switchMonth(value) {
     const month = Number(value);
     if (!Number.isInteger(month) || month < 1 || month > 12) return false;
@@ -99,8 +104,11 @@ export function createLedgerController({
     }, clock.getNextMidnightDelay());
   }
 
+  /** @param {MouseEvent} event */
   function onMonthClick(event) {
-    const button = event.target.closest?.("[data-ledger-month]");
+    const button = event.target instanceof Element
+      ? /** @type {HTMLElement | null} */ (event.target.closest("[data-ledger-month]"))
+      : null;
     if (button) switchMonth(button.dataset.ledgerMonth);
   }
 

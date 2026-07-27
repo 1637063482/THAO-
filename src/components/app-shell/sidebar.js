@@ -1,5 +1,8 @@
 import { NAV_ITEMS } from "../../js/navigation.js";
 
+/**
+ * @param {import("../../types/dom-contracts").DomHost} host
+ */
 export function renderSidebar(host) {
   if (!host) throw new Error("App sidebar host is required");
   host.setAttribute("data-i18n-aria-label", "main_navigation");

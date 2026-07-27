@@ -9,6 +9,7 @@ const BALANCE_INPUT_IDS = [
   "end-bal-other",
 ];
 
+/** @param {import("../../types/app-state").LedgerYearControllerDependencies} dependencies */
 export function createLedgerYearController({
   state,
   documentRoot,
@@ -22,13 +23,14 @@ export function createLedgerYearController({
 }) {
   let started = false;
 
+  /** @returns {HTMLSelectElement | null} */
   function selector() {
-    return documentRoot.getElementById("year-selector");
+    return /** @type {HTMLSelectElement | null} */ (documentRoot.getElementById("year-selector"));
   }
 
   function refreshLabels() {
     const displayYear = documentRoot.getElementById("display-year-text");
-    if (displayYear) displayYear.innerText = state.activeYear;
+    if (displayYear) displayYear.innerText = String(state.activeYear);
     documentRoot.title = `${state.activeYear} ${translate("app_name")}`;
     const startLabel = documentRoot.getElementById("ui-year-start-label");
     const endLabel = documentRoot.getElementById("ui-year-end-label");
@@ -56,7 +58,7 @@ export function createLedgerYearController({
     const monthsContainer = documentRoot.getElementById("months-container");
     if (monthsContainer) monthsContainer.innerHTML = "";
     for (const id of BALANCE_INPUT_IDS) {
-      const input = documentRoot.getElementById(id);
+      const input = /** @type {HTMLInputElement | null} */ (documentRoot.getElementById(id));
       if (input) {
         input.value = "";
         input.dataset.raw = "";
@@ -64,8 +66,9 @@ export function createLedgerYearController({
     }
   }
 
+  /** @param {string | number} value */
   function changeYear(value) {
-    const nextYear = Number.parseInt(value, 10);
+    const nextYear = Number.parseInt(String(value), 10);
     if (!Number.isInteger(nextYear) || nextYear === state.activeYear) return false;
     if (state.isSaving && isOnline()) {
       showBlocked(translate("syncing_year_switch"));
@@ -84,8 +87,9 @@ export function createLedgerYearController({
     return true;
   }
 
+  /** @param {Event} event */
   function onYearChange(event) {
-    changeYear(event.target.value);
+    if (event.target instanceof HTMLSelectElement) changeYear(event.target.value);
   }
 
   function start() {

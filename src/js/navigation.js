@@ -13,7 +13,9 @@ export var NAV_ITEMS = [
 
 var VALID_IDS = NAV_ITEMS.map(function (item) { return item.id; });
 var _activeId = "overview";
+/** @type {Pick<import("../types/app-state").AppRouter, "navigate"> | null} */
 var _router = null;
+/** @type {(() => void) | null} */
 var _cleanup = null;
 
 /**
@@ -66,20 +68,28 @@ export function navigateTo(id) {
 /**
  * Initialize navigation: configure click and keyboard handlers.
  */
+/**
+ * @param {Pick<import("../types/app-state").AppRouter, "navigate">} router
+ * @param {import("../types/dom-contracts").NavigationRoot} [root]
+ */
 export function initNavigation(router, root = document) {
   if (!router || typeof router.navigate !== "function") {
     throw new Error("App router is required");
   }
   if (_cleanup) _cleanup();
   _router = router;
+  /** @type {Array<() => void>} */
   var bindings = [];
 
-  root.querySelectorAll("[data-nav]").forEach(function (el) {
+  /** @type {NodeListOf<HTMLElement>} */
+  var navigationElements = root.querySelectorAll("[data-nav]");
+  navigationElements.forEach(function (el) {
     function clickHandler() {
       var id = el.getAttribute("data-nav");
       if (id) navigateTo(id);
     }
 
+    /** @param {KeyboardEvent} e */
     function keydownHandler(e) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();

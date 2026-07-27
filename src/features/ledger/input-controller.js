@@ -1,3 +1,4 @@
+/** @param {import("../../types/app-state").LedgerInputControllerDependencies} dependencies */
 export function createLedgerInputController({
   state,
   root,
@@ -20,13 +21,16 @@ export function createLedgerInputController({
   clearTimer = timer => windowRoot.clearTimeout(timer),
 }) {
   let started = false;
+  /** @type {number | null} */
   let saveTimer = null;
 
+  /** @param {HTMLInputElement} element */
   function isMathOrCell(element) {
     if (element.classList.contains("remark-input")) return false;
     return element.classList.contains("math-input") || element.classList.contains("cell-input");
   }
 
+  /** @param {HTMLInputElement} target @param {string | number} vndValue */
   function persistInputValue(target, vndValue) {
     const dataType = target.getAttribute("data-type");
     const dataKey = target.getAttribute("data-key");
@@ -51,8 +55,10 @@ export function createLedgerInputController({
     triggerSave();
   }
 
+  /** @param {Event} event */
   function onInput(event) {
     const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
     if (target.tagName !== "INPUT" || target.id.startsWith("qa-") || target.id === "monthly-budget-input") return;
     if (state.currentUser) updateActivity();
     const value = target.value;
@@ -67,8 +73,10 @@ export function createLedgerInputController({
     scheduleSave();
   }
 
+  /** @param {Event} event */
   function onFocusIn(event) {
     const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
     if (!isMathOrCell(target) || target.readOnly) return;
     target.dataset.currencyRawBefore = target.dataset.raw || "";
     if (state.currentCurrency === "VND") {
@@ -79,14 +87,17 @@ export function createLedgerInputController({
     target.dataset.currencyViewBefore = target.value;
   }
 
+  /** @param {HTMLInputElement} target */
   function clearCurrencyDraft(target) {
     delete target.dataset.currencyRawBefore;
     delete target.dataset.currencyViewBefore;
     delete target.dataset.currencyInputDirty;
   }
 
+  /** @param {Event} event */
   function onFocusOut(event) {
     const target = event.target;
+    if (!(target instanceof HTMLInputElement)) return;
     if (isMathOrCell(target) && !target.readOnly) {
       const rawInput = target.value;
       if (state.currentCurrency === "VND") {
@@ -121,6 +132,7 @@ export function createLedgerInputController({
     if (dataKey && !dataKey.endsWith("_remark")) updateStreak();
   }
 
+  /** @param {BeforeUnloadEvent} event */
   function onBeforeUnload(event) {
     if (!state.isSaving || !isOnline()) return;
     event.preventDefault();

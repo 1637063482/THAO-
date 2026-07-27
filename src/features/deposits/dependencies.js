@@ -1,6 +1,7 @@
 import { DepositRepository } from "../../infrastructure/firebase/deposit-repository.ts";
 import { subscribeToDeposits } from "./sync.js";
 
+/** @param {import("../../types/app-state").DepositDependenciesInput} input */
 export function createDepositDependencies({
   db,
   projectId,
@@ -11,8 +12,12 @@ export function createDepositDependencies({
   queueLegacyInterest,
   documentRoot = document,
   windowRoot = window,
-  confirm = message => typeof windowRoot.confirm !== "function" || windowRoot.confirm(message),
+  confirm = /** @param {string} message */ message => typeof windowRoot.confirm !== "function" || windowRoot.confirm(message),
 }) {
+  /** @param {import("../../types/app-state").AuthUser} user */
+  const createRepository = (user) => new DepositRepository(db, projectId, user.uid);
+  /** @param {import("../../types/app-state").DepositSnapshotCallbacks} callbacks */
+  const subscribe = (callbacks) => subscribeToDeposits(db, projectId, callbacks);
   return {
     state,
     hosts: {
@@ -20,8 +25,8 @@ export function createDepositDependencies({
       form: documentRoot.getElementById("deposit-form-root"),
       reminder: documentRoot.getElementById("deposit-reminder-root"),
     },
-    createRepository: user => new DepositRepository(db, projectId, user.uid),
-    subscribe: callbacks => subscribeToDeposits(db, projectId, callbacks),
+    createRepository,
+    subscribe,
     getToday,
     getNextMidnightDelay,
     getLocale,
@@ -29,12 +34,17 @@ export function createDepositDependencies({
     confirm,
     isOnline: () => windowRoot.navigator.onLine,
     isDocumentHidden: () => documentRoot.hidden,
+    /**
+     * @param {"document" | "window"} target
+     * @param {string} type
+     * @param {EventListener} listener
+     */
     addRuntimeListener(target, type, listener) {
       const eventTarget = target === "document" ? documentRoot : windowRoot;
       eventTarget.addEventListener(type, listener);
       return () => eventTarget.removeEventListener(type, listener);
     },
-    setTimer: (callback, delay) => windowRoot.setTimeout(callback, delay),
-    clearTimer: timer => windowRoot.clearTimeout(timer),
+    setTimer: (/** @type {() => void} */ callback, /** @type {number} */ delay) => windowRoot.setTimeout(callback, delay),
+    clearTimer: (/** @type {number} */ timer) => windowRoot.clearTimeout(timer),
   };
 }

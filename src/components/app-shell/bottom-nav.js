@@ -1,5 +1,8 @@
 import { NAV_ITEMS } from "../../js/navigation.js";
 
+/**
+ * @param {import("../../types/dom-contracts").DomHost} host
+ */
 export function renderBottomNav(host) {
   if (!host) throw new Error("App bottom navigation host is required");
   host.setAttribute("role", "navigation");

@@ -33,8 +33,19 @@ const VIETNAM_BANKS = [
   "SeABank", "Bac A Bank", "Nam A Bank", "PVcomBank",
 ];
 
+/** @param {string | undefined} locale @returns {import("../../types/app-state").AppLocale} */
+function normalizeLocale(locale) { return locale === "zh-CN" ? "zh-CN" : "vi"; }
+/** @param {import("../../types/app-state").AppLocale} locale */
 function words(locale) { return copy[locale] || copy.vi; }
-function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
+/** @param {unknown} value */
+function escapeHtml(value) {
+  /** @type {Record<string, string>} */
+  const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(value ?? "").replace(/[&<>"']/g, char => entities[char] || char);
+}
+/** @overload @param {unknown} value @param {true} optional @returns {number | null} */
+/** @overload @param {unknown} value @param {false} [optional] @returns {number} */
+/** @param {unknown} value @param {boolean} [optional] @returns {number | null} */
 function parseVnd(value, optional = false) {
   const normalized = String(value ?? "").trim().replace(/[,.\s]/g, "");
   if (optional && normalized === "") return null;
@@ -43,6 +54,7 @@ function parseVnd(value, optional = false) {
   if (!Number.isSafeInteger(amount) || amount < 0) throw new Error("VND amount is outside the safe range");
   return amount;
 }
+/** @param {unknown} value */
 export function parseAnnualRateToPpm(value) {
   const normalized = String(value ?? "").trim().replace(",", ".");
   if (!/^\d{1,3}(?:\.\d{1,4})?$/.test(normalized)) throw new Error("Annual rate must have at most four decimals");
@@ -51,30 +63,53 @@ export function parseAnnualRateToPpm(value) {
   if (!Number.isSafeInteger(ppm) || ppm > 1_000_000) throw new Error("Annual rate must be between 0 and 100 percent");
   return ppm;
 }
-function formValue(form, name) { return form.elements[name]?.value ?? ""; }
+/**
+ * @param {HTMLFormElement} form
+ * @param {string} name
+ * @returns {HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | null}
+ */
+function formControl(form, name) {
+  const control = form.elements.namedItem(name);
+  return control instanceof HTMLInputElement
+    || control instanceof HTMLSelectElement
+    || control instanceof HTMLTextAreaElement
+    ? control
+    : null;
+}
+/** @param {HTMLFormElement} form @param {string} name */
+function formValue(form, name) { return formControl(form, name)?.value ?? ""; }
+/** @param {string} value */
 function validDate(value) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
   const [year, month, day] = value.split("-").map(Number);
   const parsed = new Date(Date.UTC(year, month - 1, day));
   return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day;
 }
+/** @param {string} dateStr @param {number} months */
 function addMonths(dateStr, months) {
   if (!dateStr) return "";
   const [year, month, day] = dateStr.split("-").map(Number);
   const d = new Date(Date.UTC(year, month - 1 + months, day));
   return d.getUTCFullYear() + "-" + String(d.getUTCMonth() + 1).padStart(2, "0") + "-" + String(d.getUTCDate()).padStart(2, "0");
 }
+/**
+ * @param {unknown} principalVnd
+ * @param {unknown} annualRatePercent
+ * @param {string} openedOn
+ * @param {string} maturesOn
+ */
 function calculateExpectedInterest(principalVnd, annualRatePercent, openedOn, maturesOn) {
   const principal = Number(String(principalVnd ?? "").replace(/[,.\s]/g, ""));
   const rate = Number(String(annualRatePercent ?? "").replace(",", "."));
   if (!principal || !rate || !validDate(openedOn) || !validDate(maturesOn)) return null;
   if (principal <= 0 || rate <= 0) return null;
   const opened = new Date(openedOn); const matured = new Date(maturesOn);
-  const days = Math.floor((matured - opened) / 86400000);
+  const days = Math.floor((matured.getTime() - opened.getTime()) / 86400000);
   if (days <= 0) return null;
   // interest = principal * rate% * days / 365 = principal * rate * days / 36500
   return Math.round(principal * rate * days / 36500);
 }
+/** @param {HTMLFormElement} form @returns {import("../../types/app-state").DepositInput} */
 export function parseDepositForm(form) {
   const openedOn = formValue(form, "openedOn"); const maturesOn = formValue(form, "maturesOn");
   if (!validDate(openedOn) || !validDate(maturesOn) || maturesOn <= openedOn) throw new Error("maturity date must be later than opening date");
@@ -82,7 +117,7 @@ export function parseDepositForm(form) {
   if (!institutionName || !productName || institutionName.length > 120 || productName.length > 120) throw new Error("Institution and product are required");
   const reminderDays = [30, 7, 1];
   return {
-    id: form.dataset.depositId,
+    id: /** @type {string} */ (form.dataset.depositId),
     institutionName, productName,
     principalVnd: parseVnd(formValue(form, "principalVnd")),
     annualRatePpm: parseAnnualRateToPpm(formValue(form, "annualRatePercent")),
@@ -90,15 +125,19 @@ export function parseDepositForm(form) {
     expectedInterestVnd: parseVnd(formValue(form, "expectedInterestVnd"), true),
     actualInterestVnd: form.dataset.actualInterestVnd ? Number(form.dataset.actualInterestVnd) : null,
     reminderDays,
-    remindersEnabled: Boolean(form.elements.remindersEnabled?.checked),
-    status: form.dataset.status || "ACTIVE",
+    remindersEnabled: (() => {
+      const reminders = formControl(form, "remindersEnabled");
+      return reminders instanceof HTMLInputElement && reminders.checked;
+    })(),
+    status: /** @type {import("../../infrastructure/firebase/deposit-repository").PersistedDepositStatus} */ (form.dataset.status || "ACTIVE"),
     redeemedOn: form.dataset.redeemedOn || null,
     rolledOverToDepositId: form.dataset.rolledOverToDepositId || null,
     note: formValue(form, "note").trim(),
   };
 }
 
-export function renderDepositForm({ locale = "vi", id, deposit = null } = {}) {
+/** @param {import("../../types/app-state").DepositFormRenderOptions} options */
+export function renderDepositForm({ locale = "vi", id, deposit = null }) {
   const labels = words(locale); const editing = Boolean(deposit);
   const rate = deposit ? String(deposit.annualRatePpm / 10_000) : "";
   const bankOptions = VIETNAM_BANKS.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join("");
@@ -115,20 +154,23 @@ export function renderDepositForm({ locale = "vi", id, deposit = null } = {}) {
   return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<select name="productName" required>${productOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
 }
 
+/** @param {HTMLElement} root @param {import("../../types/app-state").DepositFormBindings} [bindings] */
 export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {}) {
-  const form = root?.querySelector?.("[data-deposit-form]"); if (!form) return;
-  root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
+  const form = /** @type {HTMLFormElement | null} */ (root.querySelector("[data-deposit-form]")); if (!form) return;
+  /** @type {NodeListOf<HTMLElement>} */
+  const closeButtons = root.querySelectorAll("[data-close-deposit-form]");
+  closeButtons.forEach(button => button.addEventListener("click", () => onClose?.()));
   root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
   bindDialogKeyboard(root, onClose);
 
   const labels = words(locale);
-  const productSelect = form.elements.productName;
-  const openedInput = form.elements.openedOn;
-  const maturesInput = form.elements.maturesOn;
+  const productSelect = formControl(form, "productName");
+  const openedInput = formControl(form, "openedOn");
+  const maturesInput = formControl(form, "maturesOn");
 
-  const principalInput = form.elements.principalVnd;
-  const rateInput = form.elements.annualRatePercent;
-  const expectedInput = form.elements.expectedInterestVnd;
+  const principalInput = formControl(form, "principalVnd");
+  const rateInput = formControl(form, "annualRatePercent");
+  const expectedInput = formControl(form, "expectedInterestVnd");
 
   function recalcMaturity() {
     const termValue = productSelect?.value;
@@ -146,7 +188,7 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     if (!expectedInput) return;
     const interest = calculateExpectedInterest(
       principalInput?.value, rateInput?.value,
-      openedInput?.value, maturesInput?.value,
+      openedInput?.value || "", maturesInput?.value || "",
     );
     expectedInput.value = interest !== null ? Number(interest).toLocaleString("en-US") : "";
   }
@@ -166,39 +208,43 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
   setTimeout(recalcExpected, 50);
 
   form.addEventListener("submit", async event => {
-    event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");
+    event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = /** @type {HTMLButtonElement | null} */ (form.querySelector("button[type=submit]"));
+    if (!submit) return;
     if (errorNode) errorNode.textContent = ""; submit.disabled = true;
     try { await onSubmit?.(parseDepositForm(form), { expectedVersion: Number(form.dataset.version || 0) }); }
     catch (error) {
-      const loc = locale || (document.documentElement.lang === "zh-Hans" ? "zh-CN" : "vi");
+      const loc = normalizeLocale(locale || (document.documentElement.lang === "zh-Hans" ? "zh-CN" : "vi"));
       if (errorNode) errorNode.textContent = depositErrorMessage(error, loc, "form");
     }
     finally { submit.disabled = false; }
   });
   // Android-specific: prevent native datalist from opening on empty-field focus.
   // The list attribute is restored on input so autocomplete still works as the user types.
-  const bankInput = form.elements.institutionName;
+  const bankInput = formControl(form, "institutionName");
   if (bankInput && /android/i.test(navigator.userAgent)) {
     const datalistId = bankInput.getAttribute("list");
     bankInput.addEventListener("focus", function onBankFocus() {
-      this.removeAttribute("list");
+      bankInput.removeAttribute("list");
     });
     bankInput.addEventListener("input", function onBankType() {
-      if (this.value.length > 0) this.setAttribute("list", datalistId);
+      if (bankInput.value.length > 0 && datalistId) bankInput.setAttribute("list", datalistId);
     });
     bankInput.addEventListener("blur", function onBankBlur() {
-      this.setAttribute("list", datalistId);
+      if (datalistId) bankInput.setAttribute("list", datalistId);
     });
   }
   bankInput?.focus();
 }
 
+/** @param {HTMLElement} root @param {(() => void) | undefined} onClose */
 function bindDialogKeyboard(root, onClose) {
   root.addEventListener("keydown", event => {
     if (event.key === "Escape") { event.preventDefault(); onClose?.(); return; }
     if (event.key !== "Tab") return;
-    const focusable = [...root.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])")]
-      .filter(element => !element.disabled && element.getAttribute("aria-hidden") !== "true");
+    /** @type {HTMLElement[]} */
+    const focusable = [.../** @type {NodeListOf<HTMLElement>} */ (root.querySelectorAll("button, input, select, textarea, [tabindex]:not([tabindex='-1'])"))]
+      .filter(element => !("disabled" in element) || !element.disabled)
+      .filter(element => element.getAttribute("aria-hidden") !== "true");
     if (!focusable.length) return;
     const first = focusable[0]; const last = focusable[focusable.length - 1];
     if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
@@ -206,6 +252,7 @@ function bindDialogKeyboard(root, onClose) {
   });
 }
 
+/** @param {import("../../types/app-state").DepositSettlementRenderOptions} options */
 export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "redeem", today }) {
   const labels = settlementCopy[locale] || settlementCopy.vi;
   const rollover = mode === "rollover";
@@ -213,9 +260,11 @@ export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "re
   return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-settlement-title"><header><h3 id="deposit-settlement-title">${rollover ? labels.rollover : labels.redeem}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-settlement-form data-mode="${mode}" data-deposit-id="${escapeHtml(deposit.id)}"><div class="deposit-form-grid">${nextFields}<label>${labels.actualInterest}<input name="actualInterestVnd" inputmode="numeric"></label><label class="deposit-reminder-toggle"><input name="writeInterestToLedger" type="checkbox"><span>${labels.writeInterest}</span></label><p class="deposit-principal-warning" role="note">${labels.principalWarning}</p></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${rollover ? labels.saveRollover : labels.saveRedeem}</button></div></form></section></div>`;
 }
 
+/** @param {HTMLFormElement} form @returns {import("../../types/app-state").DepositSettlementInput} */
 export function parseDepositSettlementForm(form) {
   const actualInterestVnd = parseVnd(formValue(form, "actualInterestVnd"), true);
-  const writeInterestToLedger = Boolean(form.elements.writeInterestToLedger?.checked);
+  const writeInterestControl = formControl(form, "writeInterestToLedger");
+  const writeInterestToLedger = Boolean(writeInterestControl instanceof HTMLInputElement && writeInterestControl.checked);
   if (writeInterestToLedger && (!actualInterestVnd || actualInterestVnd <= 0)) throw new Error("Confirmed interest requires a positive actual amount");
   if (form.dataset.mode === "redeem") {
     const settledOn = formValue(form, "settledOn");
@@ -235,13 +284,17 @@ export function parseDepositSettlementForm(form) {
   } };
 }
 
+/** @param {HTMLElement} root @param {import("../../types/app-state").DepositSettlementBindings} [bindings] */
 export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClose, confirm = globalThis.confirm } = {}) {
-  const form = root?.querySelector?.("[data-deposit-settlement-form]"); if (!form) return;
-  root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
+  const form = /** @type {HTMLFormElement | null} */ (root.querySelector("[data-deposit-settlement-form]")); if (!form) return;
+  /** @type {NodeListOf<HTMLElement>} */
+  const closeButtons = root.querySelectorAll("[data-close-deposit-form]");
+  closeButtons.forEach(button => button.addEventListener("click", () => onClose?.()));
   root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
   bindDialogKeyboard(root, onClose);
   form.addEventListener("submit", async event => {
-    event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = form.querySelector("button[type=submit]");
+    event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = /** @type {HTMLButtonElement | null} */ (form.querySelector("button[type=submit]"));
+    if (!submit) return;
     if (errorNode) errorNode.textContent = ""; submit.disabled = true;
     try {
       const parsed = parseDepositSettlementForm(form);

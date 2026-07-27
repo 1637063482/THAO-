@@ -18,6 +18,7 @@ describe("CI gate workflow", () => {
     expect(workflow).toContain("npm ci");
     expect(workflow).toContain("npm test -- --run");
     expect(workflow).toContain("npm run typecheck");
+    expect(workflow).toContain("npm run typecheck:js");
     expect(workflow).toContain("npm run test:rules");
     expect(workflow).toContain("npm run build");
     expect(pkg.scripts["test:rules"]).toContain("--project demo-no-project");

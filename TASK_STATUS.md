@@ -6,16 +6,16 @@
 
 | Field | Value |
 |---|---|
-| Work ID | REM-012 |
-| Scope | 隔离旧账本输入、月份/年份切换、越南日期刷新与同步生命周期 |
-| State | APPROVED |
+| Work ID | REM-014 |
+| Scope | 将 app、components、deposits、savings、ledger JavaScript 主链路纳入独立 `checkJs` 门禁 |
+| State | READY_FOR_REVIEW |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
-| Reviewer | 独立 Terra / high；`docs/task-reviews/REM-012-R1.md` |
-| Result | 已批准：旧账本输入、月份/年份切换、越南日期刷新与同步生命周期已独立；年度矩阵与 VND 持久化边界保持不变 |
-| Verification | Reviewer：计划定向 48/48；全量 350 passed / 20 skipped；typecheck、build、base/head 与工作树 diff check 通过 |
-| Previous Work | REM-008 已批准；本任务实现基线 `69d0f04` |
+| Reviewer | 独立 Terra / high；待审 |
+| Result | 首轮错误已分类为真实契约、缺少 JSDoc、第三方类型三类；无第三方缺失，已修正 DOM/表单/仓储声明漂移并补最小契约，无 `any`、全文件忽略或业务币种变更 |
+| Verification | 定向 90/90；全量 339 passed / 16 skipped；TypeScript strict、JavaScript checkJs、build、diff check 通过 |
+| Previous Work | REM-013 已完成；本任务实现基线 `1502f9c` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。

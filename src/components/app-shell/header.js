@@ -1,3 +1,6 @@
+/**
+ * @param {import("../../types/dom-contracts").DomHost} host
+ */
 export function renderHeader(host) {
   if (!host) throw new Error("App header host is required");
 

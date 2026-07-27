@@ -1,5 +1,6 @@
 export const LEDGER_TIMEZONE = "Asia/Ho_Chi_Minh";
 
+/** @param {Date} date */
 function ledgerParts(date) {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: LEDGER_TIMEZONE,

@@ -15,6 +15,7 @@ import {
   renderDepositManagement,
 } from "./view.js";
 
+/** @param {import("../../types/app-state").DepositControllerDependencies} dependencies */
 export function createDepositController(dependencies) {
   const {
     state,
@@ -33,13 +34,20 @@ export function createDepositController(dependencies) {
     clearTimer,
   } = dependencies;
 
+  /** @type {import("../../types/app-state").AuthUser | null} */
   let activeUser = null;
+  /** @type {import("../../types/app-state").DepositRepository | null} */
   let repository = null;
+  /** @type {(() => void) | null} */
   let unsubscribe = null;
+  /** @type {Array<() => void>} */
   let runtimeCleanups = [];
+  /** @type {number | null} */
   let midnightTimer = null;
+  /** @type {import("../../types/app-state").DepositUiStatus} */
   let uiStatus = "loading";
   let uiError = "";
+  /** @type {import("../../types/app-state").DepositFilter} */
   let filter = "all";
   let dataReady = false;
   let snapshotFromCache = false;
@@ -64,12 +72,18 @@ export function createDepositController(dependencies) {
     if (hosts.form) hosts.form.innerHTML = "";
   }
 
+  /** @param {string} id @returns {import("../../types/app-state").StoredDeposit} */
   function settlementRecord(id) {
     const record = state.depositDocument.depositsById[id];
     if (!record) throw new Error("Deposit is unavailable");
     return { id, ...record };
   }
 
+  /**
+   * @param {string} id
+   * @param {import("../../types/app-state").StoredDeposit} record
+   * @returns {import("../../application/deposits/settle-deposit").RolloverInput}
+   */
   function rolloverInput(id, record) {
     return {
       id,
@@ -92,21 +106,43 @@ export function createDepositController(dependencies) {
 
   function settlementDependencies() {
     const currentRepository = requireRepository();
+    /**
+     * @param {string} id
+     * @param {number} version
+     * @param {Record<string, unknown>} changes
+     */
+    const updateDeposit = (id, version, changes) => currentRepository.update(
+      id,
+      version,
+      /** @type {import("../../types/app-state").DepositChanges} */ (changes),
+    );
     return {
-      updateDeposit: (id, version, changes) => currentRepository.update(id, version, changes),
+      updateDeposit,
       queueLegacyInterest,
     };
   }
 
   function rolloverDependencies() {
     const currentRepository = requireRepository();
+    /** @param {string} id */
+    const getDeposit = async (id) => {
+      return /** @type {Record<string, unknown> | null} */ (
+        /** @type {unknown} */ (await currentRepository.get(id))
+      );
+    };
+    /** @param {import("../../application/deposits/settle-deposit").RolloverInput} input */
+    const createDeposit = (input) => currentRepository.create({
+      ...input,
+      reminderDays: [...input.reminderDays],
+    });
     return {
       ...settlementDependencies(),
-      getDeposit: id => currentRepository.get(id),
-      createDeposit: input => currentRepository.create(input),
+      getDeposit,
+      createDeposit,
     };
   }
 
+  /** @param {string | null} [id] */
   function openForm(id = null) {
     if (!hosts.form) return;
     const deposit = id ? state.depositDocument.depositsById[id] : null;
@@ -134,6 +170,7 @@ export function createDepositController(dependencies) {
     });
   }
 
+  /** @param {string} id @param {"redeem" | "rollover"} mode */
   function openSettlement(id, mode) {
     if (!hosts.form) return;
     const deposit = settlementRecord(id);
@@ -176,6 +213,7 @@ export function createDepositController(dependencies) {
     });
   }
 
+  /** @param {string} id */
   async function retryInterest(id) {
     const deposit = settlementRecord(id);
     const locale = getLocale();
@@ -189,12 +227,12 @@ export function createDepositController(dependencies) {
       if (deposit.status === "REDEEMED") {
         await redeemDeposit({
           deposit,
-          settledOn: deposit.redeemedOn,
+          settledOn: /** @type {string} */ (deposit.redeemedOn),
           actualInterestVnd: deposit.actualInterestVnd,
           writeInterestToLedger: true,
         }, settlementDependencies());
       } else if (deposit.status === "ROLLED_OVER") {
-        const target = settlementRecord(deposit.rolledOverToDepositId);
+        const target = settlementRecord(/** @type {string} */ (deposit.rolledOverToDepositId));
         await rolloverDeposit({
           deposit,
           rolloverDeposit: rolloverInput(target.id, target),
@@ -319,6 +357,7 @@ export function createDepositController(dependencies) {
     refresh();
   }
 
+  /** @param {import("../../types/app-state").AuthUser} user */
   function start(user) {
     if (!user?.uid) throw new Error("Authenticated user is required");
     stop();
@@ -328,7 +367,7 @@ export function createDepositController(dependencies) {
     refresh();
     installRuntimeResources();
     unsubscribe = subscribe({
-      onChange(_document, metadata = {}) {
+      onChange(_document, metadata = { fromCache: false }) {
         dataReady = true;
         snapshotFromCache = Boolean(metadata.fromCache);
         uiStatus = isOnline() && !snapshotFromCache ? "synced" : "offline";

@@ -16,17 +16,29 @@ const copy = {
   },
 };
 
+/** @param {import("../../types/app-state").AppLocale} locale */
 function words(locale) { return copy[locale] || copy.vi; }
-function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
+/** @param {unknown} value */
+function escapeHtml(value) {
+  /** @type {Record<string, string>} */
+  const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  return String(value ?? "").replace(/[&<>"']/g, char => entities[char] || char);
+}
 
+/** @param {Storage | null | undefined} storage @returns {Record<string, number>} */
 function readSnoozes(storage) {
   try {
     const parsed = JSON.parse(storage?.getItem(STORAGE_KEY) || "{}");
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
-    return Object.fromEntries(Object.entries(parsed).filter(([key, value]) => key.length <= 120 && Number.isFinite(value)));
+    return Object.fromEntries(
+      Object.entries(parsed).filter(([key, value]) => (
+        key.length <= 120 && typeof value === "number" && Number.isFinite(value)
+      )),
+    );
   } catch (_) { return {}; }
 }
 
+/** @param {Storage | null | undefined} storage @param {string} key @param {number} until @param {number} nowMs */
 function writeSnooze(storage, key, until, nowMs) {
   if (!storage) throw new Error("Reminder storage is unavailable");
   const current = readSnoozes(storage);
@@ -35,12 +47,18 @@ function writeSnooze(storage, key, until, nowMs) {
   storage.setItem(STORAGE_KEY, JSON.stringify(active));
 }
 
+/**
+ * @param {import("../../application/deposits/build-reminders").DepositReminder[]} reminders
+ * @param {import("../../types/app-state").AppLocale} locale
+ * @param {boolean} offline
+ */
 function renderReminderDialog(reminders, locale, offline) {
   const labels = words(locale);
   const items = reminders.map(reminder => `<li class="deposit-reminder-item" data-reminder-key="${escapeHtml(reminder.key)}"><div><strong>${escapeHtml(reminder.institutionName)}</strong><p>${escapeHtml(reminder.productName)}</p><span>${escapeHtml(labels[reminder.stage])} · ${escapeHtml(reminder.maturesOn)}</span></div><div class="deposit-reminder-actions"><button type="button" class="btn-secondary" data-snooze-reminder>${labels.snooze}</button><button type="button" class="btn-primary" data-acknowledge-reminder>${labels.acknowledge}</button></div><p class="deposit-reminder-item-error" data-reminder-error role="alert"></p></li>`).join("");
   return `<div class="deposit-reminder-backdrop" data-reminder-backdrop><section class="deposit-reminder-dialog safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-reminder-title" tabindex="-1"><header><div><p class="deposit-eyebrow">${labels.D0}</p><h2 id="deposit-reminder-title">${labels.title}</h2><p>${labels.intro}</p></div><button type="button" class="deposit-form-close" data-close-reminders aria-label="${labels.close}">×</button></header>${offline ? `<p class="deposit-reminder-offline" role="status">${labels.offline}</p>` : ""}<ul>${items}</ul><footer><button type="button" class="btn-secondary" data-close-reminders>${labels.close}</button></footer></section></div>`;
 }
 
+/** @param {import("../../types/app-state").DepositReminderControllerDependencies} dependencies */
 export function createDepositReminderController({
   root,
   getDocument,
@@ -54,7 +72,9 @@ export function createDepositReminderController({
   now = () => Date.now(),
   snoozeMs = 4 * 60 * 60 * 1000,
 }) {
+  /** @type {Set<string>} */
   const sessionSuppressed = new Set();
+  /** @type {string[]} */
   let visibleKeys = [];
 
   function hide() {
@@ -77,13 +97,18 @@ export function createDepositReminderController({
     if (reminders.length === 0) { hide(); return []; }
     visibleKeys = reminders.map(reminder => reminder.key);
     root.innerHTML = renderReminderDialog(reminders, getLocale(), isOffline());
-    const dialog = root.querySelector('[role="dialog"]');
+    const dialog = /** @type {HTMLElement | null} */ (root.querySelector('[role="dialog"]'));
     dialog?.addEventListener("keydown", event => { if (event.key === "Escape") close(); });
     dialog?.focus();
-    root.querySelectorAll("[data-close-reminders]").forEach(button => button.addEventListener("click", close));
+    /** @type {NodeListOf<HTMLElement>} */
+    const closeButtons = root.querySelectorAll("[data-close-reminders]");
+    closeButtons.forEach(button => button.addEventListener("click", close));
     root.querySelector("[data-reminder-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) close(); });
-    root.querySelectorAll("[data-reminder-key]").forEach(item => {
+    /** @type {NodeListOf<HTMLElement>} */
+    const reminderItems = root.querySelectorAll("[data-reminder-key]");
+    reminderItems.forEach(item => {
       const key = item.dataset.reminderKey;
+      if (!key) return;
       item.querySelector("[data-snooze-reminder]")?.addEventListener("click", () => {
         const errorNode = item.querySelector("[data-reminder-error]");
         try {
@@ -94,6 +119,7 @@ export function createDepositReminderController({
       item.querySelector("[data-acknowledge-reminder]")?.addEventListener("click", async event => {
         const errorNode = item.querySelector("[data-reminder-error]");
         const button = event.currentTarget;
+        if (!(button instanceof HTMLButtonElement)) return;
         button.disabled = true;
         if (errorNode) errorNode.textContent = "";
         try {
