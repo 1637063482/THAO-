@@ -1,10 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { afterEach, describe, expect, it } from "vitest";
 import {
     buildContextBundle,
     extractStatus,
     extractTaskSection,
     resolveRepoPath,
+    runCli,
 } from "../../scripts/task-context.mjs";
+
+const temporaryRoots = [];
+
+afterEach(() => {
+    temporaryRoots.splice(0).forEach((root) => rmSync(root, { recursive: true, force: true }));
+});
 
 const context = "# Compact Context\n\nNever deploy production resources.";
 const taskPlan = `# Plan
@@ -121,6 +131,20 @@ describe("task context extraction", () => {
         expect(output).not.toContain("future review");
     });
 
+    it("uses the current task as review criteria when no separate review row exists", () => {
+        const output = buildContextBundle({
+            role: "reviewer",
+            compactContext: context,
+            statusMarkdown: statusMarkdown({ state: "READY_FOR_REVIEW" }),
+            taskPlan,
+            reviewPlan: "# No separate review plan",
+            evidence: "# Evidence\n\nAll gates passed.",
+        });
+
+        expect(output).toContain("--- REVIEW CRITERIA ---");
+        expect(output).toContain("render a daily ledger");
+    });
+
     it("stops a Reviewer when the state is not ready", () => {
         const output = buildContextBundle({
             role: "reviewer",
@@ -154,5 +178,17 @@ describe("task context extraction", () => {
     it("refuses evidence or review paths outside the repository", () => {
         expect(resolveRepoPath("C:/repo", "docs/review.md")).toMatch(/repo[\\/]docs[\\/]review\.md$/);
         expect(() => resolveRepoPath("C:/repo", "../secret.txt")).toThrow("outside repository");
+    });
+
+    it("loads the task plan named by TASK_STATUS", () => {
+        const root = mkdtempSync(join(tmpdir(), "my-expense-context-"));
+        temporaryRoots.push(root);
+        mkdirSync(join(root, "docs"));
+        writeFileSync(join(root, "docs", "CODEX_CONTEXT.md"), context);
+        writeFileSync(join(root, "docs", "maintenance.md"), taskPlan.replaceAll("UXS-006", "REM-016"));
+        writeFileSync(join(root, "REVIEW_PLAN.md"), reviewPlan.replaceAll("UXS-006", "REM-016"));
+        writeFileSync(join(root, "TASK_STATUS.md"), `${statusMarkdown({ task: "REM-016" })}| Plan | \`docs/maintenance.md\` |\n`);
+
+        expect(runCli("coder", root)).toContain("REM-016");
     });
 });

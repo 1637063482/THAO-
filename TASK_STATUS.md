@@ -10,10 +10,12 @@
 | Current scope | Independent final review of maintenance remediation |
 | Scope | Composition root, module and data boundaries, lifecycle, real bilingual path, responsive rendering, types, and bundle budget |
 | State | READY_FOR_REVIEW |
-| Current result | `main.js` is now a thin startup root; its former runtime behavior is isolated in `src/js/application-runtime.js`, and reviewer context accepts Task ID |
+| Current result | `main.js` is now a thin startup root; its former runtime behavior is isolated in `src/js/application-runtime.js`, and reviewer context resolves the maintenance plan and review criteria |
 | Current verification | RED/GREEN composition-root evidence; 343 passed / 16 skipped; Rules 16/16 using demo-no-project; TypeScript, checkJs, build, and bundle budget passed |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
+| Evidence | `docs/review-evidence/REM-016-R2.md` |
+| Latest Review | `docs/task-reviews/REM-016-R1.md` |
 | Implementer | Terra / high |
 | Reviewer | 独立 Terra / high；R2 review pending |
 | Result | CHANGES_REQUESTED：`main.js` 未达到薄 composition root 要求；reviewer context status contract 在 base 已损坏 |

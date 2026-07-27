@@ -39,6 +39,7 @@ export function extractStatus(markdown) {
         evidence: fields.get("Evidence") ?? "pending",
         latestReview: fields.get("Latest Review") ?? "pending",
         nextTask: fields.get("Next Task") ?? "none",
+        plan: fields.get("Plan") ?? "`TASK_PLAN.md`",
     };
 }
 
@@ -111,7 +112,14 @@ export function buildContextBundle({
         if (!evidence.trim()) {
             throw new Error("READY_FOR_REVIEW requires evidence content");
         }
-        output += section("REVIEW CRITERIA", extractReviewRow(reviewPlan, targetTask));
+        let reviewCriteria;
+        try {
+            reviewCriteria = extractReviewRow(reviewPlan, targetTask);
+        } catch (error) {
+            if (!(error instanceof Error) || !error.message.startsWith("Review criteria for")) throw error;
+            reviewCriteria = extractTaskSection(taskPlan, targetTask);
+        }
+        output += section("REVIEW CRITERIA", reviewCriteria);
         output += section("CODER EVIDENCE", evidence);
         if (latestReview.trim()) {
             output += section("PRIOR REVIEW", latestReview);
@@ -145,11 +153,12 @@ function readOptional(repoRoot, requestedPath) {
 export function runCli(role, repoRoot = process.cwd()) {
     const statusMarkdown = readFileSync(resolve(repoRoot, "TASK_STATUS.md"), "utf8");
     const status = extractStatus(statusMarkdown);
+    const taskPlanPath = pathFromStatus(status.plan) ?? "TASK_PLAN.md";
     return buildContextBundle({
         role,
         compactContext: readFileSync(resolve(repoRoot, "docs/CODEX_CONTEXT.md"), "utf8"),
         statusMarkdown,
-        taskPlan: readFileSync(resolve(repoRoot, "TASK_PLAN.md"), "utf8"),
+        taskPlan: readFileSync(resolveRepoPath(repoRoot, taskPlanPath), "utf8"),
         reviewPlan: readFileSync(resolve(repoRoot, "REVIEW_PLAN.md"), "utf8"),
         evidence: readOptional(repoRoot, pathFromStatus(status.evidence)),
         latestReview: readOptional(repoRoot, pathFromStatus(status.latestReview)),
