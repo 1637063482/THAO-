@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { bindSavingsGoalForm, buildSavingsViewModel, installSavingsSyncBridge, renderSavingsPage, renderSavingsSummary } from "../../src/js/savings-view.js";
 
 describe("savings view", () => {
@@ -57,6 +57,22 @@ describe("savings view", () => {
       expect(root.querySelector(".savings-sync-status").textContent).toBe(label);
     }
     stop();
+  });
+
+  it("cleans up an existing bridge before installing another and never updates a detached root", async () => {
+    document.body.innerHTML = '<div id="root"><span class="savings-sync-status"></span></div><div id="sync-status"></div>';
+    const root = document.getElementById("root");
+    const sync = document.getElementById("sync-status");
+    const disconnect = vi.fn();
+    const OriginalObserver = globalThis.MutationObserver;
+    globalThis.MutationObserver = class { observe() {} disconnect() { disconnect(); } };
+    const first = installSavingsSyncBridge(root, sync);
+    first();
+    root.remove();
+    sync.className = "bg-red-50";
+    await Promise.resolve();
+    expect(disconnect).toHaveBeenCalledOnce();
+    globalThis.MutationObserver = OriginalObserver;
   });
 
   it.each([["vi", "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?"], ["zh-CN", "确定要清空储蓄目标吗？"]])("uses localized clear confirmation for %s and keeps data on cancel", (locale, prompt) => {

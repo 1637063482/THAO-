@@ -1,4 +1,5 @@
 import "../css/app.css";
+import "../features/deposits/deposits.css";
 import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
@@ -118,7 +119,9 @@ export function scheduleInputSave() {
   triggerCloudSave();
 }
 
+var stopSavingsSyncBridge = () => {};
 function refreshSavingsView(status) {
+  stopSavingsSyncBridge();
   const monthlyVm = buildDashboardViewModel({ year: state.activeYear, month: state.activeMonthId, state: { appState: state.appState } });
   let annualIncome = 0; let annualExpense = 0;
   for (let month = 1; month <= 12; month += 1) {
@@ -131,7 +134,7 @@ function refreshSavingsView(status) {
   summary.dataset.locale = getCurrentLocale();
   summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
   bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, locale: getCurrentLocale(), onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
-  installSavingsSyncBridge(summary);
+  stopSavingsSyncBridge = installSavingsSyncBridge(summary);
 }
 
 const depositController = createDepositController(createDepositDependencies({
@@ -546,7 +549,7 @@ initAuth(
       initIcons();
     }, 300);
   },
-  function() { appRouter.stop(); teardownListener(); depositController.stop(); }
+  function() { stopSavingsSyncBridge(); stopSavingsSyncBridge = () => {}; appRouter.stop(); teardownListener(); depositController.stop(); }
 );
 
 document.addEventListener("visibilitychange", function() {

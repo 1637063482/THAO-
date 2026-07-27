@@ -1,6 +1,8 @@
 import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../../domain/deposit.ts";
 import { depositProductLabel } from "./terms.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
+import { renderDepositCard } from "./deposit-card.js";
+import { renderDepositTable } from "./deposit-table.js";
 import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "../../js/deposit-schema.js";
 
 const copy = {
@@ -76,24 +78,6 @@ export function buildDepositViewModel({ document, today, locale = "vi", status =
 function stateMessage(vm, label) {
   return `<div class="deposit-state deposit-state-${vm.status}" role="status">${escapeHtml(label)}</div>`;
 }
-function statusBadge(item, labels) { return `<span class="deposit-status status-${item.derivedStatus.toLowerCase()}">${escapeHtml(labels[item.derivedStatus])}</span>`; }
-function actions(item, labels) {
-  if (item.archivedAt !== null) return "";
-  const workflow = item.status === "ACTIVE" && item.derivedStatus === "MATURED"
-    ? `<button type="button" class="btn-primary" data-redeem-deposit="${escapeHtml(item.id)}">${labels.redeem}</button><button type="button" class="btn-ghost" data-rollover-deposit="${escapeHtml(item.id)}">${labels.rollover}</button>`
-    : ["REDEEMED", "ROLLED_OVER"].includes(item.status) && Number(item.actualInterestVnd) > 0 && !item.interestRecorded
-      ? `<button type="button" class="btn-ghost" data-record-interest="${escapeHtml(item.id)}">${labels.recordInterest}</button>` : "";
-  const edit = item.status === "ACTIVE" ? `<button type="button" class="btn-ghost" data-edit-deposit="${escapeHtml(item.id)}">${labels.edit}</button>` : "";
-  const del = item.status === "ACTIVE" ? `<button type="button" class="btn-ghost danger" data-delete-deposit="${escapeHtml(item.id)}">${labels.delete}</button>` : "";
-  return `<div class="deposit-actions">${workflow}${edit}${del}<button type="button" class="btn-ghost danger" data-archive-deposit="${escapeHtml(item.id)}">${labels.archive}</button></div>`;
-}
-function card(item, labels, locale) {
-  return `<article class="deposit-card" data-deposit-id="${escapeHtml(item.id)}"><div class="deposit-card-head"><div><strong>${escapeHtml(item.institutionName)}</strong><p>${escapeHtml(depositProductLabel(item.productName, locale))}</p></div>${statusBadge(item, labels)}</div><p class="deposit-card-amount blur-sensitive">${money(item.principalVnd, locale)}</p><dl><div><dt>${labels.rate}</dt><dd>${(item.annualRatePpm / 10_000).toLocaleString()}%</dd></div><div><dt>${labels.matures}</dt><dd>${escapeHtml(item.maturesOn)}</dd></div><div><dt>${labels.interest}</dt><dd class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</dd></div></dl>${actions(item, labels)}</article>`;
-}
-function row(item, labels, locale) {
-  return `<tr data-deposit-id="${escapeHtml(item.id)}"><td><strong>${escapeHtml(item.institutionName)}</strong><small>${escapeHtml(depositProductLabel(item.productName, locale))}</small></td><td class="blur-sensitive">${money(item.principalVnd, locale)}</td><td>${(item.annualRatePpm / 10_000).toLocaleString()}%</td><td class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</td><td>${escapeHtml(item.openedOn)}</td><td>${escapeHtml(item.maturesOn)}</td><td>${statusBadge(item, labels)}</td><td>${actions(item, labels)}</td></tr>`;
-}
-
 export function renderDepositManagement(vm) {
   const labels = words(vm.locale);
   const banner = vm.status === "loading" ? stateMessage(vm, labels.loading) : vm.status === "syncing" ? stateMessage(vm, labels.syncing) : vm.status === "offline" ? stateMessage(vm, labels.offline) : vm.status === "error" ? stateMessage(vm, vm.errorMessage || labels.error) : "";
@@ -104,7 +88,7 @@ export function renderDepositManagement(vm) {
   let content;
   if (vm.status === "loading" && vm.visible.length === 0) content = "";
   else if (vm.visible.length === 0) content = `<div class="deposit-empty"><p>${labels.empty}</p><button type="button" class="btn-primary" data-add-deposit>${labels.first}</button></div>`;
-  else content = `<div class="deposit-card-list">${vm.visible.map(item => card(item, labels, vm.locale)).join("")}</div><div class="deposit-table-wrap"><table class="deposit-table"><thead><tr><th>${labels.institution}</th><th>${labels.amount}</th><th>${labels.rate}</th><th>${labels.interest}</th><th>${labels.opened}</th><th>${labels.matures}</th><th>${labels.status}</th><th>${labels.actions}</th></tr></thead><tbody>${vm.visible.map(item => row(item, labels, vm.locale)).join("")}</tbody></table></div>`;
+  else { const options = { locale: vm.locale, labels, money, productLabel: depositProductLabel, escape: escapeHtml }; content = `<div class="deposit-card-list">${vm.visible.map(item => renderDepositCard(item, options)).join("")}</div>${renderDepositTable(vm.visible, options)}`; }
   return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${capacityWarning}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 
