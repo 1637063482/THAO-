@@ -21,6 +21,7 @@ import { buildDashboardViewModel } from "./dashboard-view-model.js";
 import { db, projectId } from "./firebase.js";
 import { DepositRepository } from "../infrastructure/firebase/deposit-repository.ts";
 import { createEmptyDepositDocument } from "./deposit-schema.js";
+import { createDepositId } from "./deposit-id.js";
 import { subscribeToDeposits } from "./deposit-sync.js";
 import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
 import { depositErrorMessage } from "./deposit-errors.js";
@@ -146,11 +147,6 @@ const depositReminderController = createDepositReminderController({
   },
 });
 
-function newDepositId() {
-  const suffix = globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-  return `deposit-${suffix}`;
-}
-
 function closeDepositForm() {
   const host = document.getElementById("deposit-form-root");
   if (host) host.innerHTML = "";
@@ -160,7 +156,7 @@ function openDepositForm(id = null) {
   const host = document.getElementById("deposit-form-root");
   if (!host) return;
   const deposit = id ? state.depositDocument.depositsById[id] : null;
-  const formId = id || newDepositId();
+  const formId = id || createDepositId();
   host.dataset.locale = getCurrentLocale();
   host.innerHTML = renderDepositForm({ locale: getCurrentLocale(), id: formId, deposit });
   bindDepositForm(host, {

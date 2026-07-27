@@ -106,6 +106,17 @@ describe("deposit management view", () => {
     globalThis.confirm = originalConfirm;
   });
 
+  it.each([
+    ["vi", "Đã dùng 450/500 bản ghi xác nhận"],
+    ["zh-CN", "已使用 450/500 条确认记录"],
+  ])("warns at 450 acknowledgement records in %s without rendering acknowledgement keys", (locale, warning) => {
+    const acknowledgementsByKey = Object.fromEntries(Array.from({ length: 450 }, (_, index) => [`deposit-${index}|2027-01-01|OVERDUE`, { acknowledgedAt: new Date(), acknowledgedBy: "fixture" }]));
+    const html = renderDepositManagement(buildDepositViewModel({ document: { ...storageDocument(), acknowledgementsByKey }, today: "2026-06-01", locale }));
+
+    expect(html).toContain(warning);
+    expect(html).not.toContain("deposit-0|2027-01-01|OVERDUE");
+  });
+
   it("offers settlement only for matured active deposits and retry for terminal interest", () => {
     const matured = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ old: deposit({ maturesOn: "2026-05-01" }) }), today: "2026-06-01" }));
     expect(matured).toContain('data-redeem-deposit="old"');

@@ -1,6 +1,6 @@
 import { doc, getDoc, runTransaction, serverTimestamp, type DocumentData, type Firestore } from "firebase/firestore";
 import { DomainError } from "../../domain/errors";
-import { validateDepositDocument } from "../../js/deposit-schema.js";
+import { MAX_ACKNOWLEDGEMENTS, validateDepositDocument } from "../../js/deposit-schema.js";
 
 const SAVINGS_LEDGER_ID = "shared_ledger_savings";
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
@@ -137,7 +137,7 @@ export class DepositRepository {
       const reference = this.ref(); const snapshot = await transaction.get(reference);
       if (!snapshot.exists()) fail("DEPOSIT_DOCUMENT_NOT_FOUND", "Cannot acknowledge before a deposit document exists");
       const current = decodeDocument(snapshot.data());
-      if (Object.keys(current.acknowledgementsByKey).length >= 500 && !current.acknowledgementsByKey[key]) fail("ACKNOWLEDGEMENT_LIMIT", "Acknowledgement limit reached");
+      if (Object.keys(current.acknowledgementsByKey).length >= MAX_ACKNOWLEDGEMENTS && !current.acknowledgementsByKey[key]) fail("ACKNOWLEDGEMENT_LIMIT", "Acknowledgement limit reached");
       const stamp = serverTimestamp();
       current.acknowledgementsByKey[key] = { acknowledgedAt: stamp, acknowledgedBy: this.actorUid };
       current.lastMutation = { kind: "ACKNOWLEDGE", targetId: key, actorUid: this.actorUid, at: stamp };

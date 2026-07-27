@@ -1,6 +1,7 @@
 import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../domain/deposit.ts";
 import { depositProductLabel } from "./deposit-terms.js";
 import { depositErrorMessage } from "./deposit-errors.js";
+import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "./deposit-schema.js";
 
 const copy = {
   vi: {
@@ -16,6 +17,7 @@ const copy = {
     all: "Tất cả", active: "Đang hoạt động", maturing: "Sắp đáo hạn", matured: "Đã đáo hạn", archived: "Đã lưu trữ",
     ACTIVE: "Đang hoạt động", MATURING: "Sắp đáo hạn", MATURED: "Đã đáo hạn", REDEEMED: "Đã tất toán", ROLLED_OVER: "Đã tái tục",
     noNearest: "Chưa có", vnd: "₫", syncError: "Thao tác thất bại; dữ liệu chưa được đánh dấu là đã đồng bộ.",
+    acknowledgementCapacityWarning: "Đã dùng {count}/{limit} bản ghi xác nhận. Hãy kiểm tra lời nhắc và liên hệ hỗ trợ nếu cần.",
   },
   "zh-CN": {
     title: "定期存款", add: "新增存款", first: "添加第一笔存款",
@@ -29,6 +31,7 @@ const copy = {
     maturing: "即将到期", matured: "已到期", archived: "已归档", ACTIVE: "有效",
     MATURING: "即将到期", MATURED: "已到期", REDEEMED: "已赎回", ROLLED_OVER: "已续存",
     noNearest: "暂无", vnd: "₫", syncError: "操作失败，数据未标记为已同步。",
+    acknowledgementCapacityWarning: "已使用 {count}/{limit} 条确认记录。请检查提醒设置，必要时联系支持。",
   },
 };
 
@@ -66,7 +69,8 @@ export function buildDepositViewModel({ document, today, locale = "vi", status =
   const totalPrincipalVnd = Number(totalPrincipal);
   if (!Number.isSafeInteger(totalPrincipalVnd)) throw new Error("Deposit principal summary exceeds the safe integer range");
   const nearest = current.filter(item => item.status === "ACTIVE" && item.maturesOn >= today).sort((a, b) => a.maturesOn.localeCompare(b.maturesOn))[0] || null;
-  return { locale, status, errorMessage, filter, visible, summary, totalPrincipalVnd, nearest };
+  const acknowledgementCount = Object.keys(document?.acknowledgementsByKey || {}).length;
+  return { locale, status, errorMessage, filter, visible, summary, totalPrincipalVnd, nearest, acknowledgementCount };
 }
 
 function stateMessage(vm, label) {
@@ -93,13 +97,15 @@ function row(item, labels, locale) {
 export function renderDepositManagement(vm) {
   const labels = words(vm.locale);
   const banner = vm.status === "loading" ? stateMessage(vm, labels.loading) : vm.status === "syncing" ? stateMessage(vm, labels.syncing) : vm.status === "offline" ? stateMessage(vm, labels.offline) : vm.status === "error" ? stateMessage(vm, vm.errorMessage || labels.error) : "";
+  const capacityWarning = vm.acknowledgementCount >= ACKNOWLEDGEMENT_WARNING_THRESHOLD
+    ? `<p class="deposit-capacity-warning" role="status">${escapeHtml(labels.acknowledgementCapacityWarning.replace("{count}", vm.acknowledgementCount).replace("{limit}", MAX_ACKNOWLEDGEMENTS))}</p>` : "";
   const metrics = `<div class="deposit-metrics"><div><span>${labels.principal}</span><strong class="blur-sensitive">${money(vm.totalPrincipalVnd, vm.locale)}</strong></div><div><span>${labels.interest}</span><strong class="blur-sensitive">${money(vm.summary.expectedInterestVnd, vm.locale)}</strong></div><div><span>${labels.maturityTotal}</span><strong class="blur-sensitive">${money(vm.summary.expectedMaturityTotalVnd, vm.locale)}</strong></div><div><span>${labels.nearest}</span><strong>${vm.nearest ? escapeHtml(vm.nearest.maturesOn) : labels.noNearest}</strong></div></div>`;
   const filter = `<label class="deposit-filter"><span class="sr-only">${labels.status}</span><select data-deposit-filter><option value="all"${vm.filter === "all" ? " selected" : ""}>${labels.all}</option><option value="active"${vm.filter === "active" ? " selected" : ""}>${labels.active}</option><option value="maturing"${vm.filter === "maturing" ? " selected" : ""}>${labels.maturing}</option><option value="matured"${vm.filter === "matured" ? " selected" : ""}>${labels.matured}</option><option value="archived"${vm.filter === "archived" ? " selected" : ""}>${labels.archived}</option></select></label>`;
   let content;
   if (vm.status === "loading" && vm.visible.length === 0) content = "";
   else if (vm.visible.length === 0) content = `<div class="deposit-empty"><p>${labels.empty}</p><button type="button" class="btn-primary" data-add-deposit>${labels.first}</button></div>`;
   else content = `<div class="deposit-card-list">${vm.visible.map(item => card(item, labels, vm.locale)).join("")}</div><div class="deposit-table-wrap"><table class="deposit-table"><thead><tr><th>${labels.institution}</th><th>${labels.amount}</th><th>${labels.rate}</th><th>${labels.interest}</th><th>${labels.opened}</th><th>${labels.matures}</th><th>${labels.status}</th><th>${labels.actions}</th></tr></thead><tbody>${vm.visible.map(item => row(item, labels, vm.locale)).join("")}</tbody></table></div>`;
-  return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
+  return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${capacityWarning}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 
 export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete } = {}) {

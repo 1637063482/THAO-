@@ -59,13 +59,18 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("DepositRepository", () =>
     await expect(repository.update("deposit-1", 2, { note: "stale" })).rejects.toThrow(/version/i);
   });
 
-  it("creates a second deposit and deletes only active records", async () => {
+  it("retains acknowledgement audit keys after deletion without restoring the deleted ID", async () => {
     await repository.create(input());
     await repository.create({ ...input(), id: "deposit-2", institutionName: "Second Fixture Bank" });
     expect(Object.keys((await repository.getDocument()).depositsById)).toEqual(["deposit-1", "deposit-2"]);
 
+    const acknowledgementKey = "deposit-2|2027-01-01|OVERDUE";
+    await repository.acknowledge(acknowledgementKey);
     await repository.delete("deposit-2", 1);
     expect(await repository.get("deposit-2")).toBeNull();
+    expect((await repository.getDocument()).acknowledgementsByKey).toHaveProperty(acknowledgementKey);
+    await repository.create({ ...input(), id: "deposit-3", institutionName: "Replacement Fixture Bank" });
+    expect(Object.keys((await repository.getDocument()).depositsById)).toEqual(["deposit-1", "deposit-3"]);
 
     const redeemed = await repository.update("deposit-1", 1, {
       status: "REDEEMED",

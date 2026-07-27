@@ -2,6 +2,7 @@ export const DEPOSIT_SCHEMA_VERSION = 1;
 export const DEPOSIT_BACKUP_VERSION = 1;
 export const MAX_DEPOSITS = 100;
 export const MAX_ACKNOWLEDGEMENTS = 500;
+export const ACKNOWLEDGEMENT_WARNING_THRESHOLD = 450;
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
