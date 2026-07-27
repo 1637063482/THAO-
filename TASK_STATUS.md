@@ -8,11 +8,13 @@
 |---|---|
 | Work ID | REM-001 |
 | Scope | 建立存款真实关键路径测试 |
-| State | PLANNED |
+| State | COMPLETED |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
 | Reviewer | 本任务不需要独立 Reviewer |
+| Result | 真实表单 → `DepositRepository` → Firestore Emulator 四条关键路径已覆盖 |
+| Verification | 定向 4/4；Rules 16/16；全量 305 passed / 20 skipped；typecheck、diff check 通过 |
 | Previous Work | MAINT-2026-07-27 已完成，提交 `aebe0ea` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
