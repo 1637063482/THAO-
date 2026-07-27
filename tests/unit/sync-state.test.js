@@ -229,7 +229,7 @@ describe("sync queue", () => {
     vi.useRealTimers();
   });
 
-  it.each([7, 30])("triggers the %i day milestone once from remote snapshots", (days) => {
+  it.each([7, 30])("triggers the %i day milestone once from remote snapshots", async (days) => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-31T05:00:00.000Z"));
     document.body.innerHTML = '<div id="sync-status"></div><section id="streak-panel"></section>';
@@ -254,6 +254,7 @@ describe("sync queue", () => {
     };
     firestoreMock.snapshotHandler(snapshot);
     firestoreMock.snapshotHandler(snapshot);
+    await vi.dynamicImportSettled();
 
     const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 12000);
     expect(milestoneCalls).toHaveLength(1);

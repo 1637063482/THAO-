@@ -41,7 +41,9 @@ export function createAppRouter(options = {}) {
    */
   function runLifecycle(routeId, phase, transition) {
     const callback = lifecycle[routeId]?.[phase];
-    if (callback) callback(transition);
+    if (!callback) return;
+    const result = callback(transition);
+    if (result && typeof result.catch === "function") result.catch(() => {});
   }
 
   /** @param {string} routeId */

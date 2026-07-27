@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/check-bundle-budget.mjs",
     "context:coder": "node scripts/task-context.mjs coder",
     "context:reviewer": "node scripts/task-context.mjs reviewer",
     "preview": "vite preview",

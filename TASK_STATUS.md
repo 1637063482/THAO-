@@ -6,9 +6,12 @@
 
 | Field | Value |
 |---|---|
-| Work ID | REM-014 |
+| Work ID | REM-015 |
+| Current scope | Lazy-load Chart.js, deposit settlement, and fireworks; enforce the production bundle budget |
 | Scope | 将 app、components、deposits、savings、ledger JavaScript 主链路纳入独立 `checkJs` 门禁 |
-| State | APPROVED |
+| State | READY_FOR_REVIEW |
+| Current result | Main entry is 629.66 kB; Chart.js, settlement, and fireworks are independent lazy chunks with safe failure handling |
+| Current verification | 342 passed / 16 skipped; Rules 16/16; TypeScript and checkJs passed; build and bundle budget passed |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |

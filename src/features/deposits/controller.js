@@ -1,4 +1,3 @@
-import { buildRolloverDepositId, redeemDeposit, rolloverDeposit } from "../../application/deposits/settle-deposit.ts";
 import { createEmptyDepositDocument } from "../../js/deposit-schema.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
 import { createDepositId } from "../../js/deposit-id.js";
@@ -14,6 +13,20 @@ import {
   buildDepositViewModel,
   renderDepositManagement,
 } from "./view.js";
+
+/** @type {Promise<typeof import("../../application/deposits/settle-deposit.ts")> | null} */
+let settlementModulePromise = null;
+
+function loadSettlementModule() {
+  if (!settlementModulePromise) {
+    settlementModulePromise = import("../../application/deposits/settle-deposit.ts")
+      .catch((error) => {
+        settlementModulePromise = null;
+        throw error;
+      });
+  }
+  return settlementModulePromise;
+}
 
 /** @param {import("../../types/app-state").DepositControllerDependencies} dependencies */
 export function createDepositController(dependencies) {
@@ -173,6 +186,7 @@ export function createDepositController(dependencies) {
   /** @param {string} id @param {"redeem" | "rollover"} mode */
   function openSettlement(id, mode) {
     if (!hosts.form) return;
+    void loadSettlementModule().catch(() => {});
     const deposit = settlementRecord(id);
     const locale = getLocale();
     hosts.form.dataset.locale = locale;
@@ -185,6 +199,7 @@ export function createDepositController(dependencies) {
         uiStatus = "syncing";
         refresh();
         try {
+          const { buildRolloverDepositId, redeemDeposit, rolloverDeposit } = await loadSettlementModule();
           if (input.mode === "redeem") {
             await redeemDeposit({
               deposit,
@@ -224,6 +239,7 @@ export function createDepositController(dependencies) {
     uiStatus = "syncing";
     refresh();
     try {
+      const { redeemDeposit, rolloverDeposit } = await loadSettlementModule();
       if (deposit.status === "REDEEMED") {
         await redeemDeposit({
           deposit,

@@ -1,4 +1,3 @@
-import Chart from "chart.js/auto";
 import { state } from "./state.js";
 import { expenseCategories } from "./config.js";
 import { formatSymbol, getActiveRate } from "./utils.js";
@@ -7,6 +6,19 @@ import { t } from "./i18n.js";
 let yearlyChart = null;
 let monthlyChart = null;
 let chartTimeout = null;
+let chartLibraryPromise = null;
+
+function loadChartLibrary() {
+  if (!chartLibraryPromise) {
+    chartLibraryPromise = import("chart.js/auto")
+      .then((module) => module.default)
+      .catch((error) => {
+        chartLibraryPromise = null;
+        throw error;
+      });
+  }
+  return chartLibraryPromise;
+}
 
 const COLORS = [
   "#D97706", "#6366F1", "#059669", "#DC2626", "#F59E0B",
@@ -78,10 +90,16 @@ function makeOptions(title) {
   };
 }
 
-export function initCharts() {
+export async function initCharts() {
   var ctxY = document.getElementById("yearlyChart")?.getContext("2d");
   var ctxM = document.getElementById("monthlyChart")?.getContext("2d");
-  if (!ctxY || !ctxM) return;
+  if (!ctxY || !ctxM) return false;
+  let Chart;
+  try {
+    Chart = await loadChartLibrary();
+  } catch {
+    return false;
+  }
 
   var labels = expenseCategories.map(function (c) { return t(c.nameKey); });
 
@@ -99,6 +117,7 @@ export function initCharts() {
 
   drawLegend("yearly-legend");
   drawLegend("monthly-legend");
+  return true;
 }
 
 function drawLegend(id) {

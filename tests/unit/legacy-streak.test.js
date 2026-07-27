@@ -291,7 +291,7 @@ describe("legacy accounting streak RED", () => {
     expect(getDisplayedStreak()).toBe(0);
   });
 
-  it.each([7, 30])("triggers the %i day reward once without writing legacy streak counters", (days) => {
+  it.each([7, 30])("triggers the %i day reward once without writing legacy streak counters", async (days) => {
     vi.setSystemTime(new Date("2026-03-31T05:00:00.000Z"));
     state.activeMonthId = 3;
     state.appState.entries = entriesForStreak(days);
@@ -299,6 +299,7 @@ describe("legacy accounting streak RED", () => {
 
     updateStreakAfterRecord();
     updateStreakAfterRecord();
+    await vi.dynamicImportSettled();
 
     const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 12000);
     expect(milestoneCalls).toHaveLength(1);

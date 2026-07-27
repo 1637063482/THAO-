@@ -4,7 +4,6 @@ import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
 import { calculateAll } from "./budget.js";
 import { Icons } from "./icons.js";
-import { Fireworks } from "./fireworks.js";
 import { buildLegacyStreak } from "./streak.js";
 import { t } from "./i18n.js";
 import { buildDailyLedger, getLedgerView } from "./day-ledger.js";
@@ -211,6 +210,12 @@ function markRewardFired(threshold, todayStr) {
   catch (e) {}
 }
 
+function launchFireworks(options) {
+  import("./fireworks.js")
+    .then(function ({ Fireworks }) { Fireworks.launch(options); })
+    .catch(function () {});
+}
+
 // ---- render ----
 
 export function renderStreakPanel() {
@@ -245,8 +250,8 @@ export function updateStreakAfterRecord(options) {
   if ((s.streak === 7 || s.streak === 30) && !hasRewardFired(s.streak, s.todayStr)) {
     markRewardFired(s.streak, s.todayStr);
     showToast(t("streak_achieved", { days: s.streak }));
-    Fireworks.launch({ duration: 12000 });
+    launchFireworks({ duration: 12000 });
   } else if (launchDefaultFireworks) {
-    Fireworks.launch({ duration: 6000 });
+    launchFireworks({ duration: 6000 });
   }
 }

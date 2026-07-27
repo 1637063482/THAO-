@@ -61,4 +61,19 @@ describe("app router", () => {
     expect(lifecycle.savings.leave).toHaveBeenCalledTimes(1);
     expect(router.getActive()).toBeNull();
   });
+
+  it("keeps the selected route when optional asynchronous setup fails", async () => {
+    const { createAppRouter } = await import("../../src/app/router.js");
+    const lifecycle = {
+      stats: { enter: () => Promise.reject(new Error("optional feature unavailable")) },
+    };
+    const router = createAppRouter({ root: document, lifecycle });
+
+    router.start("overview");
+    router.navigate("stats");
+    await Promise.resolve();
+
+    expect(router.getActive()).toBe("stats");
+    expect(document.getElementById("analysis-view").style.display).toBe("");
+  });
 });

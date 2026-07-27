@@ -10,7 +10,7 @@ export interface AppRouteTransition {
 
 export type AppRouteLifecycle = Record<
   string,
-  Partial<Record<"enter" | "leave", (transition: AppRouteTransition) => void>>
+  Partial<Record<"enter" | "leave", (transition: AppRouteTransition) => void | Promise<void>>>
 >;
 
 export interface AppRouterOptions {

@@ -7,7 +7,6 @@ import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter
 import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd } from "./currency-view.js";
 import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
-import { initCharts, updateCharts } from "./charts.js";
 import { fullRebuildDOM, softUpdateDOM, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
 import { setLedgerView, getLedgerView } from "./day-ledger.js";
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
@@ -204,16 +203,29 @@ function switchLanguage(locale) {
     applyI18n();
     window.dispatchEvent(new CustomEvent("app-locale-rendered", { detail: { locale } }));
     updateLedgerToggleLabel();
-    updateCharts();
+    if (_chartsModule) _chartsModule.updateCharts();
   }
 }
 
-var _chartsInited = false;
+var _chartsModule = null;
+var _chartsLoading = null;
 function ensureCharts() {
-  if (_chartsInited) { updateCharts(); return; }
-  initCharts();
-  _chartsInited = true;
-  updateCharts();
+  if (_chartsModule) {
+    _chartsModule.updateCharts();
+    return Promise.resolve(true);
+  }
+  if (!_chartsLoading) {
+    _chartsLoading = import("./charts.js")
+      .then(async function (charts) {
+        if (!await charts.initCharts()) return false;
+        _chartsModule = charts;
+        charts.updateCharts();
+        return true;
+      })
+      .catch(function () { return false; })
+      .finally(function () { _chartsLoading = null; });
+  }
+  return _chartsLoading;
 }
 
 const appRouter = createAppRouter({
