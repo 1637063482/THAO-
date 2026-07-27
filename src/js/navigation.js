@@ -13,6 +13,8 @@ export var NAV_ITEMS = [
 
 var VALID_IDS = NAV_ITEMS.map(function (item) { return item.id; });
 var _activeId = "overview";
+var _router = null;
+var _cleanup = null;
 
 /**
  * Get the currently active navigation item ID.
@@ -38,8 +40,10 @@ export function setActive(id) {
   document.querySelectorAll("[data-nav]").forEach(function (el) {
     if (el.getAttribute("data-nav") === id) {
       el.classList.add("active");
+      el.setAttribute("aria-current", "page");
     } else {
       el.classList.remove("active");
+      el.setAttribute("aria-current", "false");
     }
   });
 
@@ -52,39 +56,50 @@ export function setActive(id) {
  * @param {string} id - Navigation destination id.
  */
 export function navigateTo(id) {
-  switch (id) {
-    case "overview":
-      window.switchMobileView("overview");
-      setActive("overview");
-      break;
-    case "savings":
-      window.switchMobileView("savings");
-      setActive("savings");
-      break;
-    case "stats":
-      window.switchMobileView("stats");
-      setActive("stats");
-      break;
+  if (!_router || typeof _router.navigate !== "function") {
+    throw new Error("App router is not initialized");
   }
+  _router.navigate(id);
+  return setActive(id);
 }
 
 /**
  * Initialize navigation: configure click and keyboard handlers.
  */
-export function initNavigation() {
-  document.querySelectorAll("[data-nav]").forEach(function (el) {
-    // Unified click handler
-    el.addEventListener("click", function (e) {
+export function initNavigation(router, root = document) {
+  if (!router || typeof router.navigate !== "function") {
+    throw new Error("App router is required");
+  }
+  if (_cleanup) _cleanup();
+  _router = router;
+  var bindings = [];
+
+  root.querySelectorAll("[data-nav]").forEach(function (el) {
+    function clickHandler() {
       var id = el.getAttribute("data-nav");
       if (id) navigateTo(id);
-    });
+    }
 
-    // Keyboard: Enter/Space trigger the same unified handler
-    el.addEventListener("keydown", function (e) {
+    function keydownHandler(e) {
       if (e.key === "Enter" || e.key === " ") {
         e.preventDefault();
         el.click();
       }
+    }
+
+    el.addEventListener("click", clickHandler);
+    el.addEventListener("keydown", keydownHandler);
+    bindings.push(function () {
+      el.removeEventListener("click", clickHandler);
+      el.removeEventListener("keydown", keydownHandler);
     });
   });
+
+  _cleanup = function cleanupNavigation() {
+    bindings.forEach(function (unbind) { unbind(); });
+    bindings = [];
+    _cleanup = null;
+    _router = null;
+  };
+  return _cleanup;
 }

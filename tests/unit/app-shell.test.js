@@ -54,4 +54,32 @@ describe("app shell responsive layout", () => {
     const html = readFileSync("index.html", "utf8");
     expect(html).not.toMatch(/<label\b[^>]*>\s*<label\b/i);
   });
+
+  it("keeps one real host for each shell component and the existing page IDs", () => {
+    const html = readFileSync("index.html", "utf8");
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+
+    expect(parsed.querySelectorAll("[data-app-header-host]")).toHaveLength(1);
+    expect(parsed.querySelectorAll("#sidebar[data-app-sidebar-host]")).toHaveLength(1);
+    expect(parsed.querySelectorAll("#bottom-nav[data-app-bottom-nav-host]")).toHaveLength(1);
+    expect(parsed.querySelectorAll("#overview-content")).toHaveLength(1);
+    expect(parsed.querySelectorAll("#savings-view")).toHaveLength(1);
+    expect(parsed.querySelectorAll("#analysis-view")).toHaveLength(1);
+  });
+
+  it("keeps IDs unique and shell landmarks reachable in the real document", () => {
+    const html = readFileSync("index.html", "utf8");
+    const parsed = new DOMParser().parseFromString(html, "text/html");
+    const ids = Array.from(parsed.querySelectorAll("[id]")).map((element) => element.id);
+
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(parsed.querySelector("header[data-app-header-host]")).not.toBeNull();
+    expect(parsed.querySelector("aside#sidebar")).not.toBeNull();
+    expect(parsed.querySelector("main")).not.toBeNull();
+    expect(parsed.querySelector("nav#bottom-nav")).not.toBeNull();
+    parsed.querySelectorAll("button").forEach((button) => {
+      expect(button.disabled).toBe(false);
+      expect(button.getAttribute("tabindex")).not.toBe("-1");
+    });
+  });
 });

@@ -16,6 +16,11 @@ import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
 import { initNavigation } from "./navigation.js";
 import { bindCommands } from "./commands.js";
+import { createAppRouter } from "../app/router.js";
+import { renderHeader } from "../components/app-shell/header.js";
+import { renderSidebar } from "../components/app-shell/sidebar.js";
+import { renderBottomNav } from "../components/app-shell/bottom-nav.js";
+import { bindCommandMenu, renderCommandMenu } from "../components/app-shell/command-menu.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
 import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
@@ -30,6 +35,17 @@ import { bindDepositForm, renderDepositForm, bindDepositSettlementForm, renderDe
 import { createDepositReminderController } from "./deposit-reminder-controller.js";
 import { buildRolloverDepositId, redeemDeposit, rolloverDeposit } from "../application/deposits/settle-deposit.ts";
 
+var headerHost = document.querySelector("[data-app-header-host]");
+if (headerHost) {
+  renderHeader(headerHost);
+  renderCommandMenu(headerHost.querySelector("[data-app-command-menu-host]"));
+  bindCommandMenu(document);
+}
+var sidebarHost = document.querySelector("[data-app-sidebar-host]");
+if (sidebarHost) renderSidebar(sidebarHost);
+var bottomNavHost = document.querySelector("[data-app-bottom-nav-host]");
+if (bottomNavHost) renderBottomNav(bottomNavHost);
+
 window.switchMonthTab = switchMonthTab;
 window.switchCurrency = switchCurrency;
 window.switchLanguage = switchLanguage;
@@ -37,9 +53,7 @@ window.changeFxMode = changeFxMode;
 window.applyManualRate = applyManualRate;
 window.togglePrivacy = togglePrivacy;
 window.toggleDarkMode = toggleDarkMode;
-window.switchMobileView = switchMobileView;
 window.toggleLedgerView = toggleLedgerView;
-window.toggleNavMore = toggleNavMore;
 window.changeYear = changeYear;
 window.handleLogin = handleLogin;
 window.logoutApp = logoutApp;
@@ -506,6 +520,15 @@ function ensureCharts() {
   updateCharts();
 }
 
+const appRouter = createAppRouter({
+  root: document,
+  lifecycle: {
+    overview: { enter: function() { depositReminderController.check(); } },
+    savings: { enter: function() { depositReminderController.check(); } },
+    stats: { enter: ensureCharts },
+  },
+});
+
 var lastLedgerDate = getLedgerToday();
 var ledgerDateTimer = null;
 
@@ -593,52 +616,6 @@ function updateThemeIcon(isDark) {
     initIcons();
   }
 }
-
-function switchMobileView(view) {
-  document.querySelectorAll(".bottom-nav-item").forEach(function(el) { el.classList.remove("active"); });
-  var activeBtn = document.querySelector('[data-nav="' + view + '"]');
-  if (activeBtn) activeBtn.classList.add("active");
-
-  var overviewContent = document.getElementById("overview-content");
-  var analysisView = document.getElementById("analysis-view");
-  var savingsView = document.getElementById("savings-view");
-  if (!overviewContent || !analysisView || !savingsView) return;
-
-  if (view === "overview") {
-    overviewContent.style.display = "";
-    analysisView.style.display = "none";
-    savingsView.style.display = "none";
-    depositReminderController.check();
-  } else if (view === "stats") {
-    overviewContent.style.display = "none";
-    analysisView.style.display = "";
-    savingsView.style.display = "none";
-    ensureCharts();
-  } else if (view === "savings") {
-    overviewContent.style.display = "none";
-    analysisView.style.display = "none";
-    savingsView.style.display = "";
-    depositReminderController.check();
-  }
-}
-
-function toggleNavMore(e) {
-  if (e) e.stopPropagation();
-  var panel = document.getElementById("nav-secondary");
-  if (!panel) return;
-  panel.classList.toggle("open");
-}
-
-// Click outside to close nav dropdown
-document.addEventListener("click", function(e) {
-  var panel = document.getElementById("nav-secondary");
-  var btn = document.getElementById("nav-more-btn");
-  if (!panel || !btn) return;
-  if (!panel.classList.contains("open")) return;
-  if (!panel.contains(e.target) && !btn.contains(e.target)) {
-    panel.classList.remove("open");
-  }
-});
 
 // Override fullRebuildDOM to also init icons and dashboard after DOM rebuild
 var _originalFullRebuildDOM = fullRebuildDOM;
@@ -744,7 +721,7 @@ function exportToCSV() {
 
 // Init icons on first load
 setTimeout(initIcons, 50);
-setTimeout(initNavigation, 50);
+setTimeout(function() { initNavigation(appRouter); }, 50);
 setTimeout(function () {
   bindCommands(document, {
     importFile: function () { document.getElementById("import-file")?.click(); },
@@ -759,6 +736,7 @@ setTimeout(updateLedgerToggleLabel, 50);
 
 initAuth(
   function(user) {
+    appRouter.start("overview");
     setupRealtimeListener();
     startDepositManagement(user);
     renderStreakPanel();
@@ -772,7 +750,7 @@ initAuth(
       initIcons();
     }, 300);
   },
-  function() { teardownListener(); stopDepositManagement(); }
+  function() { appRouter.stop(); teardownListener(); stopDepositManagement(); }
 );
 
 window.addEventListener("offline", function() {

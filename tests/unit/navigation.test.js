@@ -47,7 +47,6 @@ describe("navigation", () => {
   });
 
   it("navigateTo + initNavigation activates the clicked nav item and updates both surfaces", async function () {
-    // Set up both nav surfaces with the real switchMobileView
     document.body.innerHTML = [
       '<button class="bottom-nav-item active" data-nav="overview">Overview</button>',
       '<button class="bottom-nav-item" data-nav="stats">Stats</button>',
@@ -56,25 +55,16 @@ describe("navigation", () => {
     ].join("");
 
     const nav = await import("../../src/js/navigation.js");
-    // Provide a real switchMobileView that only manages active state
-    window.switchMobileView = function (view) {
-      // This mirrors the real function's active-state logic
-      document.querySelectorAll(".bottom-nav-item").forEach(function (el) {
-        el.classList.remove("active");
-      });
-      // Real switchMobileView uses querySelector which finds first match (sidebar)
-      var firstMatch = document.querySelector('[data-nav="' + view + '"]');
-      if (firstMatch) firstMatch.classList.add("active");
-    };
+    const router = { navigate: vi.fn() };
 
-    nav.initNavigation();
+    nav.initNavigation(router);
 
     // Click the bottom-nav stats button
     var statsBtn = document.querySelector('.bottom-nav-item[data-nav="stats"]');
     statsBtn.click();
 
+    expect(router.navigate).toHaveBeenCalledWith("stats");
     expect(nav.getActive()).toBe("stats");
-    // navigateTo reasserts setActive after switchMobileView, so bottom nav should also be active
     expect(statsBtn.classList.contains("active")).toBe(true);
     var sidebarStats = document.querySelector('.sidebar-item[data-nav="stats"]');
     expect(sidebarStats.classList.contains("active")).toBe(true);
@@ -89,27 +79,33 @@ describe("navigation", () => {
       '<button class="sidebar-item" data-nav="stats">Stats</button>',
       '<button class="sidebar-item" data-nav="overview">Overview</button>',
     ].join("");
-    window.switchMobileView = function (view) {
-      document.querySelectorAll(".bottom-nav-item").forEach(function (el) {
-        el.classList.remove("active");
-      });
-      var firstMatch = document.querySelector('[data-nav="' + view + '"]');
-      if (firstMatch) firstMatch.classList.add("active");
-    };
-
     const nav = await import("../../src/js/navigation.js");
-    nav.initNavigation();
+    const router = { navigate: vi.fn() };
+    nav.initNavigation(router);
 
     var statsBtn = document.querySelector('[data-nav="stats"]');
     var event = new KeyboardEvent("keydown", { key: "Enter", bubbles: true });
     statsBtn.dispatchEvent(event);
 
+    expect(router.navigate).toHaveBeenCalledWith("stats");
     expect(nav.getActive()).toBe("stats");
     expect(statsBtn.classList.contains("active")).toBe(true);
     var sidebarStats = document.querySelector('.sidebar-item[data-nav="stats"]');
     expect(sidebarStats.classList.contains("active")).toBe(true);
     var overviewBtn = document.querySelector('[data-nav="overview"]');
     expect(overviewBtn.classList.contains("active")).toBe(false);
+  });
+
+  it("returns a cleanup that removes navigation event bindings", async function () {
+    document.body.innerHTML = '<button data-nav="stats">Stats</button>';
+    const nav = await import("../../src/js/navigation.js");
+    const router = { navigate: vi.fn() };
+    const cleanup = nav.initNavigation(router);
+
+    cleanup();
+    document.querySelector("[data-nav]").click();
+
+    expect(router.navigate).not.toHaveBeenCalled();
   });
 
 });
