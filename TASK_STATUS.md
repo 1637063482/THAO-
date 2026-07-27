@@ -8,13 +8,13 @@
 |---|---|
 | Work ID | REM-014 |
 | Scope | 将 app、components、deposits、savings、ledger JavaScript 主链路纳入独立 `checkJs` 门禁 |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
-| Reviewer | 独立 Terra / high；待审 |
-| Result | 首轮错误已分类为真实契约、缺少 JSDoc、第三方类型三类；无第三方缺失，已修正 DOM/表单/仓储声明漂移并补最小契约，无 `any`、全文件忽略或业务币种变更 |
-| Verification | 定向 90/90；全量 339 passed / 16 skipped；TypeScript strict、JavaScript checkJs、build、diff check 通过 |
+| Reviewer | 独立 Terra / high；`docs/task-reviews/REM-014-R1.md` |
+| Result | 已批准：JavaScript 主链路已进入独立 `checkJs` 门禁；DOM、controller、state 与 repository 契约明确，无 `any` 或全文件类型忽略，runtime 业务语义保持不变 |
+| Verification | Reviewer：定向 114/114；全量 339 passed / 16 skipped；TypeScript strict、JavaScript checkJs、build、base/head 与工作树 diff check 通过 |
 | Previous Work | REM-013 已完成；本任务实现基线 `1502f9c` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
