@@ -4,10 +4,12 @@ import { describe, expect, it, vi } from "vitest";
 describe("savings controller boundary", () => {
   it("keeps savings calculation and DOM rendering out of the composition root", () => {
     const main = readFileSync("src/js/main.js", "utf8");
+    const runtime = readFileSync("src/js/application-runtime.js", "utf8");
 
-    expect(main).toContain('createSavingsController');
-    expect(main).toContain("savingsController.update()");
-    expect(main).not.toContain("function refreshSavingsView");
+    expect(main).toContain("startApplication();");
+    expect(runtime).toContain("createSavingsController");
+    expect(runtime).toContain("savingsController.update()");
+    expect(runtime).not.toContain("function refreshSavingsView");
     expect(main).not.toContain("buildSavingsViewModel");
     expect(main).not.toContain("renderSavingsPage");
   });

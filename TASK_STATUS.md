@@ -6,19 +6,19 @@
 
 | Field | Value |
 |---|---|
-| Work ID | REM-015 |
-| Current scope | Lazy-load Chart.js, deposit settlement, and fireworks; enforce the production bundle budget |
-| Scope | 将 app、components、deposits、savings、ledger JavaScript 主链路纳入独立 `checkJs` 门禁 |
+| Task ID | REM-016 |
+| Current scope | Independent final review of maintenance remediation |
+| Scope | Composition root, module and data boundaries, lifecycle, real bilingual path, responsive rendering, types, and bundle budget |
 | State | READY_FOR_REVIEW |
-| Current result | Main entry is 629.66 kB; Chart.js, settlement, and fireworks are independent lazy chunks with safe failure handling |
-| Current verification | 342 passed / 16 skipped; Rules 16/16; TypeScript and checkJs passed; build and bundle budget passed |
+| Current result | `main.js` is now a thin startup root; its former runtime behavior is isolated in `src/js/application-runtime.js`, and reviewer context accepts Task ID |
+| Current verification | RED/GREEN composition-root evidence; 343 passed / 16 skipped; Rules 16/16 using demo-no-project; TypeScript, checkJs, build, and bundle budget passed |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
-| Implementer | Sol / high |
-| Reviewer | 独立 Terra / high；`docs/task-reviews/REM-014-R1.md` |
-| Result | 已批准：JavaScript 主链路已进入独立 `checkJs` 门禁；DOM、controller、state 与 repository 契约明确，无 `any` 或全文件类型忽略，runtime 业务语义保持不变 |
-| Verification | Reviewer：定向 114/114；全量 339 passed / 16 skipped；TypeScript strict、JavaScript checkJs、build、base/head 与工作树 diff check 通过 |
-| Previous Work | REM-013 已完成；本任务实现基线 `1502f9c` |
+| Implementer | Terra / high |
+| Reviewer | 独立 Terra / high；R2 review pending |
+| Result | CHANGES_REQUESTED：`main.js` 未达到薄 composition root 要求；reviewer context status contract 在 base 已损坏 |
+| Verification | Reviewer：完整 `7f03eed..e24d333` diff、Rules/repository、lifecycle、真实合成渲染和全部 REM-016 门禁；详见 REM-016-R1 |
+| Previous Work | REM-015 implementation head `e24d333` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。
