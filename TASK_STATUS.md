@@ -8,13 +8,13 @@
 |---|---|
 | Work ID | REM-008 |
 | Scope | 提取可挂载/卸载的存款功能控制器 |
-| State | READY_FOR_REVIEW |
+| State | APPROVED |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
-| Reviewer | 独立 Terra / high，待审 |
-| Result | 存款订阅、表单、提醒、结算、续存、归档和删除已移入统一 controller lifecycle |
-| Verification | 定向 41/41；Rules 16/16；全量 334 passed / 20 skipped；typecheck、build、diff check 通过 |
+| Reviewer | 独立 Terra / high；`docs/task-reviews/REM-008-R1.md` |
+| Result | 已批准：存款 controller lifecycle 已独立，Auth 重登不叠加订阅 |
+| Verification | 定向 41/41；Rules 16/16（`demo-no-project`）；全量 334 passed / 20 skipped；typecheck、build、diff check 通过 |
 | Previous Work | REM-001 已完成，提交 `6ee88e8` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
