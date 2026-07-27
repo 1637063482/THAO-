@@ -102,6 +102,11 @@ export default {
   synced: "Đã đồng bộ",
   offline: "Mất kết nối",
   saving: "Đang lưu...",
+  deposit_error_permission: "Bạn không có quyền thực hiện thao tác này.",
+  deposit_error_conflict: "Khoản tiền gửi đã được cập nhật. Vui lòng làm mới rồi thử lại.",
+  deposit_error_validation: "Vui lòng kiểm tra thông tin tiền gửi rồi thử lại.",
+  deposit_error_offline: "Bạn đang ngoại tuyến. Vui lòng kết nối lại rồi thử lại.",
+  deposit_error_unknown: "Không thể hoàn tất thao tác. Vui lòng thử lại.",
 
   // Messages
   login_success: "Đăng nhập thành công",

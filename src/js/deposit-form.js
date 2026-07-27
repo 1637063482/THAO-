@@ -1,4 +1,5 @@
 import { depositTermMonths, depositTermOptions, normalizeDepositTermCode } from "./deposit-terms.js";
+import { depositErrorMessage } from "./deposit-errors.js";
 
 const copy = {
   vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", product: "Sản phẩm", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --", term3M: "3 tháng", term6M: "6 tháng", term1Y: "1 năm", term2Y: "2 năm", term3Y: "3 năm", term5Y: "5 năm", productAuto: "Tiền gửi {term}" },
@@ -170,7 +171,7 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     try { await onSubmit?.(parseDepositForm(form), { expectedVersion: Number(form.dataset.version || 0) }); }
     catch (error) {
       const loc = locale || (document.documentElement.lang === "zh-Hans" ? "zh-CN" : "vi");
-      if (errorNode) errorNode.textContent = words(loc).saveError;
+      if (errorNode) errorNode.textContent = depositErrorMessage(error, loc, "form");
     }
     finally { submit.disabled = false; }
   });

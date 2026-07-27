@@ -23,6 +23,7 @@ import { DepositRepository } from "../infrastructure/firebase/deposit-repository
 import { createEmptyDepositDocument } from "./deposit-schema.js";
 import { subscribeToDeposits } from "./deposit-sync.js";
 import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
+import { depositErrorMessage } from "./deposit-errors.js";
 import { bindDepositForm, renderDepositForm, bindDepositSettlementForm, renderDepositSettlementForm } from "./deposit-form.js";
 import { createDepositReminderController } from "./deposit-reminder-controller.js";
 import { buildRolloverDepositId, redeemDeposit, rolloverDeposit } from "../application/deposits/settle-deposit.ts";
@@ -127,6 +128,7 @@ function refreshSavingsView(status) {
 let depositRepository = null;
 let unsubscribeDeposits = null;
 let depositUiStatus = "loading";
+let depositUiError = "";
 let depositFilter = "all";
 let depositDataReady = false;
 let depositSnapshotFromCache = false;
@@ -230,7 +232,7 @@ function openDepositSettlement(id, mode) {
           await rolloverDeposit({ deposit, rolloverDeposit: next, actualInterestVnd: input.actualInterestVnd, writeInterestToLedger: input.writeInterestToLedger }, rolloverDependencies());
         }
         closeDepositForm(); refreshDepositView();
-      } catch (error) { depositUiStatus = "error"; refreshDepositView(); throw error; }
+      } catch (error) { depositUiStatus = "error"; depositUiError = depositErrorMessage(error, getCurrentLocale(), "list"); refreshDepositView(); throw error; }
     },
   });
 }
@@ -248,7 +250,7 @@ async function retryDepositInterest(id) {
       await rolloverDeposit({ deposit, rolloverDeposit: rolloverInput(target.id, target), actualInterestVnd: deposit.actualInterestVnd, writeInterestToLedger: true }, rolloverDependencies());
     }
     depositUiStatus = "synced"; refreshDepositView();
-  } catch (error) { depositUiStatus = "error"; refreshDepositView(); throw error; }
+  } catch (error) { depositUiStatus = "error"; depositUiError = depositErrorMessage(error, getCurrentLocale(), "list"); refreshDepositView(); throw error; }
 }
 
 function refreshDepositView() {
@@ -259,6 +261,7 @@ function refreshDepositView() {
     today: getLedgerToday().dateKey,
     locale: getCurrentLocale(),
     status: depositUiStatus,
+    errorMessage: depositUiError,
     filter: depositFilter,
     ledgerEntries: state.appState.entries,
   });
@@ -278,6 +281,7 @@ function refreshDepositView() {
         await depositRepository.archive(id, record.version);
       } catch (error) {
         depositUiStatus = "error";
+        depositUiError = depositErrorMessage(error, getCurrentLocale(), "list");
         refreshDepositView();
         throw error;
       }
@@ -291,6 +295,7 @@ function refreshDepositView() {
         await depositRepository.delete(id, record.version);
       } catch (error) {
         depositUiStatus = "error";
+        depositUiError = depositErrorMessage(error, getCurrentLocale(), "list");
         refreshDepositView();
         throw error;
       }
@@ -304,6 +309,7 @@ function stopDepositManagement() {
   unsubscribeDeposits = null;
   depositRepository = null;
   depositUiStatus = "loading";
+  depositUiError = "";
   depositFilter = "all";
   depositDataReady = false;
   depositSnapshotFromCache = false;
@@ -319,6 +325,7 @@ function startDepositManagement(user) {
   depositSnapshotFromCache = false;
   depositReminderController.destroy();
   depositUiStatus = navigator.onLine ? "loading" : "offline";
+  depositUiError = "";
   refreshDepositView();
   unsubscribeDeposits = subscribeToDeposits(db, projectId, {
     onChange(_document, metadata = {}) {

@@ -102,6 +102,11 @@ export default {
   synced: "已同步",
   offline: "网络断开",
   saving: "保存中...",
+  deposit_error_permission: "您没有权限执行此操作。",
+  deposit_error_conflict: "存款已被其他更改更新，请刷新后重试。",
+  deposit_error_validation: "请检查存款信息后重试。",
+  deposit_error_offline: "当前离线，请恢复网络后重试。",
+  deposit_error_unknown: "操作未完成，请重试。",
 
   // Messages
   login_success: "登录成功",

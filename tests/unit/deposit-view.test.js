@@ -47,6 +47,11 @@ describe("deposit management view", () => {
     expect(html.match(/blur-sensitive/g).length).toBeGreaterThanOrEqual(15);
   });
 
+  it("renders the supplied safe error message while the sync status is error", () => {
+    const vm = buildDepositViewModel({ document: storageDocument(), today: "2026-06-01", locale: "zh-CN", status: "error", errorMessage: "存款已被其他更改更新，请刷新后重试。" });
+    expect(renderDepositManagement(vm)).toContain("存款已被其他更改更新，请刷新后重试。");
+  });
+
   it("localizes stable term codes and offers delete only for active records", () => {
     const active = renderDepositManagement(buildDepositViewModel({
       document: storageDocument({ active: deposit({ productName: "1Y" }) }),
@@ -87,6 +92,17 @@ describe("deposit management view", () => {
     const select = document.querySelector("[data-deposit-filter]"); select.value = "matured"; select.dispatchEvent(new Event("change", { bubbles: true }));
     await vi.waitFor(() => expect(onArchive).toHaveBeenCalledWith("active"));
     expect(onAdd).toHaveBeenCalledOnce(); expect(onEdit).toHaveBeenCalledWith("active"); expect(onFilter).toHaveBeenCalledWith("matured");
+    globalThis.confirm = originalConfirm;
+  });
+
+  it("shows a classified error when a list operation fails", async () => {
+    document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ active: deposit() }), today: "2026-06-01", locale: "zh-CN" }));
+    const failure = Object.assign(new Error("conflict"), { code: "DEPOSIT_VERSION_CONFLICT" });
+    const originalConfirm = globalThis.confirm; globalThis.confirm = vi.fn(() => true);
+    bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure) });
+    document.querySelector("[data-archive-deposit=active]").click();
+    await vi.waitFor(() => expect(document.querySelector("[data-deposit-operation-error]").textContent).toBe("存款已被其他更改更新，请刷新后重试。"));
+    expect(document.querySelector("[data-deposit-operation-error]").hidden).toBe(false);
     globalThis.confirm = originalConfirm;
   });
 

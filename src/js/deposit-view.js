@@ -1,5 +1,6 @@
 import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../domain/deposit.ts";
 import { depositProductLabel } from "./deposit-terms.js";
+import { depositErrorMessage } from "./deposit-errors.js";
 
 const copy = {
   vi: {
@@ -44,7 +45,7 @@ function toDomain(id, record) {
   });
 }
 
-export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", filter = "all", ledgerEntries = {} }) {
+export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", errorMessage = "", filter = "all", ledgerEntries = {} }) {
   const ledgerRemarks = Object.entries(ledgerEntries).filter(([key]) => key.endsWith("_remark")).map(([, value]) => String(value || "")).join("\n");
   const records = Object.entries(document?.depositsById || {}).map(([id, record]) => {
     const domain = toDomain(id, record);
@@ -65,7 +66,7 @@ export function buildDepositViewModel({ document, today, locale = "vi", status =
   const totalPrincipalVnd = Number(totalPrincipal);
   if (!Number.isSafeInteger(totalPrincipalVnd)) throw new Error("Deposit principal summary exceeds the safe integer range");
   const nearest = current.filter(item => item.status === "ACTIVE" && item.maturesOn >= today).sort((a, b) => a.maturesOn.localeCompare(b.maturesOn))[0] || null;
-  return { locale, status, filter, visible, summary, totalPrincipalVnd, nearest };
+  return { locale, status, errorMessage, filter, visible, summary, totalPrincipalVnd, nearest };
 }
 
 function stateMessage(vm, label) {
@@ -91,7 +92,7 @@ function row(item, labels, locale) {
 
 export function renderDepositManagement(vm) {
   const labels = words(vm.locale);
-  const banner = vm.status === "loading" ? stateMessage(vm, labels.loading) : vm.status === "syncing" ? stateMessage(vm, labels.syncing) : vm.status === "offline" ? stateMessage(vm, labels.offline) : vm.status === "error" ? stateMessage(vm, labels.error) : "";
+  const banner = vm.status === "loading" ? stateMessage(vm, labels.loading) : vm.status === "syncing" ? stateMessage(vm, labels.syncing) : vm.status === "offline" ? stateMessage(vm, labels.offline) : vm.status === "error" ? stateMessage(vm, vm.errorMessage || labels.error) : "";
   const metrics = `<div class="deposit-metrics"><div><span>${labels.principal}</span><strong class="blur-sensitive">${money(vm.totalPrincipalVnd, vm.locale)}</strong></div><div><span>${labels.interest}</span><strong class="blur-sensitive">${money(vm.summary.expectedInterestVnd, vm.locale)}</strong></div><div><span>${labels.maturityTotal}</span><strong class="blur-sensitive">${money(vm.summary.expectedMaturityTotalVnd, vm.locale)}</strong></div><div><span>${labels.nearest}</span><strong>${vm.nearest ? escapeHtml(vm.nearest.maturesOn) : labels.noNearest}</strong></div></div>`;
   const filter = `<label class="deposit-filter"><span class="sr-only">${labels.status}</span><select data-deposit-filter><option value="all"${vm.filter === "all" ? " selected" : ""}>${labels.all}</option><option value="active"${vm.filter === "active" ? " selected" : ""}>${labels.active}</option><option value="maturing"${vm.filter === "maturing" ? " selected" : ""}>${labels.maturing}</option><option value="matured"${vm.filter === "matured" ? " selected" : ""}>${labels.matured}</option><option value="archived"${vm.filter === "archived" ? " selected" : ""}>${labels.archived}</option></select></label>`;
   let content;
@@ -110,19 +111,19 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
   section.querySelectorAll("[data-rollover-deposit]").forEach(button => button.addEventListener("click", () => onRollover?.(button.dataset.rolloverDeposit)));
   section.querySelectorAll("[data-record-interest]").forEach(button => button.addEventListener("click", async () => {
     try { await onRecordInterest?.(button.dataset.recordInterest); }
-    catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
+    catch (cause) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) { error.textContent = depositErrorMessage(cause, section.dataset.locale, "list"); error.hidden = false; } }
   }));
   section.querySelectorAll("[data-archive-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(section.dataset.locale);
     if (globalThis.confirm && !globalThis.confirm(labels.archiveConfirm)) return;
     try { await onArchive?.(button.dataset.archiveDeposit); }
-    catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
+    catch (cause) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) { error.textContent = depositErrorMessage(cause, section.dataset.locale, "list"); error.hidden = false; } }
   }));
   section.querySelectorAll("[data-delete-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(section.dataset.locale);
     if (globalThis.confirm && !globalThis.confirm(labels.deleteConfirm)) return;
     try { await onDelete?.(button.dataset.deleteDeposit); }
-    catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
+    catch (cause) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) { error.textContent = depositErrorMessage(cause, section.dataset.locale, "list"); error.hidden = false; } }
   }));
   section.querySelector("[data-deposit-filter]")?.addEventListener("change", event => onFilter?.(event.target.value));
 }

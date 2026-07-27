@@ -27,7 +27,7 @@ describe("deposit form", () => {
     expect(() => parseDepositForm(form)).toThrow(/maturity/i);
   });
 
-  it("renders both locales and retains the draft after an async save failure", async () => {
+  it("shows a classified save error and retains the draft", async () => {
     expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain("新增存款");
     document.body.innerHTML = '<div id="form-host" data-locale="vi">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("form-host");
@@ -38,10 +38,11 @@ describe("deposit form", () => {
     form.elements.annualRatePercent.value = "5";
     form.elements.openedOn.value = "2026-01-01";
     form.elements.maturesOn.value = "2027-01-01";
-    const onSubmit = vi.fn().mockRejectedValue(new Error("network"));
+    const failure = Object.assign(new Error("denied"), { code: "permission-denied" });
+    const onSubmit = vi.fn().mockRejectedValue(failure);
     bindDepositForm(host, { onSubmit });
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    await vi.waitFor(() => expect(form.querySelector("[data-form-error]").textContent).toContain("Không thể lưu"));
+    await vi.waitFor(() => expect(form.querySelector("[data-form-error]").textContent).toBe("Bạn không có quyền thực hiện thao tác này."));
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(form.elements.institutionName.value).toBe("Draft Bank");
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
