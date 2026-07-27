@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "../../src/js/deposit-view.js";
+import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "../../src/features/deposits/view.js";
 
 function deposit(overrides = {}) {
   return {
@@ -84,15 +84,15 @@ describe("deposit management view", () => {
   it("binds add, edit, filter and confirmed archive actions", async () => {
     document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ active: deposit() }), today: "2026-06-01" }));
     const onAdd = vi.fn(); const onEdit = vi.fn(); const onArchive = vi.fn(); const onFilter = vi.fn();
-    const originalConfirm = globalThis.confirm; globalThis.confirm = vi.fn(() => true);
-    bindDepositManagement(document.body, { onAdd, onEdit, onArchive, onFilter });
+    const confirm = vi.fn(() => true);
+    bindDepositManagement(document.body, { onAdd, onEdit, onArchive, onFilter, confirm });
     document.querySelector("[data-add-deposit]").click();
     document.querySelector("[data-edit-deposit=active]").click();
     document.querySelector("[data-archive-deposit=active]").click();
     const select = document.querySelector("[data-deposit-filter]"); select.value = "matured"; select.dispatchEvent(new Event("change", { bubbles: true }));
     await vi.waitFor(() => expect(onArchive).toHaveBeenCalledWith("active"));
     expect(onAdd).toHaveBeenCalledOnce(); expect(onEdit).toHaveBeenCalledWith("active"); expect(onFilter).toHaveBeenCalledWith("matured");
-    globalThis.confirm = originalConfirm;
+    expect(confirm).toHaveBeenCalledOnce();
   });
 
   it("shows a classified error when a list operation fails", async () => {

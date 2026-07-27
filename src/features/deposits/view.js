@@ -1,7 +1,7 @@
-import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../domain/deposit.ts";
-import { depositProductLabel } from "./deposit-terms.js";
-import { depositErrorMessage } from "./deposit-errors.js";
-import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "./deposit-schema.js";
+import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../../domain/deposit.ts";
+import { depositProductLabel } from "./terms.js";
+import { depositErrorMessage } from "../../js/deposit-errors.js";
+import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "../../js/deposit-schema.js";
 
 const copy = {
   vi: {
@@ -108,7 +108,7 @@ export function renderDepositManagement(vm) {
   return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${capacityWarning}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 
-export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete } = {}) {
+export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete, confirm = globalThis.confirm } = {}) {
   const section = root?.querySelector?.("[data-deposit-management]") || (root?.matches?.("[data-deposit-management]") ? root : null);
   if (!section) return;
   section.querySelectorAll("[data-add-deposit]").forEach(button => button.addEventListener("click", () => onAdd?.()));
@@ -121,13 +121,13 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
   }));
   section.querySelectorAll("[data-archive-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(section.dataset.locale);
-    if (globalThis.confirm && !globalThis.confirm(labels.archiveConfirm)) return;
+    if (confirm && !confirm(labels.archiveConfirm)) return;
     try { await onArchive?.(button.dataset.archiveDeposit); }
     catch (cause) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) { error.textContent = depositErrorMessage(cause, section.dataset.locale, "list"); error.hidden = false; } }
   }));
   section.querySelectorAll("[data-delete-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(section.dataset.locale);
-    if (globalThis.confirm && !globalThis.confirm(labels.deleteConfirm)) return;
+    if (confirm && !confirm(labels.deleteConfirm)) return;
     try { await onDelete?.(button.dataset.deleteDeposit); }
     catch (cause) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) { error.textContent = depositErrorMessage(cause, section.dataset.locale, "list"); error.hidden = false; } }
   }));

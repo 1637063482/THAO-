@@ -6,7 +6,7 @@ vi.mock("firebase/firestore", () => ({
   onSnapshot: vi.fn((_reference, next, error) => { firestore.next = next; firestore.error = error; return vi.fn(); }),
 }));
 
-import { subscribeToDeposits } from "../../src/js/deposit-sync.js";
+import { subscribeToDeposits } from "../../src/features/deposits/sync.js";
 
 describe("deposit snapshot metadata", () => {
   it("passes Firestore fromCache state to the UI lifecycle callback", () => {

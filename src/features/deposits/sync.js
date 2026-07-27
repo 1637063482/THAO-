@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
-import { createEmptyDepositDocument, serializeDepositBackup, validateDepositDocument } from "./deposit-schema.js";
-import { state } from "./state.js";
+import { createEmptyDepositDocument, serializeDepositBackup, validateDepositDocument } from "../../js/deposit-schema.js";
+import { state } from "../../js/state.js";
 
 const SAVINGS_LEDGER_ID = "shared_ledger_savings";
 

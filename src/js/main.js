@@ -25,15 +25,8 @@ import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterM
 import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
 import { db, projectId } from "./firebase.js";
-import { DepositRepository } from "../infrastructure/firebase/deposit-repository.ts";
-import { createEmptyDepositDocument } from "./deposit-schema.js";
-import { createDepositId } from "./deposit-id.js";
-import { subscribeToDeposits } from "./deposit-sync.js";
-import { bindDepositManagement, buildDepositViewModel, renderDepositManagement } from "./deposit-view.js";
-import { depositErrorMessage } from "./deposit-errors.js";
-import { bindDepositForm, renderDepositForm, bindDepositSettlementForm, renderDepositSettlementForm } from "./deposit-form.js";
-import { createDepositReminderController } from "./deposit-reminder-controller.js";
-import { buildRolloverDepositId, redeemDeposit, rolloverDeposit } from "../application/deposits/settle-deposit.ts";
+import { createDepositController } from "../features/deposits/controller.js";
+import { createDepositDependencies } from "../features/deposits/dependencies.js";
 
 var headerHost = document.querySelector("[data-app-header-host]");
 if (headerHost) {
@@ -141,214 +134,15 @@ function refreshSavingsView(status) {
   installSavingsSyncBridge(summary);
 }
 
-let depositRepository = null;
-let unsubscribeDeposits = null;
-let depositUiStatus = "loading";
-let depositUiError = "";
-let depositFilter = "all";
-let depositDataReady = false;
-let depositSnapshotFromCache = false;
-const depositReminderController = createDepositReminderController({
-  root: document.getElementById("deposit-reminder-root"),
-  getDocument: () => state.depositDocument,
+const depositController = createDepositController(createDepositDependencies({
+  db,
+  projectId,
+  state,
   getToday: () => getLedgerToday().dateKey,
+  getNextMidnightDelay: getNextLedgerMidnightDelay,
   getLocale: getCurrentLocale,
-  isAuthenticated: () => Boolean(state.currentUser),
-  isReady: () => depositDataReady,
-  isOffline: () => !navigator.onLine || depositSnapshotFromCache,
-  acknowledge: key => {
-    if (!depositRepository) throw new Error("Deposit repository is unavailable");
-    return depositRepository.acknowledge(key);
-  },
-});
-
-function closeDepositForm() {
-  const host = document.getElementById("deposit-form-root");
-  if (host) host.innerHTML = "";
-}
-
-function openDepositForm(id = null) {
-  const host = document.getElementById("deposit-form-root");
-  if (!host) return;
-  const deposit = id ? state.depositDocument.depositsById[id] : null;
-  const formId = id || createDepositId();
-  host.dataset.locale = getCurrentLocale();
-  host.innerHTML = renderDepositForm({ locale: getCurrentLocale(), id: formId, deposit });
-  bindDepositForm(host, {
-    onClose: closeDepositForm,
-    locale: getCurrentLocale(),
-    async onSubmit(input, { expectedVersion }) {
-      if (!depositRepository) throw new Error("Deposit repository is unavailable");
-      depositUiStatus = "syncing";
-      const { id: inputId, ...changes } = input;
-      try {
-        if (deposit) await depositRepository.update(inputId, expectedVersion, changes);
-        else await depositRepository.create(input);
-      } catch (error) {
-        depositUiStatus = "error";
-        throw error;
-      }
-      // UI refresh after successful save — outside the catch so a failed refresh
-      // doesn't incorrectly show "save failed" when the data was already persisted.
-      closeDepositForm();
-      refreshDepositView();
-    },
-  });
-}
-
-function settlementRecord(id) {
-  const record = state.depositDocument.depositsById[id];
-  if (!record) throw new Error("Deposit is unavailable");
-  return { id, ...record };
-}
-
-function rolloverInput(id, record) {
-  return {
-    id, institutionName: record.institutionName, productName: record.productName,
-    principalVnd: record.principalVnd, annualRatePpm: record.annualRatePpm,
-    openedOn: record.openedOn, maturesOn: record.maturesOn,
-    expectedInterestVnd: record.expectedInterestVnd, actualInterestVnd: record.actualInterestVnd,
-    reminderDays: [...record.reminderDays], remindersEnabled: record.remindersEnabled,
-    status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: record.note,
-  };
-}
-
-function settlementDependencies() {
-  if (!depositRepository) throw new Error("Deposit repository is unavailable");
-  return {
-    updateDeposit: (id, version, changes) => depositRepository.update(id, version, changes),
-    queueLegacyInterest: input => queueLegacyIncomeOnce(input),
-  };
-}
-
-function rolloverDependencies() {
-  const base = settlementDependencies();
-  return { ...base, getDeposit: id => depositRepository.get(id), createDeposit: input => depositRepository.create(input) };
-}
-
-function openDepositSettlement(id, mode) {
-  const host = document.getElementById("deposit-form-root"); if (!host) return;
-  const deposit = settlementRecord(id); const locale = getCurrentLocale();
-  host.dataset.locale = locale;
-  host.innerHTML = renderDepositSettlementForm({ locale, deposit, mode, today: getLedgerToday().dateKey });
-  bindDepositSettlementForm(host, {
-    locale, onClose: closeDepositForm,
-    async onSubmit(input) {
-      depositUiStatus = "syncing"; refreshDepositView();
-      try {
-        if (input.mode === "redeem") {
-          await redeemDeposit({ deposit, settledOn: input.settledOn, actualInterestVnd: input.actualInterestVnd, writeInterestToLedger: input.writeInterestToLedger }, settlementDependencies());
-        } else {
-          const next = { id: buildRolloverDepositId(deposit), ...input.rollover };
-          await rolloverDeposit({ deposit, rolloverDeposit: next, actualInterestVnd: input.actualInterestVnd, writeInterestToLedger: input.writeInterestToLedger }, rolloverDependencies());
-        }
-        closeDepositForm(); refreshDepositView();
-      } catch (error) { depositUiStatus = "error"; depositUiError = depositErrorMessage(error, getCurrentLocale(), "list"); refreshDepositView(); throw error; }
-    },
-  });
-}
-
-async function retryDepositInterest(id) {
-  const deposit = settlementRecord(id); const locale = getCurrentLocale();
-  const message = locale === "zh-CN" ? "确认只将实收利息记入收入？本金不会记作收入。" : "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc sẽ không được ghi.";
-  if (globalThis.confirm && !globalThis.confirm(message)) return;
-  depositUiStatus = "syncing"; refreshDepositView();
-  try {
-    if (deposit.status === "REDEEMED") {
-      await redeemDeposit({ deposit, settledOn: deposit.redeemedOn, actualInterestVnd: deposit.actualInterestVnd, writeInterestToLedger: true }, settlementDependencies());
-    } else if (deposit.status === "ROLLED_OVER") {
-      const target = settlementRecord(deposit.rolledOverToDepositId);
-      await rolloverDeposit({ deposit, rolloverDeposit: rolloverInput(target.id, target), actualInterestVnd: deposit.actualInterestVnd, writeInterestToLedger: true }, rolloverDependencies());
-    }
-    depositUiStatus = "synced"; refreshDepositView();
-  } catch (error) { depositUiStatus = "error"; depositUiError = depositErrorMessage(error, getCurrentLocale(), "list"); refreshDepositView(); throw error; }
-}
-
-function refreshDepositView() {
-  const root = document.getElementById("deposit-root");
-  if (!root) return;
-  const vm = buildDepositViewModel({
-    document: state.depositDocument,
-    today: getLedgerToday().dateKey,
-    locale: getCurrentLocale(),
-    status: depositUiStatus,
-    errorMessage: depositUiError,
-    filter: depositFilter,
-    ledgerEntries: state.appState.entries,
-  });
-  root.innerHTML = renderDepositManagement(vm);
-  bindDepositManagement(root, {
-    onAdd: () => openDepositForm(),
-    onEdit: id => openDepositForm(id),
-    onRedeem: id => openDepositSettlement(id, "redeem"),
-    onRollover: id => openDepositSettlement(id, "rollover"),
-    onRecordInterest: id => retryDepositInterest(id),
-    async onArchive(id) {
-      const record = state.depositDocument.depositsById[id];
-      if (!depositRepository || !record) throw new Error("Deposit is unavailable");
-      depositUiStatus = "syncing";
-      refreshDepositView();
-      try {
-        await depositRepository.archive(id, record.version);
-      } catch (error) {
-        depositUiStatus = "error";
-        depositUiError = depositErrorMessage(error, getCurrentLocale(), "list");
-        refreshDepositView();
-        throw error;
-      }
-    },
-    async onDelete(id) {
-      const record = state.depositDocument.depositsById[id];
-      if (!depositRepository || !record) throw new Error("Deposit is unavailable");
-      depositUiStatus = "syncing";
-      refreshDepositView();
-      try {
-        await depositRepository.delete(id, record.version);
-      } catch (error) {
-        depositUiStatus = "error";
-        depositUiError = depositErrorMessage(error, getCurrentLocale(), "list");
-        refreshDepositView();
-        throw error;
-      }
-    },
-    onFilter: next => { depositFilter = next; refreshDepositView(); },
-  });
-}
-
-function stopDepositManagement() {
-  if (unsubscribeDeposits) unsubscribeDeposits();
-  unsubscribeDeposits = null;
-  depositRepository = null;
-  depositUiStatus = "loading";
-  depositUiError = "";
-  depositFilter = "all";
-  depositDataReady = false;
-  depositSnapshotFromCache = false;
-  depositReminderController.destroy();
-  state.depositDocument = createEmptyDepositDocument();
-  refreshDepositView();
-}
-
-function startDepositManagement(user) {
-  if (unsubscribeDeposits) unsubscribeDeposits();
-  depositRepository = new DepositRepository(db, projectId, user.uid);
-  depositDataReady = false;
-  depositSnapshotFromCache = false;
-  depositReminderController.destroy();
-  depositUiStatus = navigator.onLine ? "loading" : "offline";
-  depositUiError = "";
-  refreshDepositView();
-  unsubscribeDeposits = subscribeToDeposits(db, projectId, {
-    onChange(_document, metadata = {}) {
-      depositDataReady = true;
-      depositSnapshotFromCache = Boolean(metadata.fromCache);
-      depositUiStatus = navigator.onLine && !depositSnapshotFromCache ? "synced" : "offline";
-      refreshDepositView();
-      depositReminderController.check();
-    },
-    onError() { depositSnapshotFromCache = true; depositUiStatus = navigator.onLine ? "error" : "offline"; refreshDepositView(); },
-  });
-}
+  queueLegacyInterest: queueLegacyIncomeOnce,
+}));
 
 document.body.addEventListener("input", function(e) {
   var target = e.target;
@@ -508,7 +302,6 @@ function switchLanguage(locale) {
     window.fullRebuildDOM();
     renderStreakPanel();
     updateCharts();
-    depositReminderController.check();
   }
 }
 
@@ -523,11 +316,15 @@ function ensureCharts() {
 const appRouter = createAppRouter({
   root: document,
   lifecycle: {
-    overview: { enter: function() { depositReminderController.check(); } },
-    savings: { enter: function() { depositReminderController.check(); } },
+    overview: { enter: notifyRouteEntered },
+    savings: { enter: notifyRouteEntered },
     stats: { enter: ensureCharts },
   },
 });
+
+function notifyRouteEntered(event) {
+  window.dispatchEvent(new CustomEvent("app-route-entered", { detail: event }));
+}
 
 var lastLedgerDate = getLedgerToday();
 var ledgerDateTimer = null;
@@ -556,7 +353,6 @@ function refreshForLedgerDateChange() {
     fullRebuildDOM();
   }
   renderStreakPanel();
-  depositReminderController.check();
 }
 
 function scheduleLedgerDateRefresh() {
@@ -624,7 +420,7 @@ window.fullRebuildDOM = function() {
   setTimeout(initIcons, 50);
   initDashboard();
   refreshSavingsView();
-  refreshDepositView();
+  window.dispatchEvent(new CustomEvent("app-dom-rebuilt"));
 };
 
 var _originalSoftUpdateDOM = softUpdateDOM;
@@ -738,7 +534,7 @@ initAuth(
   function(user) {
     appRouter.start("overview");
     setupRealtimeListener();
-    startDepositManagement(user);
+    depositController.start(user);
     renderStreakPanel();
     initDashboard();
     refreshSavingsView();
@@ -750,30 +546,17 @@ initAuth(
       initIcons();
     }, 300);
   },
-  function() { appRouter.stop(); teardownListener(); stopDepositManagement(); }
+  function() { appRouter.stop(); teardownListener(); depositController.stop(); }
 );
-
-window.addEventListener("offline", function() {
-  if (!state.currentUser) return;
-  depositUiStatus = "offline";
-  refreshDepositView();
-  depositReminderController.check();
-});
-window.addEventListener("online", function() {
-  if (!state.currentUser) return;
-  startDepositManagement(state.currentUser);
-});
 
 document.addEventListener("visibilitychange", function() {
   if (!document.hidden) {
     refreshForLedgerDateChange();
     scheduleLedgerDateRefresh();
-    depositReminderController.check();
   }
 });
 window.addEventListener("focus", function() {
   refreshForLedgerDateChange();
   scheduleLedgerDateRefresh();
-  depositReminderController.check();
 });
 scheduleLedgerDateRefresh();

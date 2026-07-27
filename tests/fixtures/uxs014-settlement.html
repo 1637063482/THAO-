@@ -10,8 +10,8 @@
 <body>
   <main id="fixture-root"></main><div id="deposit-form-root"></div>
   <script type="module">
-    import { buildDepositViewModel, renderDepositManagement } from "/src/js/deposit-view.js";
-    import { renderDepositSettlementForm } from "/src/js/deposit-form.js";
+    import { buildDepositViewModel, renderDepositManagement } from "/src/features/deposits/view.js";
+    import { renderDepositSettlementForm } from "/src/features/deposits/form.js";
     const params = new URLSearchParams(location.search);
     const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
     const mode = params.get("mode") === "rollover" ? "rollover" : "redeem";

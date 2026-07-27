@@ -1,5 +1,5 @@
-import { depositTermMonths, depositTermOptions, normalizeDepositTermCode } from "./deposit-terms.js";
-import { depositErrorMessage } from "./deposit-errors.js";
+import { depositTermMonths, depositTermOptions, normalizeDepositTermCode } from "./terms.js";
+import { depositErrorMessage } from "../../js/deposit-errors.js";
 
 const copy = {
   vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", product: "Sản phẩm", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --", term3M: "3 tháng", term6M: "6 tháng", term1Y: "1 năm", term2Y: "2 năm", term3Y: "3 năm", term5Y: "5 năm", productAuto: "Tiền gửi {term}" },
@@ -235,7 +235,7 @@ export function parseDepositSettlementForm(form) {
   } };
 }
 
-export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClose } = {}) {
+export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClose, confirm = globalThis.confirm } = {}) {
   const form = root?.querySelector?.("[data-deposit-settlement-form]"); if (!form) return;
   root.querySelectorAll("[data-close-deposit-form]").forEach(button => button.addEventListener("click", () => onClose?.()));
   root.querySelector("[data-deposit-form-backdrop]")?.addEventListener("click", event => { if (event.target === event.currentTarget) onClose?.(); });
@@ -245,7 +245,7 @@ export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClo
     if (errorNode) errorNode.textContent = ""; submit.disabled = true;
     try {
       const parsed = parseDepositSettlementForm(form);
-      if (parsed.writeInterestToLedger && globalThis.confirm && !globalThis.confirm((settlementCopy[locale] || settlementCopy.vi).confirmInterest)) return;
+      if (parsed.writeInterestToLedger && confirm && !confirm((settlementCopy[locale] || settlementCopy.vi).confirmInterest)) return;
       await onSubmit?.(parsed);
     } catch (_) { if (errorNode) errorNode.textContent = (settlementCopy[locale] || settlementCopy.vi).saveError; }
     finally { submit.disabled = false; }

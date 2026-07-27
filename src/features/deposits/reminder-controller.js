@@ -1,4 +1,4 @@
-import { buildDepositReminders } from "../application/deposits/build-reminders.ts";
+import { buildDepositReminders } from "../../application/deposits/build-reminders.ts";
 
 const STORAGE_KEY = "myExpenseApp.depositReminderSnoozes.v1";
 const copy = {

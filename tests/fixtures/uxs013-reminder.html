@@ -11,7 +11,7 @@
   <main class="fixture-shell"><h1>Thao Expense App</h1><p>Synthetic lifecycle fixture</p></main>
   <div id="reminder-root"></div>
   <script type="module">
-    import { createDepositReminderController } from "/src/js/deposit-reminder-controller.js";
+    import { createDepositReminderController } from "/src/features/deposits/reminder-controller.js";
     const params = new URLSearchParams(location.search);
     const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
     document.documentElement.lang = locale === "zh-CN" ? "zh-Hans" : "vi";

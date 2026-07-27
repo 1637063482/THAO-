@@ -7,9 +7,9 @@ import {
   type StoredDeposit,
 } from "../../src/infrastructure/firebase/deposit-repository";
 // @ts-expect-error Delivered JavaScript form module intentionally has no declaration file.
-import { bindDepositForm, renderDepositForm } from "../../src/js/deposit-form.js";
+import { bindDepositForm, renderDepositForm } from "../../src/features/deposits/form.js";
 // @ts-expect-error Delivered JavaScript term module intentionally has no declaration file.
-import { depositTermOptions } from "../../src/js/deposit-terms.js";
+import { depositTermOptions } from "../../src/features/deposits/terms.js";
 
 export const FIREBASE_PROJECT_ID = "demo-no-project";
 export const APP_PROJECT_ID = "synthetic-expense-app";

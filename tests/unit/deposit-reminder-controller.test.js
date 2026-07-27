@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { createDepositReminderController } from "../../src/js/deposit-reminder-controller.js";
+import { createDepositReminderController } from "../../src/features/deposits/reminder-controller.js";
 
 function documentWith(depositsById, acknowledgementsByKey = {}) {
   return { schemaVersion: 1, depositsById, acknowledgementsByKey, lastMutation: null };

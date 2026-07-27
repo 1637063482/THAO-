@@ -6,16 +6,16 @@
 
 | Field | Value |
 |---|---|
-| Work ID | REM-001 |
-| Scope | 建立存款真实关键路径测试 |
-| State | COMPLETED |
+| Work ID | REM-008 |
+| Scope | 提取可挂载/卸载的存款功能控制器 |
+| State | READY_FOR_REVIEW |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Implementer | Sol / high |
-| Reviewer | 本任务不需要独立 Reviewer |
-| Result | 真实表单 → `DepositRepository` → Firestore Emulator 四条关键路径已覆盖 |
-| Verification | 定向 4/4；Rules 16/16；全量 305 passed / 20 skipped；typecheck、diff check 通过 |
-| Previous Work | MAINT-2026-07-27 已完成，提交 `aebe0ea` |
+| Reviewer | 独立 Terra / high，待审 |
+| Result | 存款订阅、表单、提醒、结算、续存、归档和删除已移入统一 controller lifecycle |
+| Verification | 定向 41/41；Rules 16/16；全量 334 passed / 20 skipped；typecheck、build、diff check 通过 |
+| Previous Work | REM-001 已完成，提交 `6ee88e8` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。
