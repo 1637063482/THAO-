@@ -9,18 +9,18 @@
 | Task ID | REM-016 |
 | Current scope | Independent final review of maintenance remediation |
 | Scope | Composition root, module and data boundaries, lifecycle, real bilingual path, responsive rendering, types, and bundle budget |
-| State | READY_FOR_REVIEW |
-| Current result | `main.js` is now a thin startup root; its former runtime behavior is isolated in `src/js/application-runtime.js`, and reviewer context resolves the maintenance plan and review criteria |
-| Current verification | RED/GREEN composition-root evidence; 343 passed / 16 skipped; Rules 16/16 using demo-no-project; TypeScript, checkJs, build, and bundle budget passed |
+| State | APPROVED |
+| Current result | 已批准：`main.js` 仅保留样式、`startApplication` 导入与启动；运行时行为保留在 `src/js/application-runtime.js`，reviewer context 由状态 Plan 路径正确加载维护计划 |
+| Current verification | Reviewer fresh gates：345 passed / 16 skipped；Rules 16/16 using demo-no-project；TypeScript、checkJs、build、bundle budget 与 diff check 通过 |
 | Branch | `main` |
 | Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
 | Evidence | `docs/review-evidence/REM-016-R2.md` |
-| Latest Review | `docs/task-reviews/REM-016-R1.md` |
+| Latest Review | `docs/task-reviews/REM-016-R3.md` |
 | Implementer | Terra / high |
-| Reviewer | 独立 Terra / high；R2 review pending |
-| Result | CHANGES_REQUESTED：`main.js` 未达到薄 composition root 要求；reviewer context status contract 在 base 已损坏 |
-| Verification | Reviewer：完整 `7f03eed..e24d333` diff、Rules/repository、lifecycle、真实合成渲染和全部 REM-016 门禁；详见 REM-016-R1 |
-| Previous Work | REM-015 implementation head `e24d333` |
+| Reviewer | 独立 Terra / high；R3 APPROVED |
+| Result | APPROVED：R1 的薄 composition root 与 reviewer context 两项阻断均已修复并独立复核 |
+| Verification | Reviewer：完整 `e24d333..860210b` 整改 diff、focused 15/15、全量 345 passed / 16 skipped、Rules 16/16、类型、构建、预算与 diff check；详见 REM-016-R3 |
+| Previous Work | REM-016 implementation head `860210b` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。
