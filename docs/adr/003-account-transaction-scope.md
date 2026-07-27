@@ -77,7 +77,7 @@ Fields or assumptions that must be removed before any future reconsideration:
 Required future handling:
 
 - T020 and T021 continue against the legacy VND runtime.
-- A later cleanup task may delete or quarantine T011/T012 code and tests to reduce maintenance cost.
+- REM-013 removed the isolated T011/T012 code and tests on 2026-07-27 after a static production-import graph and repository-wide reference search confirmed they were unreachable. The separate `money.ts` helper was also removed because no currency or deposit module imported it.
 - If a future product decision needs standalone transactions, it must start with a new ADR, VND-only schema, migration plan, Rules plan, dry-run evidence, parity checks, and explicit owner approval.
 
 ## Consequences

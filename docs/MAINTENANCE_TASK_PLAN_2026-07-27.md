@@ -846,6 +846,7 @@ refactor: isolate the legacy ledger lifecycle
 | Effort | high |
 | 独立审查 | 否 |
 | 依赖 | REM-008、REM-011、REM-012 |
+| 状态 | 已完成（2026-07-27） |
 
 目标：在生产入口依赖图证明无引用后，删除 ADR-003 已放弃的 account/transaction 主线代码。
 

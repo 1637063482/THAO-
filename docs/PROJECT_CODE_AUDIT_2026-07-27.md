@@ -95,11 +95,9 @@ index.html
 4. 越南语/中文切换后编辑；
 5. 移动端与桌面端无水平溢出。
 
-### P2：旧领域模型与当前产品架构并存（待移除）
+### P2：旧领域模型与当前产品架构并存（已由 REM-013 移除）
 
-`src/domain/account.ts`、`transaction.ts`、`money.ts`，`src/application/accounts`、`transactions` 和 `src/infrastructure/firebase/account-repository.ts` 只被它们自己的测试引用，没有进入当前应用运行链路。它们来自已放弃/被替代的账户交易架构，增加认知负担。
-
-不能只按“看起来没用”直接删除。应先生成生产入口依赖图，确认无动态引用，再在独立提交中删除代码、对应测试和无效文档引用。
+这些 ADR-003 已放弃模块已在 REM-013 中删除。静态生产入口图、全仓动态导入/字符串路径搜索及 `money.ts` 对存款和货币链路的专门检查记录在 `docs/DEAD_CODE_REMOVAL_2026-07-27.md`；`currency.ts`、`deposit.ts`、`savings-goal.ts` 和 `errors.ts` 未受影响。
 
 ### P2：JavaScript 主链路没有类型检查（待改进）
 
