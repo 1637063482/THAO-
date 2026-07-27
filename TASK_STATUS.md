@@ -6,14 +6,14 @@
 
 | Field | Value |
 |---|---|
-| Work ID | MAINT-2026-07-27 |
-| Scope | 项目审查、存款保存/UI 修复、工作流精简 |
-| State | DONE |
+| Work ID | REM-001 |
+| Scope | 建立存款真实关键路径测试 |
+| State | PLANNED |
 | Branch | `main` |
-| Audit | `docs/PROJECT_CODE_AUDIT_2026-07-27.md` |
-| Tests | Vitest 305 passed / 16 skipped；Rules + repository 12 passed |
-| Gates | typecheck、build、diff check 通过 |
-| Known warning | 主 JS chunk 849.32 kB（gzip 240.45 kB），超过 500 kB |
+| Plan | `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md` |
+| Implementer | Sol / high |
+| Reviewer | 本任务不需要独立 Reviewer |
+| Previous Work | MAINT-2026-07-27 已完成，提交 `aebe0ea` |
 | Deployment | 未部署；未修改线上 Firebase/Auth/数据 |
 
 UXS-001 至 UXS-015 均已批准，历史详见 `docs/TASK_HISTORY.md` 与已有 review 文件。

@@ -1,8 +1,10 @@
 # MyExpenseApp 施工计划（T001-T021 完成；UXS-001～UXS-015）
 
+> **当前计划入口（2026-07-27）**：T001～T021 与 UXS-001～UXS-015 已结束。本文件以下内容作为历史规格保留；新的整改与模块化任务 REM-001～REM-016 见 `docs/MAINTENANCE_TASK_PLAN_2026-07-27.md`，执行流程以当前 `AGENT_WORKFLOW.md` 为准。
+
 > 产品事实：这是为越南籍女朋友定制的私人账本。她是唯一日常记账者，VND 是唯一账务事实币种；项目所有者使用第二个既有 Firebase 账号查看/维护，CNY 仅为显示换算。应用没有注册、成员管理或多家庭需求。线上账号、Rules 和数据已在 Firebase，未经明确授权不得部署、迁移或改动真实权限。
 
-> 执行与交接必须遵循 `AGENT_WORKFLOW.md` 和 `TASK_STATUS.md`。Coder 与 Reviewer 不通过聊天复制结论；每个 Task 必须形成 evidence、仓库 review 文件和状态提交。
+> 历史任务中关于 Coder/Reviewer、evidence 和 review 文件的要求只记录当时流程，不再自动适用于新任务；当前执行与交接只遵循现行 `AGENT_WORKFLOW.md`、`TASK_STATUS.md` 和新的 REM 计划。
 
 ## 已完成 T001–T012 回顾
 
