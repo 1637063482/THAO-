@@ -2,9 +2,17 @@ export function renderCommandMenu(host) {
   if (!host) throw new Error("App command menu host is required");
   host.innerHTML = `
     <div id="nav-secondary" class="nav-secondary-group">
-      <div id="sync-status" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-medium">
-        <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span></span>
-        <span id="sync-status-text" data-i18n="loading"></span>
+      <div class="command-menu-group">
+        <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
+          <button type="button" id="btn-lang-vi" data-command="language" data-locale="vi" class="month-tab active min-w-[40px] text-xs">VI</button>
+          <button type="button" id="btn-lang-zh" data-command="language" data-locale="zh-CN" class="month-tab min-w-[40px] text-xs">中文</button>
+        </div>
+        <button type="button" data-command="theme" class="btn-ghost text-xs py-2" title="" data-i18n="toggle_theme" id="btn-theme">
+          <span data-icon="moon" data-icon-class="w-4 h-4"></span>
+        </button>
+        <button type="button" data-command="privacy" class="btn-ghost text-xs py-2" title="" data-i18n="toggle_privacy" id="btn-privacy">
+          <span data-icon="eye" data-icon-class="w-4 h-4"></span>
+        </button>
       </div>
       <button type="button" data-command="import" class="btn-ghost text-xs py-2" title="" data-i18n="import_label">
         <span data-icon="download" data-icon-class="w-4 h-4"></span>
@@ -19,6 +27,22 @@ export function renderCommandMenu(host) {
         <span data-icon="download" data-icon-class="w-4 h-4"></span>
         <span id="export-label-text" data-i18n="export_csv"></span>
       </button>
+      <div class="command-menu-group">
+        <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
+          <button type="button" id="btn-curr-vnd" onclick="window.switchCurrency('VND')" class="month-tab active min-w-[52px] text-xs">VND</button>
+          <button type="button" id="btn-curr-cny" onclick="window.switchCurrency('CNY')" class="month-tab min-w-[52px] text-xs">CNY</button>
+        </div>
+        <div id="fx-panel" class="hidden items-center gap-2 bg-white/80 rounded-xl px-3 py-1.5 border border-slate-200/60">
+          <span class="text-xs text-slate-500 font-medium" data-i18n="fx_label"></span>
+          <span id="auto-rate-display" class="text-xs font-bold text-amber-600" data-i18n="fx_loading"></span>
+          <span class="flex items-center gap-1 ml-2">
+            <button type="button" onclick="window.changeFxMode('auto')" class="text-xs px-2 py-1 rounded-lg bg-amber-50 text-amber-600 font-semibold" data-i18n="auto"></button>
+            <button type="button" onclick="window.changeFxMode('manual')" class="text-xs px-2 py-1 rounded-lg bg-slate-100 text-slate-500 font-medium" data-i18n="manual"></button>
+            <input type="number" id="manual-rate-input" class="w-16 text-xs border border-slate-200 rounded-lg px-2 py-1" placeholder="3500" disabled>
+            <button type="button" id="btn-apply-rate" onclick="window.applyManualRate()" class="hidden text-xs px-2 py-1 rounded-lg bg-amber-500 text-white font-semibold hover:bg-amber-600" data-i18n="apply"></button>
+          </span>
+        </div>
+      </div>
     </div>
   `;
   return host;
@@ -29,23 +53,39 @@ export function bindCommandMenu(root = document) {
   const button = root.getElementById("nav-more-btn");
   if (!panel || !button) return () => {};
 
+  function setOpen(open, restoreFocus = false) {
+    panel.classList.toggle("open", open);
+    button.setAttribute("aria-expanded", String(open));
+    if (open) panel.querySelector("button")?.focus();
+    if (restoreFocus) button.focus();
+  }
+
   function toggle(event) {
     event.stopPropagation();
-    panel.classList.toggle("open");
+    setOpen(!panel.classList.contains("open"));
   }
 
   function closeFromOutside(event) {
     if (!panel.classList.contains("open")) return;
     if (!panel.contains(event.target) && !button.contains(event.target)) {
-      panel.classList.remove("open");
+      setOpen(false);
+    }
+  }
+
+  function closeFromEscape(event) {
+    if (event.key === "Escape" && panel.classList.contains("open")) {
+      event.preventDefault();
+      setOpen(false, true);
     }
   }
 
   button.addEventListener("click", toggle);
   root.addEventListener("click", closeFromOutside);
+  root.addEventListener("keydown", closeFromEscape);
 
   return function unbindCommandMenu() {
     button.removeEventListener("click", toggle);
     root.removeEventListener("click", closeFromOutside);
+    root.removeEventListener("keydown", closeFromEscape);
   };
 }

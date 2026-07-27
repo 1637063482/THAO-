@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/src/css/app.css">
+    <title>App Shell synthetic state</title>
+  </head>
+  <body>
+    <header data-app-header-host></header>
+    <main aria-label="Synthetic app shell preview"></main>
+    <script type="module">
+      import { applyI18n, setLocale } from "/src/js/i18n.js";
+      import { bindCommandMenu } from "/src/components/app-shell/command-menu.js";
+      import { mountSyntheticAppShell } from "./app-shell-synthetic-state.js";
+
+      setLocale("vi");
+      mountSyntheticAppShell(document.querySelector("[data-app-header-host]"));
+      bindCommandMenu(document);
+      applyI18n();
+      document.querySelector("#sync-status-text").textContent = "Đã đồng bộ";
+    </script>
+  </body>
+</html>

@@ -83,4 +83,51 @@ describe("app shell components", () => {
     button.click();
     expect(panel.classList.contains("open")).toBe(true);
   });
+
+  it("keeps year and sync status primary while placing low-frequency commands in the menu", async () => {
+    const { mountSyntheticAppShell } = await import("../fixtures/app-shell-synthetic-state.js");
+    const header = mountSyntheticAppShell(document.querySelector("[data-app-header-host]"));
+    const menu = header.querySelector("#nav-secondary");
+
+    expect(header.querySelector("#year-selector")).not.toBeNull();
+    expect(header.querySelector("#sync-status").closest("#nav-secondary")).toBeNull();
+    ["import", "export", "share", "language", "theme", "privacy"].forEach((command) => {
+      expect(menu.querySelector(`[data-command="${command}"]`)).not.toBeNull();
+    });
+  });
+
+  it("closes the command menu with Escape and restores focus to its trigger", async () => {
+    const { renderHeader } = await import("../../src/components/app-shell/header.js");
+    const { bindCommandMenu, renderCommandMenu } = await import("../../src/components/app-shell/command-menu.js");
+    const header = document.querySelector("[data-app-header-host]");
+    renderHeader(header);
+    renderCommandMenu(header.querySelector("[data-app-command-menu-host]"));
+
+    const unbind = bindCommandMenu(document);
+    const button = document.getElementById("nav-more-btn");
+    const panel = document.getElementById("nav-secondary");
+    button.click();
+    expect(button.getAttribute("aria-expanded")).toBe("true");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+    expect(panel.classList.contains("open")).toBe(false);
+    expect(button.getAttribute("aria-expanded")).toBe("false");
+    expect(document.activeElement).toBe(button);
+    unbind();
+  });
+
+  it("closes the command menu when the user clicks outside it", async () => {
+    const { renderHeader } = await import("../../src/components/app-shell/header.js");
+    const { bindCommandMenu, renderCommandMenu } = await import("../../src/components/app-shell/command-menu.js");
+    const header = document.querySelector("[data-app-header-host]");
+    renderHeader(header);
+    renderCommandMenu(header.querySelector("[data-app-command-menu-host]"));
+
+    const unbind = bindCommandMenu(document);
+    document.getElementById("nav-more-btn").click();
+    document.body.click();
+
+    expect(document.getElementById("nav-secondary").classList.contains("open")).toBe(false);
+    unbind();
+  });
 });

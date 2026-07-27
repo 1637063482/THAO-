@@ -921,67 +921,76 @@ tr:hover td:not(.sticky-col) {
   @apply w-5 h-5;
 }
 
-/* ===== Nav More Dropdown (mobile) ===== */
+/* ===== Header tools and command menu ===== */
 #nav-more-btn {
+  display: flex;
+}
+.app-header-tools {
+  position: relative;
+}
+#nav-secondary {
   display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 100;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  border: 1px solid rgba(0,0,0,0.06);
+  padding: 8px;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 200px;
+}
+.dark #nav-secondary {
+  background: #1e293b;
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+#nav-secondary.open {
+  display: flex;
+}
+#nav-secondary .command-menu-group,
+#nav-secondary .btn-ghost,
+#nav-secondary .btn-primary,
+#nav-secondary #fx-panel {
+  justify-content: flex-start;
+  width: 100%;
+}
+#nav-secondary .command-menu-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+#nav-secondary .btn-ghost,
+#nav-secondary .btn-primary {
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+#nav-secondary button:focus-visible,
+#nav-more-btn:focus-visible {
+  outline: 2px solid #d97706;
+  outline-offset: 2px;
 }
 @media (max-width: 639px) {
-  #nav-more-btn {
-    display: flex;
+  .app-header-content {
+    min-height: 56px;
   }
-  #nav-secondary {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 8px;
-    z-index: 100;
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-    border: 1px solid rgba(0,0,0,0.06);
-    padding: 8px;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 160px;
-    margin-top: 8px;
-  }
-  .dark #nav-secondary {
-    background: #1e293b;
-    border-color: rgba(255,255,255,0.08);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  #nav-secondary.open {
-    display: flex;
-  }
-  /* Ensure labels show inside dropdown */
-  #nav-secondary #sync-status-text,
-  #nav-secondary #import-label-text,
-  #nav-secondary #invite-label-text,
-  #nav-secondary #export-label-text {
-    display: inline !important;
-  }
-  #nav-secondary .btn-ghost,
-  #nav-secondary .btn-primary {
-    justify-content: flex-start;
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-radius: 10px;
-  }
-  #nav-secondary #sync-status {
-    justify-content: flex-start;
-    width: 100%;
-    padding: 8px 12px;
-    font-size: 13px;
-    border-radius: 10px;
-  }
-}
-@media (min-width: 640px) {
-  #nav-secondary {
-    display: flex;
-    align-items: center;
+  .app-header-primary {
     gap: 8px;
-    flex-wrap: wrap;
+  }
+  #sync-status {
+    max-width: 118px;
+    overflow: hidden;
+    padding-left: 8px;
+    padding-right: 8px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  #nav-secondary {
+    min-width: min(280px, calc(100vw - 16px));
   }
 }
 
