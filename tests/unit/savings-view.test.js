@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { bindSavingsGoalForm, buildSavingsViewModel, installSavingsSyncBridge, renderSavingsPage, renderSavingsSummary } from "../../src/js/savings-view.js";
+import { bindSavingsGoalForm, buildSavingsViewModel, installSavingsSyncBridge, renderSavingsPage, renderSavingsSummary } from "../../src/features/savings/view.js";
 
 describe("savings view", () => {
   const input = { settings: { savings_goal_month_3: 300000, savings_goal_annual: 4000000 }, month: 3, monthlyIncome: 500000, monthlyExpense: 200000, annualIncome: 5000000, annualExpense: 2000000 };

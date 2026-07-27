@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getSavingsGoalKey, readSavingsGoals, writeAnnualSavingsGoal, writeMonthlySavingsGoal } from "../../src/js/savings-goal-store.js";
+import { getSavingsGoalKey, readSavingsGoals, writeAnnualSavingsGoal, writeMonthlySavingsGoal } from "../../src/features/savings/store.js";
 
 describe("savings goal store", () => {
   it("reads twelve monthly goals and annual goal from one settings object", () => {

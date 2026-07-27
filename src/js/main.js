@@ -23,11 +23,11 @@ import { renderSidebar } from "../components/app-shell/sidebar.js";
 import { renderBottomNav } from "../components/app-shell/bottom-nav.js";
 import { bindCommandMenu, renderCommandMenu } from "../components/app-shell/command-menu.js";
 import { initDashboard, refreshDashboardAfterLocalUpdate, refreshDashboardAfterMonthSwitch } from "./dashboard.js";
-import { buildSavingsViewModel, renderSavingsSummary, renderSavingsPage, bindSavingsGoalForm, setSavingsStatus, installSavingsSyncBridge } from "./savings-view.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
 import { db, projectId } from "./firebase.js";
 import { createDepositController } from "../features/deposits/controller.js";
 import { createDepositDependencies } from "../features/deposits/dependencies.js";
+import { createSavingsController } from "../features/savings/controller.js";
 
 var headerHost = document.querySelector("[data-app-header-host]");
 if (headerHost) {
@@ -119,24 +119,6 @@ export function scheduleInputSave() {
   triggerCloudSave();
 }
 
-var stopSavingsSyncBridge = () => {};
-function refreshSavingsView(status) {
-  stopSavingsSyncBridge();
-  const monthlyVm = buildDashboardViewModel({ year: state.activeYear, month: state.activeMonthId, state: { appState: state.appState } });
-  let annualIncome = 0; let annualExpense = 0;
-  for (let month = 1; month <= 12; month += 1) {
-    const vm = buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } });
-    annualIncome += vm.totalIncome; annualExpense += vm.totalSpending;
-  }
-  const vm = buildSavingsViewModel({ settings: state.appState.settings, month: state.activeMonthId, monthlyIncome: monthlyVm.totalIncome, monthlyExpense: monthlyVm.totalSpending, annualIncome, annualExpense, locale: getCurrentLocale(), status: status || "synced" });
-  const summary = document.getElementById("savings-root");
-  if (!summary) return;
-  summary.dataset.locale = getCurrentLocale();
-  summary.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
-  bindSavingsGoalForm(summary, { settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId, locale: getCurrentLocale(), onStatus: function(next) { setSavingsStatus(summary, next); }, onSave: function() { setSavingsStatus(summary, "queued"); triggerCloudSave(); } });
-  stopSavingsSyncBridge = installSavingsSyncBridge(summary);
-}
-
 const depositController = createDepositController(createDepositDependencies({
   db,
   projectId,
@@ -146,6 +128,13 @@ const depositController = createDepositController(createDepositDependencies({
   getLocale: getCurrentLocale,
   queueLegacyInterest: queueLegacyIncomeOnce,
 }));
+
+const savingsController = createSavingsController({
+  getSavingsState: () => ({ settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId }),
+  getLocale: getCurrentLocale,
+  getDashboardViewModel: (month) => buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } }),
+  triggerCloudSave,
+});
 
 document.body.addEventListener("input", function(e) {
   var target = e.target;
@@ -422,7 +411,7 @@ window.fullRebuildDOM = function() {
   _originalFullRebuildDOM();
   setTimeout(initIcons, 50);
   initDashboard();
-  refreshSavingsView();
+  savingsController.update();
   window.dispatchEvent(new CustomEvent("app-dom-rebuilt"));
 };
 
@@ -431,7 +420,7 @@ window.softUpdateDOM = function() {
   _originalSoftUpdateDOM();
   setTimeout(initIcons, 50);
   initDashboard();
-  refreshSavingsView();
+  savingsController.update();
 };
 
 function togglePrivacy() {
@@ -540,7 +529,7 @@ initAuth(
     depositController.start(user);
     renderStreakPanel();
     initDashboard();
-    refreshSavingsView();
+    savingsController.start();
     setTimeout(function() {
       updateBudgetUI();
       var today = getLedgerToday();
@@ -549,7 +538,7 @@ initAuth(
       initIcons();
     }, 300);
   },
-  function() { stopSavingsSyncBridge(); stopSavingsSyncBridge = () => {}; appRouter.stop(); teardownListener(); depositController.stop(); }
+  function() { savingsController.stop(); appRouter.stop(); teardownListener(); depositController.stop(); }
 );
 
 document.addEventListener("visibilitychange", function() {
