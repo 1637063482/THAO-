@@ -171,12 +171,14 @@ function openDepositForm(id = null) {
       try {
         if (deposit) await depositRepository.update(inputId, expectedVersion, changes);
         else await depositRepository.create(input);
-        closeDepositForm();
-        refreshDepositView();
       } catch (error) {
         depositUiStatus = "error";
         throw error;
       }
+      // UI refresh after successful save — outside the catch so a failed refresh
+      // doesn't incorrectly show "save failed" when the data was already persisted.
+      closeDepositForm();
+      refreshDepositView();
     },
   });
 }
@@ -274,6 +276,19 @@ function refreshDepositView() {
       refreshDepositView();
       try {
         await depositRepository.archive(id, record.version);
+      } catch (error) {
+        depositUiStatus = "error";
+        refreshDepositView();
+        throw error;
+      }
+    },
+    async onDelete(id) {
+      const record = state.depositDocument.depositsById[id];
+      if (!depositRepository || !record) throw new Error("Deposit is unavailable");
+      depositUiStatus = "syncing";
+      refreshDepositView();
+      try {
+        await depositRepository.delete(id, record.version);
       } catch (error) {
         depositUiStatus = "error";
         refreshDepositView();
@@ -580,20 +595,26 @@ function switchMobileView(view) {
   var activeBtn = document.querySelector('[data-nav="' + view + '"]');
   if (activeBtn) activeBtn.classList.add("active");
 
-  if (view === "add") { openQuickAdd(); return; }
-
   var overviewContent = document.getElementById("overview-content");
   var analysisView = document.getElementById("analysis-view");
-  if (!overviewContent || !analysisView) return;
+  var savingsView = document.getElementById("savings-view");
+  if (!overviewContent || !analysisView || !savingsView) return;
 
   if (view === "overview") {
     overviewContent.style.display = "";
     analysisView.style.display = "none";
+    savingsView.style.display = "none";
     depositReminderController.check();
   } else if (view === "stats") {
     overviewContent.style.display = "none";
     analysisView.style.display = "";
+    savingsView.style.display = "none";
     ensureCharts();
+  } else if (view === "savings") {
+    overviewContent.style.display = "none";
+    analysisView.style.display = "none";
+    savingsView.style.display = "";
+    depositReminderController.check();
   }
 }
 

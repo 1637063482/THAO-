@@ -1,4 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
+import { readFileSync } from "node:fs";
 
 describe("app shell responsive layout", () => {
   beforeEach(() => {
@@ -47,5 +48,10 @@ describe("app shell responsive layout", () => {
     var main = document.querySelector("main.flex-1");
     expect(sidebar).not.toBeNull();
     expect(main).not.toBeNull();
+  });
+
+  it("keeps the real app shell free of nested label markup", () => {
+    const html = readFileSync("index.html", "utf8");
+    expect(html).not.toMatch(/<label\b[^>]*>\s*<label\b/i);
   });
 });

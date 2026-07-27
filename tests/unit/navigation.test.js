@@ -111,4 +111,26 @@ describe("navigation", () => {
     var overviewBtn = document.querySelector('[data-nav="overview"]');
     expect(overviewBtn.classList.contains("active")).toBe(false);
   });
+
+  it("import and export actions do not replace the active view", async function () {
+    document.body.innerHTML = [
+      '<button class="sidebar-item active" data-nav="overview">Overview</button>',
+      '<button class="sidebar-item" data-nav="import">Import</button>',
+      '<button class="sidebar-item" data-nav="export">Export</button>',
+      '<input id="import-file" type="file">',
+    ].join("");
+    const fileInput = document.getElementById("import-file");
+    const inputClick = vi.spyOn(fileInput, "click").mockImplementation(function () {});
+    window.exportToCSV = vi.fn();
+
+    const nav = await import("../../src/js/navigation.js");
+    nav.setActive("overview");
+    nav.navigateTo("import");
+    expect(inputClick).toHaveBeenCalledOnce();
+    expect(nav.getActive()).toBe("overview");
+
+    nav.navigateTo("export");
+    expect(window.exportToCSV).toHaveBeenCalledOnce();
+    expect(nav.getActive()).toBe("overview");
+  });
 });

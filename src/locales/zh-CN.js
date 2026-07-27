@@ -35,6 +35,7 @@ export default {
   // Bottom nav
   overview: "总览",
   quick_add: "记账",
+  savings: "储蓄存款",
   close: "关闭",
   main_navigation: "主导航",
   stats: "分析",

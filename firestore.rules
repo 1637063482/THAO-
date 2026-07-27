@@ -117,6 +117,22 @@ service cloud.firestore {
         );
     }
 
+    function validDepositInsert(before, after, id) {
+      let newDeposit = after.depositsById[id];
+      return id.matches("^[A-Za-z0-9_-]{1,80}$")
+        && !(id in before.depositsById)
+        && id in after.depositsById
+        && after.depositsById.diff(before.depositsById).affectedKeys().hasOnly([id])
+        && after.acknowledgementsByKey == before.acknowledgementsByKey
+        && validDeposit(newDeposit)
+        && newDeposit.version == 1
+        && newDeposit.createdAt == request.time
+        && newDeposit.updatedAt == request.time
+        && newDeposit.createdBy == request.auth.uid
+        && newDeposit.updatedBy == request.auth.uid
+        && newDeposit.archivedAt == null;
+    }
+
     function validAcknowledgementUpdate(before, after, key) {
       let acknowledgement = after.acknowledgementsByKey[key];
       return key.matches("^[A-Za-z0-9_-]{1,80}\\|[0-9]{4}-[0-9]{2}-[0-9]{2}\\|(D30|D7|D1|D0|OVERDUE)$")
@@ -136,11 +152,24 @@ service cloud.firestore {
       return validSavingsRoot(after)
         && before.schemaVersion == after.schemaVersion
         && (
-          (mutation.kind in ["UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT"]
+          (mutation.kind == "CREATE_DEPOSIT"
+            && validDepositInsert(before, after, mutation.targetId))
+          || (mutation.kind in ["UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT"]
             && validDepositUpdate(before, after, mutation.targetId, mutation.kind))
           || (mutation.kind == "ACKNOWLEDGE"
             && validAcknowledgementUpdate(before, after, mutation.targetId))
+          || (mutation.kind == "DELETE_DEPOSIT"
+            && validDepositDelete(before, after, mutation.targetId))
         );
+    }
+
+    function validDepositDelete(before, after, id) {
+      return id.matches("^[A-Za-z0-9_-]{1,80}$")
+        && id in before.depositsById
+        && before.depositsById[id].status == "ACTIVE"
+        && !(id in after.depositsById)
+        && after.depositsById.diff(before.depositsById).affectedKeys().hasOnly([id])
+        && after.acknowledgementsByKey == before.acknowledgementsByKey;
     }
 
     match /artifacts/{appId}/public/data/ledgers/shared_ledger_savings {

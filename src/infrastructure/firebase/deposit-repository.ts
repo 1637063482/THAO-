@@ -21,7 +21,7 @@ export interface DepositStorageDocument {
   schemaVersion: 1;
   depositsById: Record<string, Omit<StoredDeposit, "id">>;
   acknowledgementsByKey: Record<string, { acknowledgedAt: unknown; acknowledgedBy: string }>;
-  lastMutation: null | { kind: "CREATE_DEPOSIT" | "UPDATE_DEPOSIT" | "ARCHIVE_DEPOSIT" | "ACKNOWLEDGE"; targetId: string; actorUid: string; at: unknown };
+  lastMutation: null | { kind: "CREATE_DEPOSIT" | "UPDATE_DEPOSIT" | "ARCHIVE_DEPOSIT" | "DELETE_DEPOSIT" | "ACKNOWLEDGE"; targetId: string; actorUid: string; at: unknown };
 }
 
 function fail(code: string, message: string): never { throw new DomainError(code, message); }
@@ -114,6 +114,22 @@ export class DepositRepository {
       transaction.set(reference, current);
     });
     const archived = await this.get(id); if (!archived) fail("DEPOSIT_WRITE_FAILED", "Deposit was not persisted"); return archived;
+  }
+  async delete(id: string, expectedVersion: number): Promise<void> {
+    safeId(id);
+    await runTransaction(this.db, async transaction => {
+      const reference = this.ref(); const snapshot = await transaction.get(reference);
+      if (!snapshot.exists()) fail("DEPOSIT_NOT_FOUND", "Deposit not found");
+      const current = decodeDocument(snapshot.data()); const existing = current.depositsById[id];
+      if (!existing) fail("DEPOSIT_NOT_FOUND", "Deposit not found");
+      if (existing.version !== expectedVersion) fail("DEPOSIT_VERSION_CONFLICT", "Deposit version conflict");
+      if (existing.status !== "ACTIVE") fail("INVALID_DEPOSIT_STATUS", "Only active deposits can be deleted");
+      const stamp = serverTimestamp();
+      const { [id]: _, ...remaining } = current.depositsById;
+      current.depositsById = remaining;
+      current.lastMutation = { kind: "DELETE_DEPOSIT", targetId: id, actorUid: this.actorUid, at: stamp };
+      transaction.set(reference, current);
+    });
   }
   async acknowledge(key: string): Promise<void> {
     if (!ACK_RE.test(key)) fail("INVALID_ACKNOWLEDGEMENT_KEY", "Acknowledgement key is invalid");

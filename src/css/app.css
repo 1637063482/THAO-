@@ -269,8 +269,8 @@ body {
 .deposit-form-grid { display: grid; gap: .8rem; margin-top: 1rem; }
 .deposit-form-grid label { display: grid; gap: .35rem; color: #475569; font-size: .78rem; font-weight: 650; }
 .dark .deposit-form-grid label { color: #cbd5e1; }
-.deposit-form-grid input, .deposit-form-grid textarea { width: 100%; min-height: 44px; padding: .68rem .75rem; border: 1px solid #cbd5e1; border-radius: .75rem; background: white; color: #1e293b; font-size: 1rem; }
-.dark .deposit-form-grid input, .dark .deposit-form-grid textarea { background: #1e293b; color: #f8fafc; border-color: #475569; }
+.deposit-form-grid input, .deposit-form-grid select, .deposit-form-grid textarea { width: 100%; min-height: 44px; padding: .68rem .75rem; border: 1px solid #cbd5e1; border-radius: .75rem; background: white; color: #1e293b; font-size: 1rem; }
+.dark .deposit-form-grid input, .dark .deposit-form-grid select, .dark .deposit-form-grid textarea { background: #1e293b; color: #f8fafc; border-color: #475569; }
 .deposit-form-grid input.deposit-calc-input { background: #f1f5f9; color: #334155; font-weight: 600; cursor: default; }
 .dark .deposit-form-grid input.deposit-calc-input { background: #1a2234; color: #94a3b8; }
 .deposit-reminder-toggle { grid-template-columns: auto 1fr !important; align-items: center; }

@@ -1,4 +1,5 @@
 import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../domain/deposit.ts";
+import { depositProductLabel } from "./deposit-terms.js";
 
 const copy = {
   vi: {
@@ -9,7 +10,7 @@ const copy = {
     interest: "Tổng lợi nhuận dự kiến", maturityTotal: "Tổng khi đáo hạn", nearest: "Đáo hạn gần nhất",
     institution: "Ngân hàng", product: "Sản phẩm", amount: "Số tiền", rate: "Lãi suất",
     opened: "Ngày gửi", matures: "Ngày đáo hạn", status: "Trạng thái", actions: "Thao tác",
-    edit: "Sửa", archive: "Lưu trữ", archiveConfirm: "Lưu trữ khoản tiền gửi này? Bạn vẫn có thể xem trong bộ lọc lưu trữ.",
+    edit: "Sửa", archive: "Lưu trữ", archiveConfirm: "Lưu trữ khoản tiền gửi này? Bạn vẫn có thể xem trong bộ lọc lưu trữ.", delete: "Xóa", deleteConfirm: "Xóa vĩnh viễn khoản tiền gửi này? Hành động này không thể hoàn tác.",
     redeem: "Tất toán", rollover: "Tái tục", recordInterest: "Ghi lại tiền lãi",
     all: "Tất cả", active: "Đang hoạt động", maturing: "Sắp đáo hạn", matured: "Đã đáo hạn", archived: "Đã lưu trữ",
     ACTIVE: "Đang hoạt động", MATURING: "Sắp đáo hạn", MATURED: "Đã đáo hạn", REDEEMED: "Đã tất toán", ROLLED_OVER: "Đã tái tục",
@@ -22,7 +23,7 @@ const copy = {
     interest: "预计总收益", maturityTotal: "预计到期总额", nearest: "最近到期",
     institution: "银行", product: "产品", amount: "金额", rate: "利率", opened: "存入日期",
     matures: "到期日期", status: "状态", actions: "操作", edit: "编辑", archive: "归档",
-    archiveConfirm: "确认归档这笔存款吗？之后仍可在归档筛选中查看。", all: "全部", active: "有效",
+    archiveConfirm: "确认归档这笔存款吗？之后仍可在归档筛选中查看。", delete: "删除", deleteConfirm: "确认永久删除这笔存款吗？此操作不可撤销。", all: "全部", active: "有效",
     redeem: "赎回", rollover: "续存", recordInterest: "补记实收利息",
     maturing: "即将到期", matured: "已到期", archived: "已归档", ACTIVE: "有效",
     MATURING: "即将到期", MATURED: "已到期", REDEEMED: "已赎回", ROLLED_OVER: "已续存",
@@ -78,13 +79,14 @@ function actions(item, labels) {
     : ["REDEEMED", "ROLLED_OVER"].includes(item.status) && Number(item.actualInterestVnd) > 0 && !item.interestRecorded
       ? `<button type="button" class="btn-ghost" data-record-interest="${escapeHtml(item.id)}">${labels.recordInterest}</button>` : "";
   const edit = item.status === "ACTIVE" ? `<button type="button" class="btn-ghost" data-edit-deposit="${escapeHtml(item.id)}">${labels.edit}</button>` : "";
-  return `<div class="deposit-actions">${workflow}${edit}<button type="button" class="btn-ghost danger" data-archive-deposit="${escapeHtml(item.id)}">${labels.archive}</button></div>`;
+  const del = item.status === "ACTIVE" ? `<button type="button" class="btn-ghost danger" data-delete-deposit="${escapeHtml(item.id)}">${labels.delete}</button>` : "";
+  return `<div class="deposit-actions">${workflow}${edit}${del}<button type="button" class="btn-ghost danger" data-archive-deposit="${escapeHtml(item.id)}">${labels.archive}</button></div>`;
 }
 function card(item, labels, locale) {
-  return `<article class="deposit-card" data-deposit-id="${escapeHtml(item.id)}"><div class="deposit-card-head"><div><strong>${escapeHtml(item.institutionName)}</strong><p>${escapeHtml(item.productName)}</p></div>${statusBadge(item, labels)}</div><p class="deposit-card-amount blur-sensitive">${money(item.principalVnd, locale)}</p><dl><div><dt>${labels.rate}</dt><dd>${(item.annualRatePpm / 10_000).toLocaleString()}%</dd></div><div><dt>${labels.matures}</dt><dd>${escapeHtml(item.maturesOn)}</dd></div><div><dt>${labels.interest}</dt><dd class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</dd></div></dl>${actions(item, labels)}</article>`;
+  return `<article class="deposit-card" data-deposit-id="${escapeHtml(item.id)}"><div class="deposit-card-head"><div><strong>${escapeHtml(item.institutionName)}</strong><p>${escapeHtml(depositProductLabel(item.productName, locale))}</p></div>${statusBadge(item, labels)}</div><p class="deposit-card-amount blur-sensitive">${money(item.principalVnd, locale)}</p><dl><div><dt>${labels.rate}</dt><dd>${(item.annualRatePpm / 10_000).toLocaleString()}%</dd></div><div><dt>${labels.matures}</dt><dd>${escapeHtml(item.maturesOn)}</dd></div><div><dt>${labels.interest}</dt><dd class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</dd></div></dl>${actions(item, labels)}</article>`;
 }
 function row(item, labels, locale) {
-  return `<tr data-deposit-id="${escapeHtml(item.id)}"><td><strong>${escapeHtml(item.institutionName)}</strong><small>${escapeHtml(item.productName)}</small></td><td class="blur-sensitive">${money(item.principalVnd, locale)}</td><td>${(item.annualRatePpm / 10_000).toLocaleString()}%</td><td class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</td><td>${escapeHtml(item.openedOn)}</td><td>${escapeHtml(item.maturesOn)}</td><td>${statusBadge(item, labels)}</td><td>${actions(item, labels)}</td></tr>`;
+  return `<tr data-deposit-id="${escapeHtml(item.id)}"><td><strong>${escapeHtml(item.institutionName)}</strong><small>${escapeHtml(depositProductLabel(item.productName, locale))}</small></td><td class="blur-sensitive">${money(item.principalVnd, locale)}</td><td>${(item.annualRatePpm / 10_000).toLocaleString()}%</td><td class="blur-sensitive">${money(item.expectedInterestVnd ?? item.calculatedInterestVnd, locale)}</td><td>${escapeHtml(item.openedOn)}</td><td>${escapeHtml(item.maturesOn)}</td><td>${statusBadge(item, labels)}</td><td>${actions(item, labels)}</td></tr>`;
 }
 
 export function renderDepositManagement(vm) {
@@ -99,7 +101,7 @@ export function renderDepositManagement(vm) {
   return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 
-export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest } = {}) {
+export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete } = {}) {
   const section = root?.querySelector?.("[data-deposit-management]") || (root?.matches?.("[data-deposit-management]") ? root : null);
   if (!section) return;
   section.querySelectorAll("[data-add-deposit]").forEach(button => button.addEventListener("click", () => onAdd?.()));
@@ -114,6 +116,12 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
     const labels = words(section.dataset.locale);
     if (globalThis.confirm && !globalThis.confirm(labels.archiveConfirm)) return;
     try { await onArchive?.(button.dataset.archiveDeposit); }
+    catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
+  }));
+  section.querySelectorAll("[data-delete-deposit]").forEach(button => button.addEventListener("click", async () => {
+    const labels = words(section.dataset.locale);
+    if (globalThis.confirm && !globalThis.confirm(labels.deleteConfirm)) return;
+    try { await onDelete?.(button.dataset.deleteDeposit); }
     catch (_) { const error = section.querySelector("[data-deposit-operation-error]"); if (error) error.hidden = false; }
   }));
   section.querySelector("[data-deposit-filter]")?.addEventListener("change", event => onFilter?.(event.target.value));

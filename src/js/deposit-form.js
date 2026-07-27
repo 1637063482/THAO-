@@ -1,3 +1,5 @@
+import { depositTermMonths, depositTermOptions, normalizeDepositTermCode } from "./deposit-terms.js";
+
 const copy = {
   vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", product: "Sản phẩm", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --", term3M: "3 tháng", term6M: "6 tháng", term1Y: "1 năm", term2Y: "2 năm", term3Y: "3 năm", term5Y: "5 năm", productAuto: "Tiền gửi {term}" },
   "zh-CN": { add: "新增存款", edit: "编辑存款", institution: "银行", product: "产品", term: "期限", principal: "存款金额（VND）", rate: "年利率（%）", opened: "存入日期", matures: "到期日期", expected: "预计收益（可选）", note: "备注", reminders: "到期前提醒", save: "保存存款", cancel: "取消", saveError: "保存失败，草稿已保留。", invalid: "请检查输入内容。", termBlank: "-- 请选择期限 --", term3M: "3个月", term6M: "6个月", term1Y: "1年", term2Y: "2年", term3Y: "3年", term5Y: "5年", productAuto: "{term}定期" },
@@ -20,20 +22,6 @@ const settlementCopy = {
     nextOpened: "新一期开立日期", nextMatures: "新一期到期日期", nextExpected: "新一期预计收益",
     saveRedeem: "确认赎回", saveRollover: "确认续存", cancel: "取消", saveError: "操作未完成，已保留当前输入。",
   },
-};
-
-const TERM_OPTIONS = [
-  { value: "3M", months: 3 },
-  { value: "6M", months: 6 },
-  { value: "1Y", months: 12 },
-  { value: "2Y", months: 24 },
-  { value: "3Y", months: 36 },
-  { value: "5Y", months: 60 },
-];
-
-const TERM_LABEL_KEYS = {
-  "3M": "term3M", "6M": "term6M", "1Y": "term1Y",
-  "2Y": "term2Y", "3Y": "term3Y", "5Y": "term5Y",
 };
 
 const VIETNAM_BANKS = [
@@ -86,11 +74,6 @@ function calculateExpectedInterest(principalVnd, annualRatePercent, openedOn, ma
   // interest = principal * rate% * days / 365 = principal * rate * days / 36500
   return Math.round(principal * rate * days / 36500);
 }
-function termLabel(labels, termValue) {
-  const key = TERM_LABEL_KEYS[termValue];
-  return key ? labels[key] : "";
-}
-
 export function parseDepositForm(form) {
   const openedOn = formValue(form, "openedOn"); const maturesOn = formValue(form, "maturesOn");
   if (!validDate(openedOn) || !validDate(maturesOn) || maturesOn <= openedOn) throw new Error("maturity date must be later than opening date");
@@ -118,9 +101,17 @@ export function renderDepositForm({ locale = "vi", id, deposit = null } = {}) {
   const labels = words(locale); const editing = Boolean(deposit);
   const rate = deposit ? String(deposit.annualRatePpm / 10_000) : "";
   const bankOptions = VIETNAM_BANKS.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join("");
-  const termOptions = `<option value="">${escapeHtml(labels.termBlank)}</option>` +
-    TERM_OPTIONS.map(t => `<option value="${t.value}">${escapeHtml(labels[TERM_LABEL_KEYS[t.value]])}</option>`).join("");
-  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<input name="productName" required maxlength="120" value="${escapeHtml(deposit?.productName)}"></label><label>${labels.term}<select name="termDuration" data-term-select>${termOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
+  const selectedTerm = normalizeDepositTermCode(deposit?.productName);
+  const customProduct = deposit?.productName && !selectedTerm
+    ? `<option value="${escapeHtml(deposit.productName)}" selected>${escapeHtml(deposit.productName)}</option>`
+    : "";
+  const productOptions = `<option value="">${escapeHtml(labels.termBlank)}</option>` +
+    customProduct +
+    depositTermOptions(locale).map(term => {
+      const selected = selectedTerm === term.code ? " selected" : "";
+      return `<option value="${term.code}"${selected}>${escapeHtml(term.label)}</option>`;
+    }).join("");
+  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<select name="productName" required>${productOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
 }
 
 export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {}) {
@@ -130,22 +121,21 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
   bindDialogKeyboard(root, onClose);
 
   const labels = words(locale);
-  const termSelect = form.querySelector("[data-term-select]");
+  const productSelect = form.elements.productName;
   const openedInput = form.elements.openedOn;
   const maturesInput = form.elements.maturesOn;
-  const productInput = form.elements.productName;
 
   const principalInput = form.elements.principalVnd;
   const rateInput = form.elements.annualRatePercent;
   const expectedInput = form.elements.expectedInterestVnd;
 
   function recalcMaturity() {
-    const termValue = termSelect?.value;
+    const termValue = productSelect?.value;
     const opened = openedInput?.value;
     if (termValue && opened) {
-      const term = TERM_OPTIONS.find(t => t.value === termValue);
-      if (term) {
-        const maturity = addMonths(opened, term.months);
+      const months = depositTermMonths(termValue);
+      if (months !== null) {
+        const maturity = addMonths(opened, months);
         if (maturesInput) maturesInput.value = maturity;
       }
     }
@@ -160,21 +150,12 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     expectedInput.value = interest !== null ? Number(interest).toLocaleString("en-US") : "";
   }
 
-  function autoFillProduct() {
-    const termValue = termSelect?.value;
-    if (termValue && productInput) {
-      const tLabel = termLabel(labels, termValue);
-      if (tLabel) productInput.value = labels.productAuto.replace("{term}", tLabel);
-    }
-  }
-
   function onFieldChange() {
     recalcMaturity();
-    autoFillProduct();
     recalcExpected();
   }
 
-  termSelect?.addEventListener("change", onFieldChange);
+  productSelect?.addEventListener("change", onFieldChange);
   openedInput?.addEventListener("change", onFieldChange);
   principalInput?.addEventListener("input", recalcExpected);
   rateInput?.addEventListener("input", recalcExpected);
@@ -193,7 +174,22 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     }
     finally { submit.disabled = false; }
   });
-  form.elements.institutionName?.focus();
+  // Android-specific: prevent native datalist from opening on empty-field focus.
+  // The list attribute is restored on input so autocomplete still works as the user types.
+  const bankInput = form.elements.institutionName;
+  if (bankInput && /android/i.test(navigator.userAgent)) {
+    const datalistId = bankInput.getAttribute("list");
+    bankInput.addEventListener("focus", function onBankFocus() {
+      this.removeAttribute("list");
+    });
+    bankInput.addEventListener("input", function onBankType() {
+      if (this.value.length > 0) this.setAttribute("list", datalistId);
+    });
+    bankInput.addEventListener("blur", function onBankBlur() {
+      this.setAttribute("list", datalistId);
+    });
+  }
+  bankInput?.focus();
 }
 
 function bindDialogKeyboard(root, onClose) {

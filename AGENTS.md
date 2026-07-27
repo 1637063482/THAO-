@@ -1,12 +1,19 @@
-# MyExpenseApp Agent Router
+# MyExpenseApp — 项目边界
 
-默认不要逐个打开大型文档。按角色运行一个命令；其输出已包含 `docs/CODEX_CONTEXT.md`、`TASK_STATUS.md` 和当前行动所需片段：
+默认遵循 `AGENT_WORKFLOW.md` 的轻量流程：常规变更由一个 Implementer 会话完成，高风险变更才增加串行独立 Reviewer。
 
-```powershell
-npm run context:coder
-npm run context:reviewer
-```
+## 不可违反
 
-命令输出是当前回合的最小绑定上下文。只有命令报错、规则冲突、状态异常、计划变更或输出明确要求时，才读取完整的 `AGENT_WORKFLOW.md`、`TASK_PLAN.md`、`REVIEW_PLAN.md`、`docs/AGENTS_FULL.md` 或历史文件。
+- 未经用户明确授权：不部署、不修改线上 Firebase Rules/Auth/数据。
+- 不接回 T011/T012（ADR-003 已决定放弃）。
+- 真实财务数据、邮箱、UID 不进入测试、截图和文档。
+- VND 是唯一持久化币种；越南语默认、中文可选、无英语。
+- 不 force push；不覆盖未知工作树改动。
+- 先验证实际代码、完整 diff 和新鲜测试，不以任务摘要或 evidence 代替证据。
 
-不可违反：Coder/Reviewer 串行；一次只处理 `TASK_STATUS.md` 指向的 Task；Reviewer 不改业务代码，Coder 不自批；未经用户明确授权不得部署、修改线上 Firebase Rules/Auth 或真实数据；不得接回 T011/T012；真实财务数据、邮箱和 UID 不得进入测试、截图或 evidence。
+## 工作方式
+
+- 从用户当前症状或请求开始，只读取相关代码、测试和必要计划段落。
+- 常规缺陷、样式和局部模块调整：同一会话实现、自审、验证并提交。
+- Rules/Auth/数据迁移/金额结算/跨年账本/安全或大范围架构迁移：实现完成后再由独立 Reviewer 串行审查。
+- 任务状态和审查产物保持精简，具体规则见 `AGENT_WORKFLOW.md`。

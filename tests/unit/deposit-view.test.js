@@ -47,6 +47,30 @@ describe("deposit management view", () => {
     expect(html.match(/blur-sensitive/g).length).toBeGreaterThanOrEqual(15);
   });
 
+  it("localizes stable term codes and offers delete only for active records", () => {
+    const active = renderDepositManagement(buildDepositViewModel({
+      document: storageDocument({ active: deposit({ productName: "1Y" }) }),
+      today: "2026-06-01",
+      locale: "zh-CN",
+    }));
+    expect(active).toContain("1年定期");
+    expect(active).toContain('data-delete-deposit="active"');
+
+    const terminal = renderDepositManagement(buildDepositViewModel({
+      document: storageDocument({
+        done: deposit({
+          productName: "1Y",
+          status: "REDEEMED",
+          redeemedOn: "2027-01-02",
+          actualInterestVnd: 550_000,
+        }),
+      }),
+      today: "2027-01-03",
+      locale: "zh-CN",
+    }));
+    expect(terminal).not.toContain('data-delete-deposit="done"');
+  });
+
   it("shows archived records only under the archived filter", () => {
     const doc = storageDocument({ archived: deposit({ archivedAt: new Date() }), active: deposit() });
     expect(buildDepositViewModel({ document: doc, today: "2026-06-01", filter: "archived" }).visible.map(item => item.id)).toEqual(["archived"]);

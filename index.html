@@ -149,9 +149,9 @@
                 <span data-icon="home" data-icon-class="w-5 h-5"></span>
                 <span data-i18n="overview"></span>
             </button>
-            <button class="sidebar-item" data-nav="add" tabindex="0">
-                <span data-icon="plus" data-icon-class="w-5 h-5"></span>
-                <span data-i18n="quick_add"></span>
+            <button class="sidebar-item" data-nav="savings" tabindex="0">
+                <span data-icon="piggyBank" data-icon-class="w-5 h-5"></span>
+                <span data-i18n="savings"></span>
             </button>
             <button class="sidebar-item" data-nav="stats" tabindex="0">
                 <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>
@@ -168,14 +168,14 @@
         </aside>
 
         <main class="flex-1 min-w-0 px-4 md:px-6 py-6 pb-24 md:pb-6">
+            <!-- Global overlays (outside view containers so they work on any tab) -->
+            <div id="deposit-form-root" data-deposit-form-host></div>
+            <div id="deposit-reminder-root"></div>
+
             <!-- Overview content -->
             <div id="overview-content" class="space-y-5">
                 <!-- Dashboard -->
                 <div id="dashboard-root"></div>
-                <div id="savings-root"></div>
-                <div id="deposit-root"></div>
-                <div id="deposit-form-root" data-deposit-form-host></div>
-                <div id="deposit-reminder-root"></div>
 
                 <!-- Streak panel -->
                 <div id="streak-panel"></div>
@@ -268,6 +268,12 @@
                 </div>
             </div>
 
+            <!-- Savings view (hidden by default) -->
+            <div id="savings-view" class="space-y-5" style="display:none">
+                <div id="savings-root"></div>
+                <div id="deposit-root"></div>
+            </div>
+
             <!-- Analysis view (hidden by default) -->
             <div id="analysis-view" class="space-y-5" style="display:none">
                 <!-- Yearly analysis -->
@@ -343,9 +349,9 @@
             <span data-icon="home" data-icon-class="w-5 h-5"></span>
             <span data-i18n="overview"></span>
         </button>
-        <button class="bottom-nav-item" data-nav="add" tabindex="0">
-            <span data-icon="plus" data-icon-class="w-5 h-5"></span>
-            <span data-i18n="quick_add"></span>
+        <button class="bottom-nav-item" data-nav="savings" tabindex="0">
+            <span data-icon="piggyBank" data-icon-class="w-5 h-5"></span>
+            <span data-i18n="savings"></span>
         </button>
         <button class="bottom-nav-item" data-nav="stats" tabindex="0">
             <span data-icon="chartBar" data-icon-class="w-5 h-5"></span>

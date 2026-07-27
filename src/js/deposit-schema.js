@@ -7,7 +7,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const ID_RE = /^[A-Za-z0-9_-]{1,80}$/;
 const ACK_KEY_RE = /^[A-Za-z0-9_-]{1,80}\|\d{4}-\d{2}-\d{2}\|(D30|D7|D1|D0|OVERDUE)$/;
 const STATUSES = new Set(["ACTIVE", "REDEEMED", "ROLLED_OVER"]);
-const MUTATIONS = new Set(["CREATE_DEPOSIT", "UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT", "ACKNOWLEDGE"]);
+const MUTATIONS = new Set(["CREATE_DEPOSIT", "UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT", "DELETE_DEPOSIT", "ACKNOWLEDGE"]);
 const ROOT_FIELDS = ["schemaVersion", "depositsById", "acknowledgementsByKey", "lastMutation"];
 const DEPOSIT_FIELDS = [
   "institutionName", "productName", "principalVnd", "annualRatePpm", "openedOn", "maturesOn",

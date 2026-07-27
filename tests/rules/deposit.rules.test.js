@@ -78,4 +78,43 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("deposit fixed-document ru
       lastMutation: { kind: "ACKNOWLEDGE", targetId: "deposit-1|2027-01-01|UNKNOWN", actorUid: "owner", at: serverTimestamp() },
     }));
   });
+
+  it("allows adding a second deposit to an existing fixed document", async () => {
+    const owner = db("owner", emails[1]);
+    const reference = doc(owner, path);
+    await assertSucceeds(setDoc(reference, createPayload("owner")));
+    const first = (await getDoc(reference)).data().depositsById["deposit-1"];
+    await assertSucceeds(updateDoc(reference, {
+      depositsById: {
+        "deposit-1": first,
+        "deposit-2": deposit("owner", {
+          institutionName: "Second Fixture Bank",
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }),
+      },
+      lastMutation: { kind: "CREATE_DEPOSIT", targetId: "deposit-2", actorUid: "owner", at: serverTimestamp() },
+    }));
+  });
+
+  it("allows deleting only an active deposit", async () => {
+    const owner = db("owner", emails[1]);
+    const reference = doc(owner, path);
+    await assertSucceeds(setDoc(reference, createPayload("owner")));
+    await assertSucceeds(updateDoc(reference, {
+      depositsById: {},
+      lastMutation: { kind: "DELETE_DEPOSIT", targetId: "deposit-1", actorUid: "owner", at: serverTimestamp() },
+    }));
+
+    await env.clearFirestore();
+    await assertSucceeds(setDoc(reference, createPayload("owner", {
+      status: "REDEEMED",
+      redeemedOn: "2027-01-02",
+      actualInterestVnd: 550_000,
+    })));
+    await assertFails(updateDoc(reference, {
+      depositsById: {},
+      lastMutation: { kind: "DELETE_DEPOSIT", targetId: "deposit-1", actorUid: "owner", at: serverTimestamp() },
+    }));
+  });
 });

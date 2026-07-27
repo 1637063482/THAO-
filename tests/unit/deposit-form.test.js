@@ -14,12 +14,12 @@ describe("deposit form", () => {
     document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
     const form = document.querySelector("form");
     Object.assign(form.elements.institutionName, { value: "Fixture Bank" });
-    Object.assign(form.elements.productName, { value: "12 months" });
+    Object.assign(form.elements.productName, { value: "1Y" });
     Object.assign(form.elements.principalVnd, { value: "10,000,000" });
     Object.assign(form.elements.annualRatePercent, { value: "5.5" });
     Object.assign(form.elements.openedOn, { value: "2026-01-01" });
     Object.assign(form.elements.maturesOn, { value: "2027-01-01" });
-    expect(parseDepositForm(form)).toMatchObject({ id: "fixture-id", principalVnd: 10_000_000, annualRatePpm: 55_000, status: "ACTIVE" });
+    expect(parseDepositForm(form)).toMatchObject({ id: "fixture-id", productName: "1Y", principalVnd: 10_000_000, annualRatePpm: 55_000, status: "ACTIVE" });
     form.elements.maturesOn.value = "2026-01-01";
     expect(() => parseDepositForm(form)).toThrow(/maturity/i);
     form.elements.openedOn.value = "2026-02-31";
@@ -33,7 +33,7 @@ describe("deposit form", () => {
     const host = document.getElementById("form-host");
     const form = host.querySelector("form");
     form.elements.institutionName.value = "Draft Bank";
-    form.elements.productName.value = "Draft Product";
+    form.elements.productName.value = "1Y";
     form.elements.principalVnd.value = "1000000";
     form.elements.annualRatePercent.value = "5";
     form.elements.openedOn.value = "2026-01-01";
@@ -42,6 +42,7 @@ describe("deposit form", () => {
     bindDepositForm(host, { onSubmit });
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(form.querySelector("[data-form-error]").textContent).toContain("Không thể lưu"));
+    expect(onSubmit).toHaveBeenCalledOnce();
     expect(form.elements.institutionName.value).toBe("Draft Bank");
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
   });
@@ -54,6 +55,20 @@ describe("deposit form", () => {
     expect(document.activeElement).toBe(focusable[0]);
     host.querySelector("input").dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("normalizes legacy localized term labels and keeps custom products editable", () => {
+    const base = {
+      institutionName: "Fixture Bank", principalVnd: 10_000_000, annualRatePpm: 55_000,
+      openedOn: "2026-01-01", maturesOn: "2027-01-01", expectedInterestVnd: null,
+      actualInterestVnd: null, remindersEnabled: true, status: "ACTIVE", redeemedOn: null,
+      rolledOverToDepositId: null, note: "", version: 1,
+    };
+    document.body.innerHTML = renderDepositForm({ locale: "zh-CN", id: "legacy", deposit: { ...base, productName: "Tiền gửi 1 năm" } });
+    expect(document.querySelector('[name="productName"]').value).toBe("1Y");
+
+    document.body.innerHTML = renderDepositForm({ locale: "zh-CN", id: "custom", deposit: { ...base, productName: "Custom Product" } });
+    expect(document.querySelector('[name="productName"]').value).toBe("Custom Product");
   });
 });
 

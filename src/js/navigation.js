@@ -7,7 +7,7 @@
 
 export var NAV_ITEMS = [
   { id: "overview", labelKey: "overview", icon: "home", route: "overview" },
-  { id: "add",      labelKey: "quick_add", icon: "plus", route: "add" },
+  { id: "savings",  labelKey: "savings", icon: "piggyBank", route: "savings" },
   { id: "stats",    labelKey: "stats", icon: "chartBar", route: "stats" },
   { id: "import",   labelKey: "import_label", icon: "download", route: "import" },
   { id: "export",   labelKey: "export_csv", icon: "download", route: "export" },
@@ -54,14 +54,14 @@ export function setActive(id) {
  * @param {string} id - Navigation destination id.
  */
 export function navigateTo(id) {
-  setActive(id);
   switch (id) {
     case "overview":
       window.switchMobileView("overview");
       setActive("overview");
       break;
-    case "add":
-      window.openQuickAdd();
+    case "savings":
+      window.switchMobileView("savings");
+      setActive("savings");
       break;
     case "stats":
       window.switchMobileView("stats");

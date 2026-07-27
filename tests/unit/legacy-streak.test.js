@@ -177,6 +177,7 @@ describe("legacy accounting streak RED", () => {
     const input = document.getElementById("direct-entry");
     input.value = "200000";
     input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
 
     expect(getDisplayedStreak()).toBe(2);
   });
@@ -285,6 +286,7 @@ describe("legacy accounting streak RED", () => {
     const input = document.getElementById("delete-entry");
     input.value = "";
     input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
 
     expect(getDisplayedStreak()).toBe(0);
   });
