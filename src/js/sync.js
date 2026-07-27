@@ -133,18 +133,41 @@ export function setupRealtimeListener({
   if (unsubscribeSnapshot) unsubscribeSnapshot();
   if (unsubscribePreviousYearSnapshot) unsubscribePreviousYearSnapshot();
   if (initialLedgerLoadTimerId !== null) clearTimeout(initialLedgerLoadTimerId);
+
+  // Track whether both the current-year and previous-year snapshots have arrived.
+  let previousYearLoaded = false;
+  let currentYearLoaded = false;
+
+  function tryCompleteInitialLoad() {
+    if (previousYearLoaded && currentYearLoaded) {
+      if (initialLedgerLoadTimerId !== null) {
+        clearTimeout(initialLedgerLoadTimerId);
+        initialLedgerLoadTimerId = null;
+      }
+      completeInitialLedgerLoad();
+    }
+  }
+
   initialLedgerLoadTimerId = setTimeout(() => {
     updateSyncStatus("error");
     completeInitialLedgerLoad();
   }, initialLoadTimeoutMs);
+
   const docRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + state.activeYear);
   const previousDocRef = doc(db, "artifacts", projectId, "public", "data", "ledgers", "shared_ledger_" + (state.activeYear - 1));
+
   unsubscribePreviousYearSnapshot = onSnapshot(previousDocRef, (snapshot) => {
     state.previousYearEntries = snapshot.exists() ? (snapshot.data().entries || {}) : {};
+    previousYearLoaded = true;
     refreshStreakFromSnapshot(onStreakRefresh);
+    tryCompleteInitialLoad();
   }, (error) => {
     console.error("拉取上一年度数据失败:", error);
+    previousYearLoaded = true;
+    currentYearLoaded = true;
+    tryCompleteInitialLoad();
   });
+
   unsubscribeSnapshot = onSnapshot(docRef, (snapshot) => {
     try {
       if (snapshot.exists()) {
@@ -157,20 +180,24 @@ export function setupRealtimeListener({
         state.appState.entries = {};
         state.appState.settings = {};
       }
+      currentYearLoaded = true;
       onSnapshotApplied();
       refreshStreakFromSnapshot(onStreakRefresh);
       updateSyncStatus("synced");
     } catch (error) {
       console.error("刷新云端账本界面失败:", error);
       updateSyncStatus("error");
+      currentYearLoaded = true;
+      previousYearLoaded = true;
     } finally {
-      // 快照已完成时，即使某个 UI 子模块渲染失败，也不能永久阻塞整个应用。
-      completeInitialLedgerLoad();
+      tryCompleteInitialLoad();
     }
   }, (error) => {
     console.error("拉取数据失败:", error);
     updateSyncStatus("error");
-    completeInitialLedgerLoad();
+    currentYearLoaded = true;
+    previousYearLoaded = true;
+    tryCompleteInitialLoad();
   });
 }
 

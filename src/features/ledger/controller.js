@@ -25,6 +25,19 @@ export function createLedgerController({
   let midnightTimer = null;
   let lastLedgerDate = clock.getToday();
 
+  function createMonthTabs() {
+    const container = documentRoot.getElementById("month-tabs");
+    if (!container || container.hasChildNodes()) return;
+    for (let i = 1; i <= 12; i++) {
+      const button = documentRoot.createElement("button");
+      button.type = "button";
+      button.dataset.ledgerMonth = String(i);
+      button.className = "month-tab";
+      button.textContent = translate("month_tab", { month: i });
+      container.appendChild(button);
+    }
+  }
+
   function updateMonthChrome() {
     /** @type {NodeListOf<HTMLElement>} */
     const monthButtons = documentRoot.querySelectorAll("[data-ledger-month]");
@@ -135,6 +148,7 @@ export function createLedgerController({
     if (mounted) return;
     inputController.start();
     yearController.start();
+    createMonthTabs();
     lastLedgerDate = clock.getToday();
     documentRoot.addEventListener("click", onMonthClick);
     documentRoot.addEventListener("visibilitychange", onVisibilityChange);

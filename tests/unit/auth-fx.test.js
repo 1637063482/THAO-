@@ -6,6 +6,7 @@ vi.mock("firebase/app", () => ({
 
 vi.mock("firebase/firestore", () => ({
   getFirestore: vi.fn(() => ({})),
+  connectFirestoreEmulator: vi.fn(),
 }));
 
 vi.mock("firebase/auth", () => ({
@@ -13,6 +14,7 @@ vi.mock("firebase/auth", () => ({
   signInWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
   onAuthStateChanged: vi.fn(),
+  connectAuthEmulator: vi.fn(),
 }));
 
 vi.mock("../../src/js/fx-display.js", () => ({

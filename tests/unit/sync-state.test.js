@@ -17,6 +17,15 @@ vi.mock("firebase/firestore", () => ({
     firestoreMock.snapshotErrorHandler = onError;
     return vi.fn();
   }),
+  connectFirestoreEmulator: vi.fn(),
+}));
+
+vi.mock("firebase/auth", () => ({
+  getAuth: vi.fn(() => ({})),
+  signInWithEmailAndPassword: vi.fn(),
+  signOut: vi.fn(),
+  onAuthStateChanged: vi.fn(),
+  connectAuthEmulator: vi.fn(),
 }));
 
 vi.mock("../../src/js/fireworks.js", () => ({

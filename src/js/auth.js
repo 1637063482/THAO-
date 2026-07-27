@@ -2,18 +2,15 @@
 // auth.js - Firebase 鉴权系统
 // ==========================================
 import {
-  getAuth,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
 } from "firebase/auth";
-import { app } from "./firebase.js";
+import { auth } from "./firebase.js";
 import { loadCnyVndRate } from "./fx-display.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
 import { t } from "./i18n.js";
-
-const auth = getAuth(app);
 
 const SESSION_KEY = "family_expense_app_last_active";
 const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
@@ -47,7 +44,6 @@ function recoverLoginUiAfterTimeout() {
 export { auth };
 
 export function initAuth(onLoginCallback, onLogoutCallback) {
-  initDOM();
   fetchReliableAutoRate();
   checkSessionTimeout();
   sessionCheckIntervalId = setInterval(checkSessionTimeout, 60000);
@@ -77,14 +73,6 @@ export function initAuth(onLoginCallback, onLogoutCallback) {
       onLogoutCallback();
     }
   });
-}
-
-function initDOM() {
-  const tabsContainer = document.getElementById("month-tabs");
-  if (!tabsContainer) return;
-  for (let i = 1; i <= 12; i++) {
-    tabsContainer.innerHTML += '<button type="button" id="btn-tab-' + i + '" data-ledger-month="' + i + '" class="month-tab">' + t("month_tab", { month: i }) + '</button>';
-  }
 }
 
 async function fetchReliableAutoRate() {

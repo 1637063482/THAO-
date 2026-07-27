@@ -37,14 +37,13 @@ export function saveBudgetAndCalculate() {
   let vndVal = val;
   if (state.currentCurrency === "CNY") vndVal = val * getActiveRate();
   if (!state.appState.settings) state.appState.settings = {};
-  state.appState.settings.monthlyBudget = vndVal;
+  // Use per-month key for budget so switching months doesn't reuse the same value.
   state.appState.settings["budget_" + state.activeMonthId] = vndVal;
   inputEl.dataset.raw = vndVal;
   inputEl.dataset.month = state.activeMonthId;
   inputEl.value = formatDisplay(vndVal);
   try { localStorage.setItem("thao_monthly_budget", vndVal); } catch { /* noop */ }
   if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
-  state.pendingUpdates.settings.monthlyBudget = vndVal;
   state.pendingUpdates.settings["budget_" + state.activeMonthId] = vndVal;
   triggerCloudSave();
   calculateAll();
