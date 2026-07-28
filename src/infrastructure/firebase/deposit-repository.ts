@@ -69,24 +69,25 @@ export class DepositRepository {
   }
   async create(input: DepositInput): Promise<StoredDeposit> {
     validateInput(input);
-    await runTransaction(this.db, async transaction => {
+    return runTransaction(this.db, async transaction => {
       const reference = this.ref(); const snapshot = await transaction.get(reference);
       const current = snapshot.exists() ? decodeDocument(snapshot.data()) : emptyDocument();
       if (current.depositsById[input.id]) fail("DEPOSIT_ALREADY_EXISTS", "Deposit already exists");
       if (Object.keys(current.depositsById).length >= 100) fail("DEPOSIT_LIMIT", "Deposit limit reached");
       const stamp = serverTimestamp();
       const { id, ...fields } = input;
+      const created = { ...fields, version: 1, createdAt: stamp, updatedAt: stamp, createdBy: this.actorUid, updatedBy: this.actorUid, archivedAt: null };
       transaction.set(reference, {
         ...current,
-        depositsById: { ...current.depositsById, [id]: { ...fields, version: 1, createdAt: stamp, updatedAt: stamp, createdBy: this.actorUid, updatedBy: this.actorUid, archivedAt: null } },
+        depositsById: { ...current.depositsById, [id]: created },
         lastMutation: { kind: "CREATE_DEPOSIT", targetId: id, actorUid: this.actorUid, at: stamp },
       });
+      return { id, ...created };
     });
-    const created = await this.get(input.id); if (!created) fail("DEPOSIT_WRITE_FAILED", "Deposit was not persisted"); return created;
   }
   async update(id: string, expectedVersion: number, changes: DepositChanges): Promise<StoredDeposit> {
     safeId(id);
-    await runTransaction(this.db, async transaction => {
+    return runTransaction(this.db, async transaction => {
       const reference = this.ref(); const snapshot = await transaction.get(reference);
       if (!snapshot.exists()) fail("DEPOSIT_NOT_FOUND", "Deposit not found");
       const current = decodeDocument(snapshot.data()); const existing = current.depositsById[id];
@@ -94,11 +95,12 @@ export class DepositRepository {
       if (existing.version !== expectedVersion) fail("DEPOSIT_VERSION_CONFLICT", "Deposit version conflict");
       const candidate = { id, ...existing, ...changes } as DepositInput & Omit<StoredDeposit, "id">; validateInput(candidate);
       const stamp = serverTimestamp();
-      current.depositsById[id] = { ...existing, ...changes, version: existing.version + 1, updatedAt: stamp, updatedBy: this.actorUid };
+      const updated = { ...existing, ...changes, version: existing.version + 1, updatedAt: stamp, updatedBy: this.actorUid };
+      current.depositsById[id] = updated;
       current.lastMutation = { kind: "UPDATE_DEPOSIT", targetId: id, actorUid: this.actorUid, at: stamp };
       transaction.set(reference, current);
+      return { id, ...updated };
     });
-    const updated = await this.get(id); if (!updated) fail("DEPOSIT_WRITE_FAILED", "Deposit was not persisted"); return updated;
   }
   async archive(id: string, expectedVersion: number): Promise<StoredDeposit> {
     safeId(id);

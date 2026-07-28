@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import type { Firestore } from "firebase/firestore";
 import { DepositRepository } from "../../src/infrastructure/firebase/deposit-repository";
@@ -50,6 +50,29 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("DepositRepository", () =>
     const archived = await repository.archive("deposit-1", 2);
     expect(archived.version).toBe(3);
     expect(archived.archivedAt).not.toBeNull();
+  });
+
+  it("does not report a committed create as failed because of a follow-up read", async () => {
+    const read = vi.spyOn(repository, "get").mockRejectedValueOnce(Object.assign(new Error("synthetic follow-up read failure"), { code: "unavailable" }));
+
+    const created = await repository.create(input());
+
+    expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
+    expect(created).toMatchObject({ id: "deposit-1", version: 1, createdBy: auth.uid });
+    expect(await repository.get("deposit-1")).toMatchObject({ id: "deposit-1", version: 1 });
+  });
+
+  it("does not report a committed update as failed because of a follow-up read", async () => {
+    await repository.create(input());
+    const read = vi.spyOn(repository, "get").mockRejectedValueOnce(Object.assign(new Error("synthetic follow-up read failure"), { code: "unavailable" }));
+
+    const updated = await repository.update("deposit-1", 1, { note: "committed update" });
+
+    expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
+    expect(updated).toMatchObject({ id: "deposit-1", version: 2, note: "committed update" });
+    expect(await repository.get("deposit-1")).toMatchObject({ version: 2, note: "committed update" });
   });
 
   it("persists acknowledgement and rejects stale concurrent versions", async () => {
