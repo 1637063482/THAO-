@@ -1,9 +1,10 @@
 import { depositTermMonths, depositTermOptions, normalizeDepositTermCode } from "./terms.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
+import { bindVndInputFormatting, formatVndInputValue } from "../../js/vnd-input.js";
 
 const copy = {
-  vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", product: "Sản phẩm", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --", term3M: "3 tháng", term6M: "6 tháng", term1Y: "1 năm", term2Y: "2 năm", term3Y: "3 năm", term5Y: "5 năm", productAuto: "Tiền gửi {term}" },
-  "zh-CN": { add: "新增存款", edit: "编辑存款", institution: "银行", product: "产品", term: "期限", principal: "存款金额（VND）", rate: "年利率（%）", opened: "存入日期", matures: "到期日期", expected: "预计收益（可选）", note: "备注", reminders: "到期前提醒", save: "保存存款", cancel: "取消", saveError: "保存失败，草稿已保留。", invalid: "请检查输入内容。", termBlank: "-- 请选择期限 --", term3M: "3个月", term6M: "6个月", term1Y: "1年", term2Y: "2年", term3Y: "3年", term5Y: "5年", productAuto: "{term}定期" },
+  vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", chooseBank: "Chọn ngân hàng", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", datePlaceholder: "ngày/tháng/năm", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --" },
+  "zh-CN": { add: "新增存款", edit: "编辑存款", institution: "银行", chooseBank: "选择银行", term: "期限", principal: "存款金额（VND）", rate: "年利率（%）", opened: "存入日期", matures: "到期日期", datePlaceholder: "年/月/日", expected: "预计收益（可选）", note: "备注", reminders: "到期前提醒", save: "保存存款", cancel: "取消", saveError: "保存失败，草稿已保留。", invalid: "请检查输入内容。", termBlank: "-- 请选择期限 --" },
 };
 
 const settlementCopy = {
@@ -140,7 +141,10 @@ export function parseDepositForm(form) {
 export function renderDepositForm({ locale = "vi", id, deposit = null }) {
   const labels = words(locale); const editing = Boolean(deposit);
   const rate = deposit ? String(deposit.annualRatePpm / 10_000) : "";
-  const bankOptions = VIETNAM_BANKS.map(b => `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`).join("");
+  const bankOptions = VIETNAM_BANKS.map(b => `<button type="button" role="option" data-bank-option="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
+  const bankInputId = `deposit-bank-${escapeHtml(id)}`;
+  const bankOptionsId = `deposit-bank-options-${escapeHtml(id)}`;
+  const dateLang = normalizeLocale(locale) === "vi" ? "vi" : "zh-CN";
   const selectedTerm = normalizeDepositTermCode(deposit?.productName);
   const customProduct = deposit?.productName && !selectedTerm
     ? `<option value="${escapeHtml(deposit.productName)}" selected>${escapeHtml(deposit.productName)}</option>`
@@ -151,7 +155,7 @@ export function renderDepositForm({ locale = "vi", id, deposit = null }) {
       const selected = selectedTerm === term.code ? " selected" : "";
       return `<option value="${term.code}"${selected}>${escapeHtml(term.label)}</option>`;
     }).join("");
-  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}<input name="institutionName" list="bank-list-${escapeHtml(id)}" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><datalist id="bank-list-${escapeHtml(id)}">${bankOptions}</datalist></label><label>${labels.product}<select name="productName" required>${productOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(deposit?.principalVnd)}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<input name="openedOn" required type="date" value="${escapeHtml(deposit?.openedOn)}"></label><label>${labels.matures}<input name="maturesOn" required type="date" value="${escapeHtml(deposit?.maturesOn)}"></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
+  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title" tabindex="-1"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><div class="deposit-form-field"><label for="${bankInputId}">${labels.institution}</label><div class="deposit-bank-picker"><div class="deposit-bank-control"><input id="${bankInputId}" name="institutionName" required maxlength="120" autocomplete="organization" value="${escapeHtml(deposit?.institutionName)}"><button type="button" class="deposit-bank-toggle" data-bank-picker-toggle aria-label="${labels.chooseBank}" aria-expanded="false" aria-controls="${bankOptionsId}">⌄</button></div><div id="${bankOptionsId}" class="deposit-bank-options" data-bank-picker-options role="listbox" hidden>${bankOptions}</div></div></div><label>${labels.term}<select name="productName" required>${productOptions}</select></label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(formatVndInputValue(deposit?.principalVnd))}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}<span class="deposit-date-control"><input name="openedOn" required type="date" lang="${dateLang}" value="${escapeHtml(deposit?.openedOn)}"><span class="deposit-date-placeholder" aria-hidden="true">${labels.datePlaceholder}</span></span></label><label>${labels.matures}<span class="deposit-date-control"><input name="maturesOn" required type="date" lang="${dateLang}" value="${escapeHtml(deposit?.maturesOn)}"><span class="deposit-date-placeholder" aria-hidden="true">${labels.datePlaceholder}</span></span></label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
 }
 
 /** @param {HTMLElement} root @param {import("../../types/app-state").DepositFormBindings} [bindings] */
@@ -200,7 +204,7 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
 
   productSelect?.addEventListener("change", onFieldChange);
   openedInput?.addEventListener("change", onFieldChange);
-  principalInput?.addEventListener("input", recalcExpected);
+  if (principalInput instanceof HTMLInputElement) bindVndInputFormatting(principalInput, recalcExpected);
   rateInput?.addEventListener("input", recalcExpected);
   maturesInput?.addEventListener("change", recalcExpected);
 
@@ -218,22 +222,42 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     }
     finally { submit.disabled = false; }
   });
-  // Android-specific: prevent native datalist from opening on empty-field focus.
-  // The list attribute is restored on input so autocomplete still works as the user types.
   const bankInput = formControl(form, "institutionName");
-  if (bankInput && /android/i.test(navigator.userAgent)) {
-    const datalistId = bankInput.getAttribute("list");
-    bankInput.addEventListener("focus", function onBankFocus() {
-      bankInput.removeAttribute("list");
-    });
-    bankInput.addEventListener("input", function onBankType() {
-      if (bankInput.value.length > 0 && datalistId) bankInput.setAttribute("list", datalistId);
-    });
-    bankInput.addEventListener("blur", function onBankBlur() {
-      if (datalistId) bankInput.setAttribute("list", datalistId);
-    });
+  const bankToggle = /** @type {HTMLButtonElement | null} */ (form.querySelector("[data-bank-picker-toggle]"));
+  const bankOptions = /** @type {HTMLElement | null} */ (form.querySelector("[data-bank-picker-options]"));
+  /** @param {boolean} open */
+  const setBankPickerOpen = (open) => {
+    if (!bankToggle || !bankOptions) return;
+    bankOptions.hidden = !open;
+    bankToggle.setAttribute("aria-expanded", String(open));
+  };
+  bankToggle?.addEventListener("click", () => setBankPickerOpen(Boolean(bankOptions?.hidden)));
+  bankOptions?.addEventListener("click", event => {
+    const option = event.target instanceof Element ? event.target.closest("[data-bank-option]") : null;
+    if (!option || !bankInput) return;
+    bankInput.value = option.getAttribute("data-bank-option") || "";
+    bankInput.dispatchEvent(new Event("input", { bubbles: true }));
+    setBankPickerOpen(false);
+    bankInput.focus();
+  });
+  bankInput?.addEventListener("input", () => setBankPickerOpen(false));
+  root.addEventListener("click", event => {
+    const target = event.target instanceof Element ? event.target : null;
+    if (target && !target.closest(".deposit-bank-picker")) setBankPickerOpen(false);
+  });
+  root.addEventListener("keydown", event => {
+    if (event.key === "Escape" && bankOptions && !bankOptions.hidden) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      setBankPickerOpen(false);
+      bankToggle?.focus();
+    }
+  }, true);
+  const dialog = /** @type {HTMLElement | null} */ (root.querySelector(".deposit-form-sheet"));
+  if (dialog) {
+    try { dialog.focus({ preventScroll: true }); }
+    catch { dialog.focus(); }
   }
-  bankInput?.focus();
 }
 
 /** @param {HTMLElement} root @param {(() => void) | undefined} onClose */

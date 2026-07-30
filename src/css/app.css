@@ -682,6 +682,7 @@ tr:hover td:not(.sticky-col) {
   gap: 8px;
   flex: 1;
   min-width: 0;
+  flex-wrap: wrap;
 }
 .budget-inline-input {
   border: 1px solid rgba(0,0,0,0.08);
@@ -712,14 +713,23 @@ tr:hover td:not(.sticky-col) {
 
 /* Budget tip text */
 .budget-tip-text {
+  flex: 1 0 100%;
   font-size: 12px;
   font-weight: 500;
   color: #64748b;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .dark .budget-tip-text { color: #94a3b8; }
 .budget-num {
   font-weight: 800;
   font-size: 13px;
+}
+@media (max-width: 767px) {
+  .budget-inline-right {
+    flex-basis: 100%;
+  }
 }
 
 /* ===== Table Card Container ===== */

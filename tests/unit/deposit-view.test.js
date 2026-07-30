@@ -58,7 +58,7 @@ describe("deposit management view", () => {
       today: "2026-06-01",
       locale: "zh-CN",
     }));
-    expect(active).toContain("1年定期");
+    expect(active).toContain("12个月");
     expect(active).toContain('data-delete-deposit="active"');
 
     const terminal = renderDepositManagement(buildDepositViewModel({

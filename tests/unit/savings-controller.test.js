@@ -23,16 +23,16 @@ describe("savings controller boundary", () => {
 
     controller.start();
     expect(dashboard).toHaveBeenCalledTimes(13);
-    expect(document.querySelector('[name="monthly"]').value).toBe("300000");
+    expect(document.querySelector('[name="monthly"]').value).toBe("300,000");
 
     state.month = 4;
     state.settings.savings_goal_month_4 = 400000;
     controller.update();
-    expect(document.querySelector('[name="monthly"]').value).toBe("400000");
+    expect(document.querySelector('[name="monthly"]').value).toBe("400,000");
 
     state.settings.savings_goal_month_4 = 500000;
     controller.update();
-    expect(document.querySelector('[name="monthly"]').value).toBe("500000");
+    expect(document.querySelector('[name="monthly"]').value).toBe("500,000");
   });
 
   it("stops the sync observer and goal-form event listeners", async () => {

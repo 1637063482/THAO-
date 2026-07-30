@@ -100,7 +100,7 @@ export function renderMonthTable(monthId) {
     + '</div>'
     + '<div class="budget-inline-right">'
     + '<div class="bg-slate-100 rounded-full h-2.5 overflow-hidden flex-1" style="min-width:80px;"><div id="budget-progress-bar" class="progress-bar h-full" style="width:0%"></div></div>'
-    + '<div id="budget-text" class="text-xs text-slate-500 font-medium whitespace-nowrap">' + t("used") + ' 0%</div>'
+    + '<div id="budget-text" class="text-xs text-slate-500 font-medium">' + t("used") + ' 0%</div>'
     + '</div>'
     + '</div>'
     // Table header bar

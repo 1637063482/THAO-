@@ -33,6 +33,9 @@ describe("budget heading render integration", () => {
     // The month span is followed by a text node with the budget label
     expect(container.innerHTML).toContain("Ngân sách");
     expect(container.innerHTML).not.toContain("预算");
+    const budgetText = document.getElementById("budget-text");
+    expect(budgetText.classList.contains("whitespace-nowrap")).toBe(false);
+    expect(budgetText.closest(".budget-inline-right")).not.toBeNull();
 
     // Switch to zh-CN and re-render
     i18nModule.setLocale("zh-CN");

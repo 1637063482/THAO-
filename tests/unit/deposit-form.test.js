@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/features/deposits/form.js";
+import { depositTermOptions } from "../../src/features/deposits/terms.js";
 
 describe("deposit form", () => {
   it.each([["5.5", 55_000], ["0.01", 100], ["100", 1_000_000]])("converts %s percent to integer ppm", (input, expected) => {
@@ -46,6 +47,76 @@ describe("deposit form", () => {
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(form.elements.institutionName.value).toBe("Draft Bank");
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
+  });
+
+  it("labels the field as term and offers common Vietnamese deposit terms", () => {
+    document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
+    const select = document.querySelector('[name="productName"]');
+    expect(select.closest("label").firstChild.textContent).toBe("Kỳ hạn");
+    expect(depositTermOptions("vi").map(option => option.code)).toEqual([
+      "1M", "3M", "6M", "9M", "1Y", "13M", "15M", "18M", "2Y", "3Y",
+    ]);
+    expect([...select.options].map(option => option.textContent)).toEqual([
+      "-- Chọn kỳ hạn --", "1 tháng", "3 tháng", "6 tháng", "9 tháng",
+      "12 tháng", "13 tháng", "15 tháng", "18 tháng", "24 tháng", "36 tháng",
+    ]);
+    expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain("<label>期限<select");
+  });
+
+  it("uses localized empty-date hints without removing the native date picker", () => {
+    document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
+    expect([...document.querySelectorAll(".deposit-date-placeholder")].map(node => node.textContent)).toEqual([
+      "ngày/tháng/năm", "ngày/tháng/năm",
+    ]);
+    expect([...document.querySelectorAll('input[type="date"]')].every(input => input.lang === "vi")).toBe(true);
+
+    document.body.innerHTML = renderDepositForm({ locale: "zh-CN", id: "fixture-id" });
+    expect([...document.querySelectorAll(".deposit-date-placeholder")].map(node => node.textContent)).toEqual([
+      "年/月/日", "年/月/日",
+    ]);
+  });
+
+  it("formats the deposit principal while keeping the parsed VND amount unchanged", () => {
+    const deposit = {
+      institutionName: "Vietcombank", productName: "1Y", principalVnd: 10_000_000,
+      annualRatePpm: 55_000, openedOn: "2026-01-01", maturesOn: "2027-01-01",
+      expectedInterestVnd: null, actualInterestVnd: null, remindersEnabled: true,
+      status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: "", version: 1,
+    };
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id", deposit }) + "</div>";
+    const host = document.getElementById("host");
+    const principal = host.querySelector('[name="principalVnd"]');
+    expect(principal.value).toBe("10,000,000");
+
+    bindDepositForm(host);
+    principal.value = "12345678";
+    principal.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(principal.value).toBe("12,345,678");
+    expect(parseDepositForm(host.querySelector("form")).principalVnd).toBe(12_345_678);
+  });
+
+  it("opens the bank list only on request and keeps custom bank entry available", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("host");
+    bindDepositForm(host);
+
+    const dialog = host.querySelector(".deposit-form-sheet");
+    const bankInput = host.querySelector('[name="institutionName"]');
+    const toggle = host.querySelector("[data-bank-picker-toggle]");
+    const options = host.querySelector("[data-bank-picker-options]");
+    expect(bankInput.hasAttribute("list")).toBe(false);
+    expect(host.querySelector("datalist")).toBeNull();
+    expect(document.activeElement).toBe(dialog);
+    expect(options.hidden).toBe(true);
+
+    toggle.click();
+    expect(options.hidden).toBe(false);
+    host.querySelector('[data-bank-option="Vietcombank"]').click();
+    expect(bankInput.value).toBe("Vietcombank");
+    expect(options.hidden).toBe(true);
+
+    bankInput.value = "Fixture Bank";
+    expect(bankInput.value).toBe("Fixture Bank");
   });
 
   it("traps keyboard focus and closes with Escape", () => {

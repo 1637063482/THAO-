@@ -16,6 +16,22 @@ describe("savings view", () => {
     expect(renderSavingsPage(vm)).toContain("储蓄目标");
   });
 
+  it("renders and edits savings goals with readable VND separators", () => {
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById("root");
+    root.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input }));
+
+    const monthly = root.querySelector('[name="monthly"]');
+    const annual = root.querySelector('[name="annual"]');
+    expect(monthly.value).toBe("300,000");
+    expect(annual.value).toBe("4,000,000");
+
+    bindSavingsGoalForm(root, { settings: {}, pendingUpdates: {}, month: 3 });
+    monthly.value = "1234567";
+    monthly.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(monthly.value).toBe("1,234,567");
+  });
+
   it("rounds derived fractional VND totals before applying integer domain rules", () => {
     const vm = buildSavingsViewModel({
       ...input,
