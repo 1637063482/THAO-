@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
 import { bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/features/deposits/form.js";
 import { depositTermOptions } from "../../src/features/deposits/terms.js";
@@ -74,6 +75,11 @@ describe("deposit form", () => {
     expect([...document.querySelectorAll(".deposit-date-placeholder")].map(node => node.textContent)).toEqual([
       "年/月/日", "年/月/日",
     ]);
+
+    const css = readFileSync("src/features/deposits/deposits.css", "utf8");
+    expect(css).toContain(".deposit-date-control input:not(:valid)::-webkit-datetime-edit { opacity: 0;");
+    expect(css).toContain(".deposit-date-control input:not(:valid)::-webkit-datetime-edit-fields-wrapper");
+    expect(css).toContain("background-color: transparent;");
   });
 
   it("formats the deposit principal while keeping the parsed VND amount unchanged", () => {

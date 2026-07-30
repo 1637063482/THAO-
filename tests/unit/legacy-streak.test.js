@@ -301,10 +301,19 @@ describe("legacy accounting streak RED", () => {
     updateStreakAfterRecord();
     await vi.dynamicImportSettled();
 
-    const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 12000);
+    const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 15000);
     expect(milestoneCalls).toHaveLength(1);
     expect(state.pendingUpdates.settings.expense_streak).toBeUndefined();
     expect(state.pendingUpdates.settings.expense_last_date).toBeUndefined();
+  });
+
+  it("extends the regular celebration duration by 25%", async () => {
+    state.appState.entries = entriesForStreak(2);
+
+    updateStreakAfterRecord();
+    await vi.dynamicImportSettled();
+
+    expect(Fireworks.launch).toHaveBeenCalledWith({ duration: 7500 });
   });
 
   it("derives Dec 31 to Jan 1 continuity from adjacent-year entries", () => {

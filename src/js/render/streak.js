@@ -58,8 +58,8 @@ export function updateStreakAfterRecord(options) {
   if ((s.streak === 7 || s.streak === 30) && !hasRewardFired(s.streak, s.todayStr)) {
     markRewardFired(s.streak, s.todayStr);
     showToast(t("streak_achieved", { days: s.streak }));
-    launchFireworks({ duration: 12000 });
+    launchFireworks({ duration: 15000 });
   } else if (launchDefaultFireworks) {
-    launchFireworks({ duration: 6000 });
+    launchFireworks({ duration: 7500 });
   }
 }

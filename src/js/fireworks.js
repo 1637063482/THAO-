@@ -590,6 +590,11 @@ var BARRAGE_TEXTS = [
 var _barrageLanes = [];
 var _barrageLastLane = -1;
 
+export function calculateBarrageSpeed(width, duration, randomFactor) {
+  var totalFrames = (duration / 1000) * 60;
+  return ((width + 250) / totalFrames) * randomFactor;
+}
+
 function _spawnBarrage() {
   if (!_running || !_overlay) return;
   var text = BARRAGE_TEXTS[Math.floor(Math.random() * BARRAGE_TEXTS.length)];
@@ -631,9 +636,7 @@ function _spawnBarrage() {
   _overlay.appendChild(el);
 
   // 速度根据屏幕宽度和 show 时长动态计算，确保弹幕横跨全屏
-  var totalFrames = (_duration / 1000) * 60;
-  var baseSpeed = (_dims.w + 250) / totalFrames;
-  var speed = baseSpeed * (0.8 + Math.random() * 0.4);
+  var speed = calculateBarrageSpeed(_dims.w, _duration, 0.8 + Math.random() * 0.4);
   var anim = function() {
     if (!el.parentNode) return;
     var left = parseFloat(el.style.right || '-20');
@@ -756,7 +759,7 @@ function _cleanup() {
 
 export var Fireworks = {
   launch: function(opts) {
-    var duration = (opts && opts.duration) || 6000;
+    var duration = (opts && opts.duration) || 7500;
     _cleanup();
     _duration = duration;
 

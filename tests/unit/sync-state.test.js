@@ -265,9 +265,9 @@ describe("sync queue", () => {
     firestoreMock.snapshotHandler(snapshot);
     await vi.dynamicImportSettled();
 
-    const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 12000);
+    const milestoneCalls = Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 15000);
     expect(milestoneCalls).toHaveLength(1);
-    expect(Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 6000)).toHaveLength(0);
+    expect(Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 7500)).toHaveLength(0);
     vi.useRealTimers();
   });
 });

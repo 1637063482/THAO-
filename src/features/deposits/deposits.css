@@ -87,7 +87,17 @@
 .deposit-date-placeholder { position: absolute; inset-inline-start: .75rem; top: 50%; transform: translateY(-50%); pointer-events: none; color: #64748b; font-size: 1rem; font-weight: 500; }
 .deposit-date-control input:valid + .deposit-date-placeholder { display: none; }
 .deposit-date-control input:not(:valid) { color: transparent; }
-.deposit-date-control input:not(:valid)::-webkit-datetime-edit { color: transparent; }
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit { opacity: 0; color: transparent; -webkit-text-fill-color: transparent; }
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit-fields-wrapper,
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit-text,
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit-day-field,
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit-month-field,
+.deposit-date-control input:not(:valid)::-webkit-datetime-edit-year-field {
+  opacity: 0;
+  color: transparent;
+  background-color: transparent;
+  -webkit-text-fill-color: transparent;
+}
 .dark .deposit-date-placeholder { color: #94a3b8; }
 .deposit-form-grid input.deposit-calc-input { background: #f1f5f9; color: #334155; font-weight: 600; cursor: default; }
 .dark .deposit-form-grid input.deposit-calc-input { background: #1a2234; color: #94a3b8; }
