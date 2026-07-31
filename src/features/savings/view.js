@@ -1,10 +1,9 @@
 import { calculateActualSavings, calculateSavingsProgress } from "../../domain/savings-goal.ts";
 import { bindVndInputFormatting, formatVndInputValue } from "../../js/vnd-input.js";
-import { showConfirmAlert } from "../../js/app-alert.js";
 import { readSavingsGoals, writeAnnualSavingsGoal, writeMonthlySavingsGoal } from "./store.js";
 /** @typedef {import("../../types/app-state").AppLocale} AppLocale */
 /** @typedef {import("../../types/app-state").SavingsViewModel} SavingsViewModel */
-const labels = { vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", cancel: "Hủy", confirmClear: "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", syncing: "Đang đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" }, "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", cancel: "取消", confirmClear: "确定要清空储蓄目标吗？", noGoal: "未设置目标", synced: "已同步", syncing: "正在同步", queued: "等待保存", error: "保存失败" } };
+const labels = { vi: { title: "Mục tiêu tiết kiệm", month: "Tháng này", annual: "Cả năm", actual: "Đã tiết kiệm", target: "Mục tiêu", difference: "Còn lại", save: "Lưu", clear: "Xóa mục tiêu", confirmClear: "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?", noGoal: "Chưa đặt mục tiêu", synced: "Đã đồng bộ", syncing: "Đang đồng bộ", queued: "Đang chờ lưu", error: "Lưu thất bại" }, "zh-CN": { title: "储蓄目标", month: "本月", annual: "全年", actual: "实际储蓄", target: "目标", difference: "差额", save: "保存", clear: "清空目标", confirmClear: "确定要清空储蓄目标吗？", noGoal: "未设置目标", synced: "已同步", syncing: "正在同步", queued: "等待保存", error: "保存失败" } };
 /** @param {string | undefined} locale @returns {AppLocale} */
 function normalizeLocale(locale) { return locale === "zh-CN" ? "zh-CN" : "vi"; }
 /** @param {AppLocale} locale @param {keyof typeof labels.vi} key */
@@ -41,7 +40,6 @@ export function bindSavingsGoalForm(root, {
   locale = normalizeLocale(root.dataset.locale),
   onSave,
   onStatus,
-  confirm,
 }) {
   /** @type {import("../../types/dom-contracts").SavingsGoalForm | null} */
   const form = root.querySelector("[data-savings-goal-form]");
@@ -64,21 +62,12 @@ export function bindSavingsGoalForm(root, {
       onStatus?.("error", error);
     }
   };
-  const clear = async () => {
-    const prompt = text(locale, "confirmClear");
-    const ok = confirm
-      ? Boolean(confirm(prompt))
-      : await showConfirmAlert({
-          title: text(locale, "title"),
-          message: prompt,
-          confirmLabel: text(locale, "clear"),
-          cancelLabel: text(locale, "cancel"),
-          tone: "destructive",
-        });
-    if (!ok) return;
-    writeMonthlySavingsGoal(settings, pendingUpdates, month, null);
-    writeAnnualSavingsGoal(settings, pendingUpdates, null);
-    onSave?.();
+  const clear = () => {
+    if (!globalThis.confirm || globalThis.confirm(text(locale, "confirmClear"))) {
+      writeMonthlySavingsGoal(settings, pendingUpdates, month, null);
+      writeAnnualSavingsGoal(settings, pendingUpdates, null);
+      onSave?.();
+    }
   };
   const clearButton = root.querySelector("[data-clear-goals]");
   const stopMonthlyFormatting = bindVndInputFormatting(monthlyInput);

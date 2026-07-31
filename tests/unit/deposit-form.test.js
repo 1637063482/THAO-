@@ -168,11 +168,12 @@ describe("deposit settlement form", () => {
     const host = document.getElementById("host"); const form = host.querySelector("form");
     form.elements.annualRatePercent.value = "5.25"; form.elements.maturesOn.value = "2027-07-02";
     form.elements.actualInterestVnd.value = "500000"; form.elements.writeInterestToLedger.checked = true;
-    const confirm = vi.fn(() => true); const onSubmit = vi.fn();
-    bindDepositSettlementForm(host, { locale: "zh-CN", onSubmit, confirm });
+    const confirmBefore = globalThis.confirm; globalThis.confirm = vi.fn(() => true); const onSubmit = vi.fn();
+    bindDepositSettlementForm(host, { locale: "zh-CN", onSubmit });
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
-    expect(confirm).toHaveBeenCalledOnce();
+    expect(globalThis.confirm).toHaveBeenCalledOnce();
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ mode: "rollover", rollover: { principalVnd: 10_000_000, annualRatePpm: 52_500 } });
+    globalThis.confirm = confirmBefore;
   });
 });

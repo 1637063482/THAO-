@@ -11,6 +11,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Sổ của Thao">
     <link rel="apple-touch-icon" href="/app-icon-192.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;500;600;700;800;900&family=Varela+Round&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
     <script type="module" src="/src/js/main.js"></script>
 </head>
 <body class="font-sans antialiased selection:bg-amber-200">
@@ -30,13 +33,13 @@
                         <label class="block text-xs font-semibold text-slate-500 mb-1">
                             <span data-icon="user" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="email"></span>
                         </label>
-                        <input type="email" id="auth-email" class="input-glass" placeholder="" autocomplete="email">
+                        <input type="email" id="auth-email" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="" autocomplete="email">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-slate-500 mb-1">
                             <span data-icon="lock" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="password"></span>
                         </label>
-                        <input type="password" id="auth-password" class="input-glass" placeholder="" autocomplete="current-password">
+                        <input type="password" id="auth-password" class="w-full border border-slate-200 bg-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-300 focus:border-amber-400 transition-all" placeholder="" autocomplete="current-password">
                     </div>
                     <div id="auth-error" role="alert" aria-live="assertive" class="hidden text-red-500 text-xs bg-red-50 rounded-lg px-3 py-2"></div>
                 </div>
@@ -237,19 +240,9 @@
                 </button>
             </div>
             <div class="space-y-4">
-                <div class="grid gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="calendar" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="date"></span></label>
-                        <div class="flex items-center gap-1.5">
-                            <input type="hidden" id="qa-day" value="">
-                            <div id="qa-day-chips" class="flex gap-1 flex-1 min-w-0" role="group" data-i18n-aria-label="date"></div>
-                            <input type="date" id="qa-date-picker" class="input-glass flex-none !w-[132px]" data-i18n-aria-label="date">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="tag" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="category"></span></label>
-                        <select id="qa-cat" class="w-full input-glass"></select>
-                    </div>
+                <div class="flex gap-3">
+                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="calendar" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="date"></span></label><select id="qa-day" class="w-full input-glass"></select></div>
+                    <div class="flex-1"><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="tag" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="category"></span></label><select id="qa-cat" class="w-full input-glass"></select></div>
                 </div>
                 <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="wallet" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="amount"></span></label><input type="number" id="qa-amount" class="w-full input-glass text-lg font-bold" placeholder="" data-i18n="amount_placeholder" onkeydown="if(event.key==='Enter')window.submitQuickAdd()" inputmode="decimal"></div>
                 <div><label class="block text-xs font-semibold text-slate-500 mb-1"><span data-icon="pencil" data-icon-class="w-3.5 h-3.5 inline mr-1"></span><span data-i18n="remark_optional"></span></label><input type="text" id="qa-remark" class="w-full input-glass" placeholder="" onkeydown="if(event.key==='Enter')window.submitQuickAdd()"></div>
@@ -262,12 +255,12 @@
     <nav id="bottom-nav" class="md:hidden" data-app-bottom-nav-host></nav>
 
     <!-- Update toast -->
-    <div id="update-toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;top:env(safe-area-inset-top, 0);right:16px;z-index:400;display:none;background:rgba(255,255,255,.85);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,.12);border:1px solid rgba(0,0,0,.08);padding:16px;max-width:360px;transform:translateY(-120%);transition:transform 0.3s cubic-bezier(.4,0,.2,1);">
+    <div id="update-toast" role="status" aria-live="polite" aria-atomic="true" style="position:fixed;top:env(safe-area-inset-top, 0);right:16px;z-index:400;display:none;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.12);border:1px solid #e2e8f0;padding:16px;max-width:360px;transform:translateY(-120%);transition:transform 0.3s;">
         <div style="display:flex;align-items:flex-start;gap:12px;">
             <span data-icon="info" data-icon-class="w-6 h-6 text-amber-500"></span>
             <div style="flex:1;">
-                <p style="font-size:14px;font-weight:700;color:#1d1d1f;margin:0;" data-i18n="update_available"></p>
-                <p id="update-log" style="display:none;font-size:12px;color:#6e6e73;margin-top:4px;white-space:pre-line;"></p>
+                <p style="font-size:14px;font-weight:700;color:#1e293b;margin:0;" data-i18n="update_available"></p>
+                <p id="update-log" style="display:none;font-size:12px;color:#64748b;margin-top:4px;white-space:pre-line;"></p>
                 <button id="btn-update-refresh" class="mt-2 btn-primary text-xs py-1.5 px-3" data-i18n="update_now"></button>
             </div>
         </div>

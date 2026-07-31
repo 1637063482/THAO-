@@ -98,11 +98,12 @@ describe("deposit management view", () => {
   it("shows a classified error when a list operation fails", async () => {
     document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ active: deposit() }), today: "2026-06-01", locale: "zh-CN" }));
     const failure = Object.assign(new Error("conflict"), { code: "DEPOSIT_VERSION_CONFLICT" });
-    const confirm = vi.fn(() => true);
-    bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure), confirm });
+    const originalConfirm = globalThis.confirm; globalThis.confirm = vi.fn(() => true);
+    bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure) });
     document.querySelector("[data-archive-deposit=active]").click();
     await vi.waitFor(() => expect(document.querySelector("[data-deposit-operation-error]").textContent).toBe("存款已被其他更改更新，请刷新后重试。"));
     expect(document.querySelector("[data-deposit-operation-error]").hidden).toBe(false);
+    globalThis.confirm = originalConfirm;
   });
 
   it.each([

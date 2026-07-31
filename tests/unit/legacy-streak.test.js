@@ -186,7 +186,7 @@ describe("legacy accounting streak RED", () => {
     document.body.innerHTML += [
       '<div id="quick-add-modal" style="display:flex"></div>',
       '<div id="quick-add-panel"></div>',
-      '<input type="hidden" id="qa-day" value="3">',
+      '<select id="qa-day"><option value="3" selected>2/3</option></select>',
       '<select id="qa-cat"><option value="income" selected>income</option></select>',
       '<input id="qa-amount" value="200000">',
       '<input id="qa-remark" value="">',
@@ -205,7 +205,7 @@ describe("legacy accounting streak RED", () => {
     document.body.innerHTML += [
       '<div id="quick-add-modal" style="display:flex"></div>',
       '<div id="quick-add-panel"></div>',
-      '<input type="hidden" id="qa-day" value="2">',
+      '<select id="qa-day"><option value="2" selected>2/2</option></select>',
       '<select id="qa-cat"><option value="income" selected>income</option></select>',
       '<input id="qa-amount" value="200000">',
       '<input id="qa-remark" value="">',

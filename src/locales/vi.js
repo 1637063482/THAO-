@@ -43,9 +43,6 @@ export default {
   // Quick add
   quick_add_title: "Ghi nhanh",
   date: "Ngày",
-  today: "Hôm nay",
-  yesterday: "Hôm qua",
-  tomorrow: "Ngày mai",
   category: "Danh mục",
   amount: "Số tiền",
   remark_optional: "Ghi chú (không bắt buộc)",
