@@ -1,6 +1,7 @@
 import { createDeposit, deriveDepositStatus, expectedInterestVnd, summarizeDeposits } from "../../domain/deposit.ts";
 import { depositProductLabel } from "./terms.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
+import { showConfirmAlert } from "../../js/app-alert.js";
 import { renderDepositCard } from "./deposit-card.js";
 import { renderDepositTable } from "./deposit-table.js";
 import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "../../js/deposit-schema.js";
@@ -19,6 +20,7 @@ const copy = {
     all: "Tất cả", active: "Đang hoạt động", maturing: "Sắp đáo hạn", matured: "Đã đáo hạn", archived: "Đã lưu trữ",
     ACTIVE: "Đang hoạt động", MATURING: "Sắp đáo hạn", MATURED: "Đã đáo hạn", REDEEMED: "Đã tất toán", ROLLED_OVER: "Đã tái tục",
     noNearest: "Chưa có", vnd: "₫", syncError: "Thao tác thất bại; dữ liệu chưa được đánh dấu là đã đồng bộ.",
+    cancel: "Hủy",
     acknowledgementCapacityWarning: "Đã dùng {count}/{limit} bản ghi xác nhận. Hãy kiểm tra lời nhắc và liên hệ hỗ trợ nếu cần.",
   },
   "zh-CN": {
@@ -32,7 +34,7 @@ const copy = {
     redeem: "赎回", rollover: "续存", recordInterest: "补记实收利息",
     maturing: "即将到期", matured: "已到期", archived: "已归档", ACTIVE: "有效",
     MATURING: "即将到期", MATURED: "已到期", REDEEMED: "已赎回", ROLLED_OVER: "已续存",
-    noNearest: "暂无", vnd: "₫", syncError: "操作失败，数据未标记为已同步。",
+    noNearest: "暂无", vnd: "₫", syncError: "操作失败，数据未标记为已同步。", cancel: "取消",
     acknowledgementCapacityWarning: "已使用 {count}/{limit} 条确认记录。请检查提醒设置，必要时联系支持。",
   },
 };
@@ -110,7 +112,7 @@ export function renderDepositManagement(vm) {
  * @param {HTMLElement} root
  * @param {import("../../types/app-state").DepositManagementBindings} [bindings]
  */
-export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete, confirm = globalThis.confirm } = {}) {
+export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete, confirm } = {}) {
   const section = /** @type {HTMLElement | null} */ (
     root.querySelector("[data-deposit-management]")
     || (root.matches("[data-deposit-management]") ? root : null)
@@ -118,6 +120,15 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
   if (!section) return;
   /** @param {string} selector */
   const buttons = (selector) => /** @type {NodeListOf<HTMLElement>} */ (section.querySelectorAll(selector));
+  /** @param {string} message @param {{ confirmLabel?: string, cancelLabel?: string }} [opts] */
+  const ask = (message, opts = {}) => (confirm
+    ? Promise.resolve(Boolean(confirm(message)))
+    : showConfirmAlert({
+        message,
+        confirmLabel: opts.confirmLabel || "OK",
+        cancelLabel: opts.cancelLabel || words(normalizeLocale(section.dataset.locale)).cancel,
+        tone: "destructive",
+      }));
   buttons("[data-add-deposit]").forEach(button => button.addEventListener("click", () => onAdd?.()));
   buttons("[data-edit-deposit]").forEach(button => button.addEventListener("click", () => { if (button.dataset.editDeposit) onEdit?.(button.dataset.editDeposit); }));
   buttons("[data-redeem-deposit]").forEach(button => button.addEventListener("click", () => { if (button.dataset.redeemDeposit) onRedeem?.(button.dataset.redeemDeposit); }));
@@ -128,13 +139,13 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
   }));
   buttons("[data-archive-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(normalizeLocale(section.dataset.locale));
-    if (confirm && !confirm(labels.archiveConfirm)) return;
+    if (!(await ask(labels.archiveConfirm, { confirmLabel: labels.archive, cancelLabel: labels.cancel }))) return;
     try { if (button.dataset.archiveDeposit) await onArchive?.(button.dataset.archiveDeposit); }
     catch (cause) { const error = /** @type {HTMLElement | null} */ (section.querySelector("[data-deposit-operation-error]")); if (error) { error.textContent = depositErrorMessage(cause, normalizeLocale(section.dataset.locale), "list"); error.hidden = false; } }
   }));
   buttons("[data-delete-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(normalizeLocale(section.dataset.locale));
-    if (confirm && !confirm(labels.deleteConfirm)) return;
+    if (!(await ask(labels.deleteConfirm, { confirmLabel: labels.delete, cancelLabel: labels.cancel }))) return;
     try { if (button.dataset.deleteDeposit) await onDelete?.(button.dataset.deleteDeposit); }
     catch (cause) { const error = /** @type {HTMLElement | null} */ (section.querySelector("[data-deposit-operation-error]")); if (error) { error.textContent = depositErrorMessage(cause, normalizeLocale(section.dataset.locale), "list"); error.hidden = false; } }
   }));

@@ -4,12 +4,12 @@
 export function renderHeader(host) {
   if (!host) throw new Error("App header host is required");
 
-  host.className = "safe-area-top sticky top-0 z-50 bg-white/85 backdrop-blur-xl border-b border-amber-100/60 shadow-sm";
+  host.className = "safe-area-top sticky top-0 z-50 app-header";
   host.innerHTML = `
     <nav data-i18n-aria-label="main_navigation">
       <div class="app-header-content max-w-[2200px] px-4 md:px-6 py-2.5 flex gap-2 justify-between items-center mx-auto">
         <div class="app-header-primary flex items-center gap-3 min-w-0">
-          <span data-icon="wallet" data-icon-class="w-8 h-8 text-amber-500 animate-float"></span>
+          <span data-icon="wallet" data-icon-class="w-8 h-8 text-amber-500"></span>
           <h1 class="text-xl font-black text-slate-800 font-heading flex items-center gap-2 min-w-0">
             <span class="relative inline-flex items-center bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl px-3 py-1.5 transition-colors cursor-pointer group shadow-sm">
               <select id="year-selector" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" title="" data-i18n="switch_year"></select>
@@ -20,7 +20,7 @@ export function renderHeader(host) {
           </h1>
         </div>
         <div class="app-header-tools flex items-center gap-2 shrink-0">
-          <div id="sync-status" class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-500 text-sm font-medium">
+          <div id="sync-status" class="sync-status-chip flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors">
             <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-slate-500"></span></span>
             <span id="sync-status-text" data-i18n="loading"></span>
           </div>

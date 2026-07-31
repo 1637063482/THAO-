@@ -214,7 +214,7 @@ describe("currency view", () => {
     mountShell([
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="1" selected>1</option></select>',
+      '<input type="hidden" id="qa-day" value="1">',
       '<select id="qa-cat"><option value="income" selected>income</option></select>',
       '<input id="qa-amount" value="1.25">',
       '<input id="qa-remark" value="">',
@@ -238,7 +238,7 @@ describe("currency view", () => {
       '<div id="toast-msg"></div>',
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="1" selected>1</option></select>',
+      '<input type="hidden" id="qa-day" value="1">',
       '<select id="qa-cat"><option value="income" selected>income</option></select>',
       '<input id="qa-amount" value="1.25">',
       '<input id="qa-remark" value="">',

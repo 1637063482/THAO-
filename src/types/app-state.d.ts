@@ -129,6 +129,7 @@ export interface SavingsGoalFormOptions {
   locale?: AppLocale;
   onSave?: () => void;
   onStatus?: (status: string, error?: unknown) => void;
+  confirm?: (message: string) => boolean;
 }
 
 export type Translate = (

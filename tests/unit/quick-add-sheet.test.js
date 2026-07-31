@@ -5,7 +5,7 @@ vi.mock("../../src/js/sync.js", () => ({ triggerCloudSave: vi.fn() }));
 const setupSheet = () => {
   document.body.innerHTML = [
     '<div id="quick-add-modal" aria-hidden="true"><div id="quick-add-panel" tabindex="-1"></div></div>',
-    '<select id="qa-day"><option value="1" selected>1</option></select>',
+    '<input type="hidden" id="qa-day" value="1">',
     '<select id="qa-cat"><option value="dining" selected>dining</option></select>',
     '<input id="qa-amount">',
     '<input id="qa-remark">',

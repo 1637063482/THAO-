@@ -91,19 +91,17 @@ describe("savings view", () => {
     globalThis.MutationObserver = OriginalObserver;
   });
 
-  it.each([["vi", "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?"], ["zh-CN", "确定要清空储蓄目标吗？"]])("uses localized clear confirmation for %s and keeps data on cancel", (locale, prompt) => {
+  it.each([["vi", "Bạn có chắc muốn xóa mục tiêu tiết kiệm không?"], ["zh-CN", "确定要清空储蓄目标吗？"]])("uses localized clear confirmation for %s and keeps data on cancel", async (locale, prompt) => {
     document.body.innerHTML = '<div id="root"></div>';
     const root = document.getElementById("root");
     root.dataset.locale = locale;
     const settings = { savings_goal_month_3: 300 };
     const pending = {};
     root.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input, locale }));
-    const originalConfirm = globalThis.confirm;
     let seen = "";
-    globalThis.confirm = (message) => { seen = message; return false; };
-    bindSavingsGoalForm(root, { settings, pendingUpdates: pending, month: 3, locale });
+    bindSavingsGoalForm(root, { settings, pendingUpdates: pending, month: 3, locale, confirm: (message) => { seen = message; return false; } });
     root.querySelector("[data-clear-goals]").click();
-    globalThis.confirm = originalConfirm;
+    await Promise.resolve();
     expect(seen).toBe(prompt);
     expect(settings.savings_goal_month_3).toBe(300);
     expect(pending).toEqual({});

@@ -6,7 +6,7 @@ export function renderCommandMenu(host) {
   host.innerHTML = `
     <div id="nav-secondary" class="nav-secondary-group">
       <div class="command-menu-group">
-        <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
+        <div class="segmented-control" role="group" aria-label="Language">
           <button type="button" id="btn-lang-vi" data-command="language" data-locale="vi" class="month-tab active min-w-[40px] text-xs">VI</button>
           <button type="button" id="btn-lang-zh" data-command="language" data-locale="zh-CN" class="month-tab min-w-[40px] text-xs">中文</button>
         </div>
@@ -31,7 +31,7 @@ export function renderCommandMenu(host) {
         <span id="export-label-text" data-i18n="export_csv"></span>
       </button>
       <div class="command-menu-group">
-        <div class="flex items-center bg-slate-100/80 rounded-xl p-1 border border-slate-200/60 shadow-inner">
+        <div class="segmented-control" role="group" aria-label="Currency">
           <button type="button" id="btn-curr-vnd" onclick="window.switchCurrency('VND')" class="month-tab active min-w-[52px] text-xs">VND</button>
           <button type="button" id="btn-curr-cny" onclick="window.switchCurrency('CNY')" class="month-tab min-w-[52px] text-xs">CNY</button>
         </div>

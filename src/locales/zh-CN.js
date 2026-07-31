@@ -43,6 +43,9 @@ export default {
   // Quick add
   quick_add_title: "快速记账",
   date: "日期",
+  today: "今天",
+  yesterday: "昨天",
+  tomorrow: "明天",
   category: "分类",
   amount: "金额",
   remark_optional: "备注 (可选)",

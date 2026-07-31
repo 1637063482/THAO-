@@ -72,6 +72,49 @@ function resetSubmitControl() {
   if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
 }
 
+/** @param {number} day @param {boolean} [focusPicker] */
+function setQuickAddDay(day) {
+  const daySel = document.getElementById("qa-day");
+  const chipsRoot = document.getElementById("qa-day-chips");
+  const picker = document.getElementById("qa-date-picker");
+  if (daySel) daySel.value = String(day);
+  if (chipsRoot) {
+    chipsRoot.querySelectorAll(".qa-day-chip").forEach(btn => {
+      btn.classList.toggle("active", Number(btn.dataset.day) === day);
+    });
+  }
+  if (picker) {
+    picker.value = state.activeYear + "-" + String(state.activeMonthId).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+  }
+}
+
+/** @param {number} year @param {number} month @param {number} day */
+function quickAddDateKey(year, month, day) {
+  return year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
+}
+
+function bindQuickAddDatePickers() {
+  const chipsRoot = document.getElementById("qa-day-chips");
+  const picker = document.getElementById("qa-date-picker");
+  if (chipsRoot && !chipsRoot.dataset.bound) {
+    chipsRoot.dataset.bound = "1";
+    chipsRoot.addEventListener("click", event => {
+      const btn = event.target instanceof Element ? event.target.closest(".qa-day-chip") : null;
+      if (!(btn instanceof HTMLButtonElement) || btn.disabled) return;
+      setQuickAddDay(Number(btn.dataset.day));
+    });
+  }
+  if (picker && !picker.dataset.bound) {
+    picker.dataset.bound = "1";
+    picker.addEventListener("change", () => {
+      const parts = picker.value.split("-");
+      if (parts.length === 3 && parts[0] === String(state.activeYear) && Number(parts[1]) === state.activeMonthId) {
+        setQuickAddDay(Number(parts[2]));
+      }
+    });
+  }
+}
+
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
@@ -83,16 +126,38 @@ export function openQuickAdd() {
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
 
-  const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
+  const today = getLedgerToday();
+  const todayInMonth = today.year === state.activeYear && today.month === state.activeMonthId;
+  const defaultDay = todayInMonth ? today.day : 1;
+
   const daySel = document.getElementById("qa-day");
-  if (daySel) {
-    const today = getLedgerToday();
-    daySel.innerHTML = "";
-    for (let d = 1; d <= monthDays; d++) {
-      const isToday = d === today.day && state.activeMonthId === today.month && state.activeYear === today.year;
-      daySel.innerHTML += '<option value="' + d + '" ' + (isToday ? "selected" : "") + '>' + t("month_display", { month: state.activeMonthId }) + " " + t("day_display", { day: d }) + '</option>';
-    }
+  if (daySel) daySel.value = String(defaultDay);
+
+  const chipsRoot = document.getElementById("qa-day-chips");
+  if (chipsRoot) {
+    chipsRoot.innerHTML = "";
+    [["yesterday", -1], ["today", 0], ["tomorrow", 1]].forEach(([key, offset]) => {
+      const shifted = new Date(Date.UTC(state.activeYear, state.activeMonthId - 1, defaultDay + offset));
+      const sameMonth = shifted.getUTCFullYear() === state.activeYear && shifted.getUTCMonth() === state.activeMonthId - 1;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "qa-day-chip" + (offset === 0 ? " active" : "");
+      button.textContent = t(key);
+      button.disabled = !sameMonth;
+      button.dataset.day = String(shifted.getUTCDate());
+      chipsRoot.appendChild(button);
+    });
   }
+
+  const picker = document.getElementById("qa-date-picker");
+  if (picker) {
+    const daysInMonth = getDaysInMonth(state.activeYear, state.activeMonthId);
+    picker.min = quickAddDateKey(state.activeYear, state.activeMonthId, 1);
+    picker.max = quickAddDateKey(state.activeYear, state.activeMonthId, daysInMonth);
+    setQuickAddDay(defaultDay);
+  }
+
+  bindQuickAddDatePickers();
 
   const catSel = document.getElementById("qa-cat");
   if (catSel && catSel.options.length === 0) {
@@ -104,7 +169,7 @@ export function openQuickAdd() {
   
   setTimeout(() => {
     modal.style.opacity = '1';
-    panel.style.transform = 'scale(1)';
+    panel.style.transform = 'translateY(0)';
     document.getElementById("qa-amount")?.focus();
   }, 10);
 }
@@ -116,7 +181,7 @@ export function closeQuickAdd() {
   modal.setAttribute("aria-hidden", "true");
   modal.classList.remove("is-open");
   modal.style.opacity = '0';
-  panel.style.transform = 'scale(0.95)';
+  panel.style.transform = 'translateY(24px)';
   setTimeout(() => { modal.style.display = 'none'; if (lastTrigger && typeof lastTrigger.focus === "function") lastTrigger.focus(); }, 300);
 }
 

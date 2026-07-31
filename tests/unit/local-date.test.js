@@ -77,7 +77,7 @@ describe("Vietnam ledger clock", () => {
     document.body.innerHTML = [
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"></select>',
+      '<input type="hidden" id="qa-day" value="">',
       '<select id="qa-cat"></select>',
       '<input id="qa-amount">',
     ].join("");
@@ -156,7 +156,7 @@ describe("Vietnam ledger clock", () => {
       '<span id="ui-year-end"></span>',
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"></select>',
+      '<input type="hidden" id="qa-day" value="">',
       '<select id="qa-cat"><option value="income">income</option></select>',
       '<input id="qa-amount" value="50000">',
       '<input id="qa-remark" value="">',
