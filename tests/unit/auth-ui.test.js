@@ -16,6 +16,16 @@ describe("login interface focus contract", () => {
     expect(css).toMatch(/\.auth-password-toggle:focus-visible\s*\{[\s\S]*?box-shadow:\s*none/);
   });
 
+  it("keeps browser autofill inside the rounded auth field and the app surface", () => {
+    const css = read("src/css/app.css");
+
+    expect(css).toMatch(/\.auth-field\s*\{[\s\S]*?overflow:\s*hidden/);
+    expect(css).toMatch(/\.auth-input:-webkit-autofill/);
+    expect(css).toMatch(/-webkit-text-fill-color:\s*var\(--color-label\)/);
+    expect(css).toMatch(/-webkit-box-shadow:\s*0 0 0 1000px var\(--color-surface-secondary\) inset/);
+    expect(css).toMatch(/\.auth-input:autofill/);
+  });
+
   it("keeps the password toggle in the password field container", () => {
     const html = read("index.html");
     expect(html).toMatch(/<div class="auth-field">\s*<label class="auth-field-label"[^>]+for="auth-password"[\s\S]*?<input[^>]+id="auth-password"[\s\S]*?<button[^>]+id="auth-password-toggle"[^>]+role="switch"[^>]+aria-checked="false"/);

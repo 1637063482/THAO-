@@ -26,7 +26,7 @@ export const state = {
   currentCurrency: "VND",
   fxMode: "auto",
   fxRateAuto: null,
-  fxRateManual: 3500,
+  fxRateManual: 3700,
   isSaving: false,
   isFirstLoad: true,
   currentUser: null,

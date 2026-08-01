@@ -51,6 +51,60 @@ describe("quick-add bottom sheet", () => {
     expect(document.getElementById("qa-remark").value).toBe("test note");
   });
 
+  it("formats the quick-add amount with thousands separators while typing", async () => {
+    await import("../../src/js/quick-add.js");
+    const amount = document.getElementById("qa-amount");
+
+    amount.value = "1234567";
+    amount.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(amount.type).toBe("text");
+    expect(amount.value).toBe("1,234,567");
+  });
+
+  it("submits a formatted quick-add amount as the original numeric VND value", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const sync = await import("../../src/js/sync.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.currentCurrency = "VND";
+    stateModule.state.appState.entries = {};
+    stateModule.state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
+    sync.triggerCloudSave.mockImplementation(() => {});
+    document.getElementById("qa-amount").value = "1,234,567";
+
+    quickAdd.submitQuickAdd();
+
+    const key = stateModule.state.activeMonthId + "_1_dining";
+    expect(stateModule.state.appState.entries[key]).toBe("=1234567");
+  });
+
+  it("formats CNY quick-add amounts with separators and decimal precision", async () => {
+    await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.currentCurrency = "CNY";
+    const amount = document.getElementById("qa-amount");
+
+    amount.value = "1234567.89";
+    amount.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(amount.value).toBe("1,234,567.89");
+  });
+
+  it("does not turn a fractional VND amount into a different valid integer", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.currentCurrency = "VND";
+    stateModule.state.appState.entries = {};
+    const amount = document.getElementById("qa-amount");
+
+    amount.value = "1.5";
+    amount.dispatchEvent(new Event("input", { bubbles: true }));
+    quickAdd.submitQuickAdd();
+
+    expect(amount.value).toBe("1.5");
+    expect(stateModule.state.appState.entries[stateModule.state.activeMonthId + "_1_dining"]).toBeUndefined();
+  });
+
   it("ignores a re-entrant duplicate submit while the first save is in flight", async () => {
     const quickAdd = await import("../../src/js/quick-add.js");
     const sync = await import("../../src/js/sync.js");

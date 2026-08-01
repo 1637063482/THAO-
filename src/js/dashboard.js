@@ -8,6 +8,7 @@
 import { t, getCurrentLocale } from "./i18n.js";
 import { state } from "./state.js";
 import { getLedgerStreakDate, getLedgerToday } from "./clock.js";
+import { formatDisplay } from "./utils.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
 
 const dashboardLabels = {
@@ -40,20 +41,20 @@ export function renderDashboard(vm) {
   }
 
   // Hero: budget remaining
-  var heroAmount = vm.budgetRemaining.toLocaleString("en-US");
+  var heroAmount = formatDisplay(vm.budgetRemaining);
   var heroClass = vm.isOverBudget ? "dashboard-budget-value over-budget" : "dashboard-budget-value";
 
   var heroHtml = '<div class="dashboard-hero card p-6 mb-4 text-center">'
     + '<p class="text-sm text-slate-500 mb-1">' + dashboardText("budget_remaining") + '</p>'
     + '<p class="text-4xl font-black ' + heroClass + ' blur-sensitive">' + heroAmount + '</p>'
-    + '<p class="text-xs text-slate-400 mt-1">' + dashboardText("budget_of") + ' ' + vm.budgetVnd.toLocaleString("en-US") + '</p>'
+    + '<p class="text-xs text-slate-400 mt-1">' + dashboardText("budget_of") + ' ' + formatDisplay(vm.budgetVnd) + '</p>'
     + '</div>';
 
   // Stats row
   var statsHtml = '<div class="grid grid-cols-2 gap-3 mb-4">'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("today_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + vm.todaySpending.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + vm.totalSpending.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold dashboard-income-value blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("today_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + formatDisplay(vm.todaySpending) + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + formatDisplay(vm.totalSpending) + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold dashboard-income-value blur-sensitive">' + formatDisplay(vm.totalIncome) + '</p></div>'
     + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("streak_days") + '</p><p class="text-xl font-bold text-slate-800">' + vm.streak.streak + ' <span class="text-sm font-normal text-slate-400">' + t("streak_unit") + '</span></p></div>'
     + '</div>';
 
@@ -64,7 +65,7 @@ export function renderDashboard(vm) {
     vm.topCategories.forEach(function (cat) {
       topHtml += '<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">'
         + '<span class="text-sm">' + cat.emoji + ' ' + t(cat.label) + '</span>'
-        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + cat.spending.toLocaleString("en-US") + '</span>'
+        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + formatDisplay(cat.spending) + '</span>'
         + '</div>';
     });
     topHtml += '</div>';
@@ -78,7 +79,7 @@ export function renderDashboard(vm) {
     vm.days.forEach(function (day) {
       recentHtml += '<div class="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">'
         + '<span class="text-xs text-slate-500">' + day.dateKey + '</span>'
-        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + day.totalSpending.toLocaleString("en-US") + '</span>'
+        + '<span class="text-sm font-semibold text-slate-700 blur-sensitive">' + formatDisplay(day.totalSpending) + '</span>'
         + '</div>';
     });
     recentHtml += '</div>';

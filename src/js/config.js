@@ -17,5 +17,5 @@ export const expenseCategories = [
   { id: "other", nameKey: "category_other", name: "其他支出", emoji: "📦", color: "#6b7280" },
 ];
 
-export const DEFAULT_FX_RATE = 3500;
+export const DEFAULT_FX_RATE = 3700;
 export const DEFAULT_BUDGET_VND = 15000000;

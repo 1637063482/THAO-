@@ -1,7 +1,8 @@
 import { state } from "./state.js";
 import { t } from "./i18n.js";
 import { expenseCategories, DEFAULT_BUDGET_VND } from "./config.js";
-import { safeEval, formatDisplay, formatSymbol, getActiveRate } from "./utils.js";
+import { safeEval, formatDisplay, formatSymbol, getActiveRate, showToast } from "./utils.js";
+import { isValidCurrencyRate } from "./currency-view.js";
 import { updateCharts } from "./charts.js";
 import { triggerCloudSave } from "./sync.js";
 
@@ -46,7 +47,14 @@ export function saveBudgetAndCalculate() {
   if (!rawInput) return;
   let val = safeEval(rawInput);
   let vndVal = val;
-  if (state.currentCurrency === "CNY") vndVal = val * getActiveRate();
+  if (state.currentCurrency === "CNY") {
+    const activeRate = getActiveRate();
+    if (!isValidCurrencyRate(activeRate)) {
+      showToast(t("fx_unavailable"), true);
+      return;
+    }
+    vndVal = val * activeRate;
+  }
   if (!state.appState.settings) state.appState.settings = {};
   // Use per-month key for budget so switching months doesn't reuse the same value.
   state.appState.settings["budget_" + state.activeMonthId] = vndVal;
@@ -63,16 +71,24 @@ export function saveBudgetAndCalculate() {
 
 export function updateBudgetProgress() {
   const targetBudgetVND = getRawBudgetVND();
-  const targetBudget = state.currentCurrency === "VND" ? targetBudgetVND : targetBudgetVND / getActiveRate();
+  const activeRate = getActiveRate();
+  const bar = document.getElementById("budget-progress-bar");
+  const txt = document.getElementById("budget-text");
+  if (!bar || !txt) return;
+  if (state.currentCurrency === "CNY" && !isValidCurrencyRate(activeRate)) {
+    bar.style.width = "0%";
+    bar.className = "progress-bar";
+    txt.className = "budget-tip-text";
+    txt.textContent = t("fx_unavailable");
+    return;
+  }
+  const targetBudget = state.currentCurrency === "VND" ? targetBudgetVND : targetBudgetVND / activeRate;
   let currentMonthExp = 0;
   if (state.monthlyCatSums[state.activeMonthId]) {
     currentMonthExp = Object.values(state.monthlyCatSums[state.activeMonthId]).reduce((a, b) => a + b, 0);
   }
-  const displayExp = state.currentCurrency === "VND" ? currentMonthExp : currentMonthExp / getActiveRate();
+  const displayExp = state.currentCurrency === "VND" ? currentMonthExp : currentMonthExp / activeRate;
   let pct = targetBudget > 0 ? (displayExp / targetBudget) * 100 : 0;
-  const bar = document.getElementById("budget-progress-bar");
-  const txt = document.getElementById("budget-text");
-  if (!bar || !txt) return;
   let widthPct = Math.min(pct, 100);
   bar.style.width = widthPct + "%";
   if (pct >= 90) { bar.className = "progress-bar danger"; }

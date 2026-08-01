@@ -49,6 +49,23 @@ describe("FX display adapter", () => {
     });
   });
 
+  it("uses the fallback endpoint when the primary FX endpoint fails", async () => {
+    const storage = memoryStorage();
+    const calls = [];
+    const fetchImpl = vi.fn(async url => {
+      calls.push(url);
+      if (url === "primary") throw new Error("CDN unavailable");
+      return okResponse({ cny: { vnd: 3620 } });
+    });
+
+    await expect(loadCnyVndRate({ fetchImpl, storage, now, url: "primary", fallbackUrl: "fallback" })).resolves.toMatchObject({
+      ok: true,
+      rate: 3620,
+      source: "live",
+    });
+    expect(calls).toEqual(["primary", "fallback"]);
+  });
+
   it("times out slow FX requests and uses the last valid cache with age visible", async () => {
     vi.useFakeTimers();
     const storage = memoryStorage({
@@ -60,6 +77,7 @@ describe("FX display adapter", () => {
       storage,
       now,
       timeoutMs: 1000,
+      fallbackUrl: null,
     });
 
     await vi.advanceTimersByTimeAsync(1000);

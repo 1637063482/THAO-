@@ -1,6 +1,7 @@
 import { state } from "./state.js";
 import { expenseCategories } from "./config.js";
 import { formatSymbol, getActiveRate } from "./utils.js";
+import { isValidCurrencyRate } from "./currency-view.js";
 import { t } from "./i18n.js";
 
 let yearlyChart = null;
@@ -138,11 +139,12 @@ export function updateCharts() {
   clearTimeout(chartTimeout);
   chartTimeout = setTimeout(function () {
     var rate = getActiveRate();
+    var canConvert = state.currentCurrency === "VND" || isValidCurrencyRate(rate);
 
     // Build year data with labels, sorted desc
     var yearEntries = expenseCategories.map(function (c) {
       var v = state.yearlyCatSums[c.id] || 0;
-      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
+      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : canConvert ? +(v / rate).toFixed(2) : 0 };
     });
     yearEntries.sort(function (a, b) { return b.value - a.value; });
 
@@ -156,7 +158,7 @@ export function updateCharts() {
     var mobj = state.monthlyCatSums[state.activeMonthId] || {};
     var monthEntries = expenseCategories.map(function (c) {
       var v = mobj[c.id] || 0;
-      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : +(v / rate).toFixed(2) };
+      return { label: t(c.nameKey), value: state.currentCurrency === "VND" ? Math.round(v) : canConvert ? +(v / rate).toFixed(2) : 0 };
     });
     monthEntries.sort(function (a, b) { return b.value - a.value; });
 

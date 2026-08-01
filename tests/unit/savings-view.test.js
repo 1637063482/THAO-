@@ -16,6 +16,22 @@ describe("savings view", () => {
     expect(renderSavingsPage(vm)).toContain("储蓄目标");
   });
 
+  it("uses the supplied currency formatter for read-only savings totals", () => {
+    const vm = buildSavingsViewModel({ ...input, locale: "zh-CN" });
+    const formatCny = value => Number(value / 3500).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    expect(renderSavingsSummary(vm, formatCny)).toContain("85.71");
+    expect(renderSavingsPage(vm, formatCny)).toContain("1,142.86");
+  });
+
+  it("marks savings differences and goal inputs as privacy-sensitive", () => {
+    document.body.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input }));
+
+    expect(document.querySelectorAll(".savings-metric small.blur-sensitive")).toHaveLength(2);
+    expect(document.querySelectorAll(".savings-goal-form input.savings-goal-input")).toHaveLength(2);
+    expect(document.querySelector(".savings-goal-form input.savings-goal-input").classList.contains("blur-sensitive")).toBe(true);
+  });
+
   it("renders and edits savings goals with readable VND separators", () => {
     document.body.innerHTML = '<div id="root"></div>';
     const root = document.getElementById("root");

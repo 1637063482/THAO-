@@ -94,6 +94,7 @@ export interface SavingsControllerDependencies {
   getSavingsState?: () => SavingsState;
   getLocale?: () => AppLocale;
   getDashboardViewModel?: (month: number) => DashboardViewModel;
+  formatMoney?: (value: number) => string;
   triggerCloudSave?: () => void;
 }
 
@@ -359,6 +360,7 @@ export interface DepositControllerDependencies {
   getToday: () => string;
   getNextMidnightDelay: () => number;
   getLocale: () => AppLocale;
+  formatMoney?: (value: number) => string;
   queueLegacyInterest: (input: {
     amountVnd: number;
     dateKey: string;

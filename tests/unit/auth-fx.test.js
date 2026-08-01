@@ -21,10 +21,16 @@ vi.mock("../../src/js/fx-display.js", () => ({
   loadCnyVndRate: vi.fn(),
 }));
 
+vi.mock("../../src/components/feedback/confirmation-dialog.js", () => ({
+  requestAppConfirmation: vi.fn(),
+}));
+
 import { bindAuthPasswordToggle, initAuth, handleLogin } from "../../src/js/auth.js";
+import * as authModule from "../../src/js/auth.js";
 import { loadCnyVndRate } from "../../src/js/fx-display.js";
+import { requestAppConfirmation } from "../../src/components/feedback/confirmation-dialog.js";
 import { state } from "../../src/js/state.js";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 
 describe("auth FX display integration", () => {
   beforeEach(() => {
@@ -50,6 +56,22 @@ describe("auth FX display integration", () => {
       expect(document.getElementById("auto-rate-display").innerText).toBe("(汇率不可用)");
     });
     expect(state.fxRateAuto).toBeNull();
+  });
+
+  it("provides a retryable automatic FX refresh after an earlier failure", async () => {
+    loadCnyVndRate.mockResolvedValue({
+      ok: true,
+      rate: 3620,
+      source: "live",
+      updatedAt: "2026-07-20T04:00:00.000Z",
+      stale: false,
+      message: "(live: 3620)",
+    });
+
+    expect(authModule.refreshAutoRate).toBeTypeOf("function");
+    await authModule.refreshAutoRate();
+
+    expect(state.fxRateAuto).toBe(3620);
   });
 
   it("toggles password visibility without moving focus outside the password field", () => {
@@ -131,5 +153,20 @@ describe("auth FX display integration", () => {
     await handleLogin();
 
     expect(document.getElementById("auth-error").textContent).toContain("sai tài khoản hoặc mật khẩu");
+  });
+
+  it("signs out only after the user confirms the logout dialog", async () => {
+    requestAppConfirmation.mockResolvedValueOnce(false);
+    await authModule.logoutApp();
+    expect(signOut).not.toHaveBeenCalled();
+
+    requestAppConfirmation.mockResolvedValueOnce(true);
+    await authModule.logoutApp();
+    expect(requestAppConfirmation).toHaveBeenLastCalledWith({
+      message: expect.any(String),
+      title: expect.any(String),
+      destructive: true,
+    });
+    expect(signOut).toHaveBeenCalledOnce();
   });
 });

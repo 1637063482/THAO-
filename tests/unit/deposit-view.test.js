@@ -26,6 +26,17 @@ describe("deposit management view", () => {
     expect(renderDepositManagement(buildDepositViewModel({ document: storageDocument(), today: "2026-06-01", locale: "zh-CN" }))).toContain("添加第一笔存款");
   });
 
+  it("uses the supplied currency formatter for read-only deposit totals", () => {
+    const vm = buildDepositViewModel({
+      document: storageDocument({ active: deposit() }),
+      today: "2026-06-01",
+      locale: "zh-CN",
+    });
+    const formatCny = value => `¥ ${Number(value / 3500).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+    expect(renderDepositManagement(vm, { formatMoney: formatCny })).toContain("¥ 2,857.14");
+  });
+
   it("sorts by maturity, derives states, excludes archived totals and renders card/table parity", () => {
     const vm = buildDepositViewModel({
       document: storageDocument({

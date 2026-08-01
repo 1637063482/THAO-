@@ -3,12 +3,12 @@ import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
 import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd } from "./currency-view.js";
-import { initAuth, handleLogin, logoutApp, updateActivityTime } from "./auth.js";
+import { initAuth, handleLogin, logoutApp, refreshAutoRate, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
 import { fullRebuildDOM, softUpdateDOM, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
 import { setLedgerView, getLedgerView } from "./day-ledger.js";
 import { calculateAll, updateBudgetUI, saveBudgetAndCalculate } from "./budget.js";
-import { openQuickAdd, closeQuickAdd, submitQuickAdd, queueLegacyIncomeOnce } from "./quick-add.js";
+import { closeQuickAdd, openQuickAdd, queueLegacyIncomeOnce, refreshQuickAddAmountInput, submitQuickAdd } from "./quick-add.js";
 import { initIcons } from "./icons.js";
 import { buildLegacyCsv } from "./export.js";
 import { t, setLocale, getCurrentLocale, applyI18n } from "./i18n.js";
@@ -76,20 +76,24 @@ applyI18n();
   }
 })();
 
-const depositController = createDepositController(createDepositDependencies({
-  db,
-  projectId,
-  state,
-  getToday: () => getLedgerToday().dateKey,
-  getNextMidnightDelay: getNextLedgerMidnightDelay,
-  getLocale: getCurrentLocale,
-  queueLegacyInterest: queueLegacyIncomeOnce,
-}));
+const depositController = createDepositController({
+  ...createDepositDependencies({
+    db,
+    projectId,
+    state,
+    getToday: () => getLedgerToday().dateKey,
+    getNextMidnightDelay: getNextLedgerMidnightDelay,
+    getLocale: getCurrentLocale,
+    queueLegacyInterest: queueLegacyIncomeOnce,
+  }),
+  formatMoney: formatSymbol,
+});
 
 const savingsController = createSavingsController({
   getSavingsState: () => ({ settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId }),
   getLocale: getCurrentLocale,
   getDashboardViewModel: (month) => buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } }),
+  formatMoney: formatDisplay,
   triggerCloudSave,
 });
 
@@ -251,7 +255,11 @@ function switchCurrency(curr) {
   if (qaBadge) qaBadge.innerText = curr;
   var fxPanel = document.getElementById("fx-panel");
   if (fxPanel) fxPanel.classList.toggle("hidden", curr !== "CNY");
+  refreshQuickAddAmountInput();
   ledgerController.refresh();
+  if (curr === "CNY" && state.fxMode === "auto" && !isValidCurrencyRate(state.fxRateAuto)) {
+    refreshAutoRate().then(() => ledgerController.refresh());
+  }
 }
 
 function changeFxMode(mode) {
@@ -262,8 +270,13 @@ function changeFxMode(mode) {
   if (manualBtn) manualBtn.classList.toggle("active", mode === "manual");
   var input = document.getElementById("manual-rate-input");
   var btn = document.getElementById("btn-apply-rate");
-  if (mode === "manual") { if (input) input.disabled = false; if (btn) btn.classList.remove("hidden"); }
-  else { if (input) input.disabled = true; if (btn) btn.classList.add("hidden"); ledgerController.refresh(); }
+  if (input) { input.disabled = mode !== "manual"; input.classList.toggle("hidden", mode !== "manual"); }
+  if (mode === "manual") { if (btn) btn.classList.remove("hidden"); }
+  else {
+    if (btn) btn.classList.add("hidden");
+    ledgerController.refresh();
+    if (state.currentCurrency === "CNY" && !isValidCurrencyRate(state.fxRateAuto)) refreshAutoRate().then(() => ledgerController.refresh());
+  }
 }
 
 function applyManualRate() {
@@ -364,6 +377,7 @@ setTimeout(function () {
     setLanguage: switchLanguage,
     toggleTheme: toggleDarkMode,
     togglePrivacy: togglePrivacy,
+    logout: logoutApp,
   });
 }, 50);
 setTimeout(updateLedgerToggleLabel, 50);

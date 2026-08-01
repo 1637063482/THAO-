@@ -2,7 +2,7 @@ import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
-import { convertCnyAmountToVnd, isValidCurrencyRate } from "./currency-view.js";
+import { convertCnyAmountToVnd, formatCurrencyInput, isValidCurrencyRate, normalizeCurrencyInput } from "./currency-view.js";
 import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
@@ -73,6 +73,39 @@ function resetSubmitControl() {
   if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
 }
 
+function formatQuickAddAmountInput(input) {
+  const selectionStart = input.selectionStart ?? input.value.length;
+  const significantBeforeCaret = input.value.slice(0, selectionStart).replace(/[^\d.]/g, "").length;
+  const formatted = formatCurrencyInput(input.value, state.currentCurrency);
+  input.value = formatted;
+  if (document.activeElement === input) {
+    let seen = 0;
+    let caret = formatted.length;
+    for (let index = 0; index < formatted.length; index += 1) {
+      if (/[\d.]/.test(formatted[index])) seen += 1;
+      if (seen === significantBeforeCaret) {
+        caret = index + 1;
+        break;
+      }
+    }
+    input.setSelectionRange(caret, caret);
+  }
+}
+
+function bindQuickAddAmountInput() {
+  const input = document.getElementById("qa-amount");
+  if (!input || input.dataset.amountFormattingBound === "1") return;
+  input.type = "text";
+  input.inputMode = "decimal";
+  input.addEventListener("input", () => formatQuickAddAmountInput(input));
+  input.dataset.amountFormattingBound = "1";
+}
+
+export function refreshQuickAddAmountInput() {
+  const input = document.getElementById("qa-amount");
+  if (input) formatQuickAddAmountInput(input);
+}
+
 function buildQuickAddDayOptions({ selectDefault = false } = {}) {
   const today = getLedgerToday();
   const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
@@ -116,6 +149,7 @@ export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
+  bindQuickAddAmountInput();
   resetSubmitControl();
   lastTrigger = document.getElementById("fab-btn") || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
   modal.setAttribute("aria-hidden", "false");
@@ -146,6 +180,7 @@ export function closeQuickAdd() {
 }
 
 if (typeof document !== "undefined") {
+  bindQuickAddAmountInput();
   bindAppDropdown(document.getElementById("qa-day"));
   bindAppDropdown(document.getElementById("qa-cat"));
   if (window.__quickAddLocaleHandler) window.removeEventListener("locale-changed", window.__quickAddLocaleHandler);
@@ -180,7 +215,7 @@ export function submitQuickAdd() {
 
   const d = getAppDropdownValue(document.getElementById("qa-day"));
   const cat = getAppDropdownValue(document.getElementById("qa-cat"));
-  const rawAmt = document.getElementById("qa-amount")?.value;
+  const rawAmt = normalizeCurrencyInput(document.getElementById("qa-amount")?.value);
   const remark = document.getElementById("qa-remark")?.value;
 
   const month = Number(state.activeMonthId);

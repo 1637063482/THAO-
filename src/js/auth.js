@@ -18,6 +18,7 @@ const SESSION_KEY = "family_expense_app_last_active";
 const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
 let sessionCheckIntervalId = null;
 let loginGuardTimerId = null;
+let autoRateRefreshPromise = null;
 
 function clearLoginGuard() {
   if (loginGuardTimerId !== null) {
@@ -63,7 +64,7 @@ export function bindAuthPasswordToggle() {
 bindAuthPasswordToggle();
 
 export function initAuth(onLoginCallback, onLogoutCallback) {
-  fetchReliableAutoRate();
+  refreshAutoRate();
   checkSessionTimeout();
   sessionCheckIntervalId = setInterval(checkSessionTimeout, 60000);
 
@@ -94,11 +95,17 @@ export function initAuth(onLoginCallback, onLogoutCallback) {
   });
 }
 
-async function fetchReliableAutoRate() {
-  const result = await loadCnyVndRate();
-  state.fxRateAuto = result.ok ? result.rate : null;
-  const el = document.getElementById("auto-rate-display");
-  if (el) el.innerText = result.message;
+export function refreshAutoRate() {
+  if (autoRateRefreshPromise) return autoRateRefreshPromise;
+  autoRateRefreshPromise = loadCnyVndRate()
+    .then(result => {
+      state.fxRateAuto = result.ok ? result.rate : null;
+      const el = document.getElementById("auto-rate-display");
+      if (el) el.innerText = result.message;
+      return result;
+    })
+    .finally(() => { autoRateRefreshPromise = null; });
+  return autoRateRefreshPromise;
 }
 
 function checkSessionTimeout() {

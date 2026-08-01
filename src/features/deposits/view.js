@@ -93,13 +93,15 @@ export function buildDepositViewModel({ document, today, locale = "vi", status =
 function stateMessage(vm, label) {
   return `<div class="deposit-state deposit-state-${vm.status}" role="status">${escapeHtml(label)}</div>`;
 }
-/** @param {import("../../types/app-state").DepositViewModel} vm */
-export function renderDepositManagement(vm) {
+/** @param {import("../../types/app-state").DepositViewModel} vm @param {{ formatMoney?: (value: number) => string }} [options] */
+export function renderDepositManagement(vm, { formatMoney } = {}) {
   const labels = words(vm.locale);
+  /** @type {(value: number | null | undefined, locale: import("../../types/app-state").AppLocale) => string} */
+  const displayMoney = typeof formatMoney === "function" ? (value, _locale) => formatMoney(value || 0) : money;
   const banner = vm.status === "loading" ? stateMessage(vm, labels.loading) : vm.status === "syncing" ? stateMessage(vm, labels.syncing) : vm.status === "offline" ? stateMessage(vm, labels.offline) : vm.status === "error" ? stateMessage(vm, vm.errorMessage || labels.error) : "";
   const capacityWarning = vm.acknowledgementCount >= ACKNOWLEDGEMENT_WARNING_THRESHOLD
     ? `<p class="deposit-capacity-warning" role="status">${escapeHtml(labels.acknowledgementCapacityWarning.replace("{count}", String(vm.acknowledgementCount)).replace("{limit}", String(MAX_ACKNOWLEDGEMENTS)))}</p>` : "";
-  const metrics = `<div class="deposit-metrics"><div><span>${labels.principal}</span><strong class="blur-sensitive">${money(vm.totalPrincipalVnd, vm.locale)}</strong></div><div><span>${labels.interest}</span><strong class="blur-sensitive">${money(vm.summary.expectedInterestVnd, vm.locale)}</strong></div><div><span>${labels.maturityTotal}</span><strong class="blur-sensitive">${money(vm.summary.expectedMaturityTotalVnd, vm.locale)}</strong></div><div><span>${labels.nearest}</span><strong>${vm.nearest ? escapeHtml(vm.nearest.maturesOn) : labels.noNearest}</strong></div></div>`;
+  const metrics = `<div class="deposit-metrics"><div><span>${labels.principal}</span><strong class="blur-sensitive">${displayMoney(vm.totalPrincipalVnd, vm.locale)}</strong></div><div><span>${labels.interest}</span><strong class="blur-sensitive">${displayMoney(vm.summary.expectedInterestVnd, vm.locale)}</strong></div><div><span>${labels.maturityTotal}</span><strong class="blur-sensitive">${displayMoney(vm.summary.expectedMaturityTotalVnd, vm.locale)}</strong></div><div><span>${labels.nearest}</span><strong class="blur-sensitive">${vm.nearest ? escapeHtml(vm.nearest.maturesOn) : labels.noNearest}</strong></div></div>`;
   const filter = `<label class="deposit-filter"><span class="sr-only">${labels.status}</span>${renderAppDropdown({
     className: "deposit-filter-dropdown", value: vm.filter, ariaLabel: labels.status,
     options: [
@@ -113,7 +115,7 @@ export function renderDepositManagement(vm) {
   let content;
   if (vm.status === "loading" && vm.visible.length === 0) content = "";
   else if (vm.visible.length === 0) content = `<div class="deposit-empty"><p>${labels.empty}</p><button type="button" class="btn-primary" data-add-deposit>${labels.first}</button></div>`;
-  else { const options = { locale: vm.locale, labels, money, productLabel: depositProductLabel, escape: escapeHtml }; content = `<div class="deposit-card-list">${vm.visible.map(item => renderDepositCard(item, options)).join("")}</div>${renderDepositTable(vm.visible, options)}`; }
+  else { const options = { locale: vm.locale, labels, money: displayMoney, productLabel: depositProductLabel, escape: escapeHtml }; content = `<div class="deposit-card-list">${vm.visible.map(item => renderDepositCard(item, options)).join("")}</div>${renderDepositTable(vm.visible, options)}`; }
   return `<section class="deposit-management card" data-deposit-management data-locale="${vm.locale}"><header><div><p class="deposit-eyebrow">${labels.nearest}</p><h2>${labels.title}</h2></div><button type="button" class="btn-primary" data-add-deposit>${labels.add}</button></header>${banner}${capacityWarning}${metrics}<div class="deposit-toolbar">${filter}</div>${content}<p class="deposit-operation-error" data-deposit-operation-error hidden>${labels.syncError}</p></section>`;
 }
 

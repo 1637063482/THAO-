@@ -31,8 +31,13 @@ export default {
 
   // Nav actions
   import_label: "Nhập",
+  logout: "Đăng xuất",
   share: "Chia sẻ",
   export_csv: "Xuất CSV",
+  command_menu_eyebrow: "Tùy chọn ứng dụng",
+  command_menu_preferences: "Tùy chọn",
+  command_menu_actions: "Thao tác dữ liệu",
+  command_menu_currency: "Tiền tệ và tỷ giá",
 
   // Bottom nav
   overview: "Tổng quan",

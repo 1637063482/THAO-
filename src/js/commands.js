@@ -6,6 +6,7 @@ function runCommand(element, dependencies) {
   if (command === "language") dependencies.setLanguage?.(element.getAttribute("data-locale"));
   if (command === "theme") dependencies.toggleTheme?.();
   if (command === "privacy") dependencies.togglePrivacy?.();
+  if (command === "logout") dependencies.logout?.();
 }
 
 export function bindCommands(root, dependencies) {

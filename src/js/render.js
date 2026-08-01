@@ -86,7 +86,7 @@ export function renderMonthTable(monthId) {
   // Summary footer cells
   var sumCellsHtml = "";
   expenseCategories.forEach(function(cat) {
-    sumCellsHtml += '<td><span id="sum-' + monthId + '-' + cat.id + '">0</span></td>';
+    sumCellsHtml += '<td><span id="sum-' + monthId + '-' + cat.id + '" class="blur-sensitive">0</span></td>';
   });
 
   var tableHtml = '<div class="table-card">'

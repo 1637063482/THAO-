@@ -33,6 +33,7 @@ vi.mock("../../src/js/icons.js", () => ({
 
 import { state } from "../../src/js/state.js";
 import { convertCnyAmountToVnd, formatVndForCurrencyDisplay } from "../../src/js/currency-view.js";
+import { renderMonthTable } from "../../src/js/render.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
 import { triggerCloudSave } from "../../src/js/sync.js";
 import { renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
@@ -96,10 +97,18 @@ describe("currency view", () => {
 
   it("formats large, zero, and decimal VND values for VND and CNY views", () => {
     expect(formatVndForCurrencyDisplay(123456789, "VND", 3500)).toBe("123,456,789");
-    expect(formatVndForCurrencyDisplay(123456789, "CNY", 3500)).toBe("35273.37");
+    expect(formatVndForCurrencyDisplay(123456789, "CNY", 3500)).toBe("35,273.37");
     expect(formatVndForCurrencyDisplay(0, "CNY", 3500)).toBe("0.00");
     expect(formatVndForCurrencyDisplay(4375, "CNY", 3500)).toBe("1.25");
     expect(convertCnyAmountToVnd("1.25", 4000)).toBe("5000");
+  });
+
+  it("marks every category total in the ledger footer as privacy-sensitive", () => {
+    renderMonthTable(1);
+
+    const totals = Array.from(document.querySelectorAll('tfoot span[id^="sum-1-"]'));
+    expect(totals).toHaveLength(12);
+    expect(totals.every(element => element.classList.contains("blur-sensitive"))).toBe(true);
   });
 
   it("keeps VND raw unchanged when a CNY field is focused and blurred without edits", () => {
@@ -179,6 +188,22 @@ describe("currency view", () => {
     expect(input.dataset.raw).toBe("");
     expect(snapshotPersistence()).toBe(before);
     expect(triggerCloudSave).not.toHaveBeenCalled();
+  });
+
+  it("does not persist or render a budget through an unavailable automatic FX rate", async () => {
+    const { saveBudgetAndCalculate, updateBudgetProgress } = await import("../../src/js/budget.js");
+    state.currentCurrency = "CNY";
+    state.fxMode = "auto";
+    state.fxRateAuto = null;
+    state.appState.settings = {};
+    const input = document.getElementById("monthly-budget-input");
+    input.value = "1000";
+
+    saveBudgetAndCalculate();
+    updateBudgetProgress();
+
+    expect(state.appState.settings).toEqual({});
+    expect(document.getElementById("budget-text").textContent).not.toContain("NaN");
   });
 
   it("does not change state or pending updates after 100 CNY/VND display switches", () => {

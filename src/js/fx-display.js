@@ -1,5 +1,6 @@
 export const FX_CACHE_KEY = "myExpenseApp.fx.cnyVnd";
 export const FX_RATE_URL = "https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/cny.json";
+export const FX_FALLBACK_URL = "https://latest.currency-api.pages.dev/v1/currencies/cny.json";
 
 const DEFAULT_TIMEOUT_MS = 2500;
 const STALE_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -62,25 +63,30 @@ export async function loadCnyVndRate({
   now = () => new Date().toISOString(),
   timeoutMs = DEFAULT_TIMEOUT_MS,
   url = FX_RATE_URL,
+  fallbackUrl = FX_FALLBACK_URL,
 } = {}) {
   const timestamp = now();
-  try {
-    if (typeof fetchImpl !== "function") throw new Error("FX_FETCH_UNAVAILABLE");
-    const response = await withTimeout(fetchImpl(url), timeoutMs);
-    if (!response?.ok) throw new Error("FX_HTTP_" + (response?.status || "UNKNOWN"));
-    const data = await response.json();
-    const rate = data?.cny?.vnd;
-    if (!validRate(rate)) throw new Error("FX_INVALID_RATE");
-    writeCache(storage, rate, timestamp);
-    const result = { ok: true, rate, source: "live", updatedAt: timestamp, stale: false };
-    return { ...result, message: messageFor(result) };
-  } catch {
-    const cached = readCache(storage, timestamp);
-    if (cached) {
-      const result = { ok: true, source: "cache", ...cached };
+  const urls = [url, fallbackUrl].filter((candidate, index, all) => typeof candidate === "string" && candidate && all.indexOf(candidate) === index);
+  for (const candidateUrl of urls) {
+    try {
+      if (typeof fetchImpl !== "function") throw new Error("FX_FETCH_UNAVAILABLE");
+      const response = await withTimeout(fetchImpl(candidateUrl), timeoutMs);
+      if (!response?.ok) throw new Error("FX_HTTP_" + (response?.status || "UNKNOWN"));
+      const data = await response.json();
+      const rate = data?.cny?.vnd;
+      if (!validRate(rate)) throw new Error("FX_INVALID_RATE");
+      writeCache(storage, rate, timestamp);
+      const result = { ok: true, rate, source: "live", updatedAt: timestamp, stale: false };
       return { ...result, message: messageFor(result) };
     }
-    const result = { ok: false, rate: null, source: "unavailable", updatedAt: null, stale: false };
+    catch { /* Try the next endpoint, then the validated cache. */ }
+  }
+
+  const cached = readCache(storage, timestamp);
+  if (cached) {
+    const result = { ok: true, source: "cache", ...cached };
     return { ...result, message: messageFor(result) };
   }
+  const result = { ok: false, rate: null, source: "unavailable", updatedAt: null, stale: false };
+  return { ...result, message: messageFor(result) };
 }

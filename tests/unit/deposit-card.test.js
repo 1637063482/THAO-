@@ -6,4 +6,7 @@ it("renders a card with the supplied fields and terminal actions", () => {
   expect(html).toContain("Fixture Bank");
   expect(html).toContain('data-record-interest="done"');
   expect(html).not.toContain('data-delete-deposit="done"');
+  const template = document.createElement("template");
+  template.innerHTML = html;
+  expect(template.content.querySelectorAll("dd.blur-sensitive")).toHaveLength(3);
 });

@@ -38,6 +38,7 @@ export function createDepositController(dependencies) {
     getToday,
     getNextMidnightDelay,
     getLocale,
+    formatMoney,
     queueLegacyInterest,
     confirm,
     isOnline,
@@ -277,7 +278,7 @@ export function createDepositController(dependencies) {
       filter,
       ledgerEntries: state.appState.entries,
     });
-    hosts.root.innerHTML = renderDepositManagement(viewModel);
+    hosts.root.innerHTML = renderDepositManagement(viewModel, { formatMoney });
     bindDepositManagement(hosts.root, {
       confirm,
       onAdd: () => openForm(),

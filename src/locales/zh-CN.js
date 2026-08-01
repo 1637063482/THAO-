@@ -31,8 +31,13 @@ export default {
 
   // Nav actions
   import_label: "导入",
+  logout: "退出登录",
   share: "分享",
   export_csv: "导出CSV",
+  command_menu_eyebrow: "应用选项",
+  command_menu_preferences: "偏好设置",
+  command_menu_actions: "数据操作",
+  command_menu_currency: "币种与汇率",
 
   // Bottom nav
   overview: "总览",

@@ -62,6 +62,31 @@ describe("dashboard rendering", () => {
     expect(html).toContain("no-data");
   });
 
+  it("formats dashboard VND totals through the active CNY display rate", async () => {
+    const dash = await import("../../src/js/dashboard.js");
+    const utils = await import("../../src/js/utils.js");
+    utils.setCurrencyGetter(() => "CNY");
+    utils.setRateGetter(() => 3500);
+
+    const html = dash.renderDashboard({
+      budgetRemaining: 3500000,
+      isOverBudget: false,
+      totalSpending: 1500000,
+      totalIncome: 2000000,
+      todaySpending: 200000,
+      budgetVnd: 5000000,
+      topCategories: [{ id: "dining", label: "category_dining", emoji: "馃崪", spending: 800000 }],
+      days: [{ day: 15, dateKey: "2026-03-15", totalSpending: 200000, categories: {} }],
+      streak: { streak: 3, hasRecordedToday: true },
+      noData: false,
+    });
+
+    expect(html).toContain("1,000.00");
+    expect(html).not.toContain("3,500,000");
+    utils.setCurrencyGetter(() => "VND");
+    utils.setRateGetter(() => 3500);
+  });
+
   it("initDashboard attaches event listeners", async () => {
     document.body.innerHTML = '<div id="dashboard-root"></div>';
     const dash = await import("../../src/js/dashboard.js");

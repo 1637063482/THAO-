@@ -28,6 +28,7 @@ describe("Apple UI input system", () => {
     const css = read("src/css/app.css");
     expect(css).toContain(".savings-goal-form input");
     expect(css).toContain(".deposit-form-grid input");
+    expect(css).toContain(".privacy-mode .savings-goal-form input.savings-goal-input:not(:focus)");
   });
 
   it("keeps the inline ledger and budget inputs in the shared input visual system", () => {

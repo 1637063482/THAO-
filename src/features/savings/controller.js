@@ -6,6 +6,7 @@ export function createSavingsController({
   getSavingsState,
   getLocale = () => "vi",
   getDashboardViewModel,
+  formatMoney,
   triggerCloudSave = () => {},
 } = {}) {
   let stopBridge = () => {};
@@ -50,7 +51,7 @@ export function createSavingsController({
     });
 
     root.dataset.locale = locale;
-    root.innerHTML = renderSavingsSummary(vm) + renderSavingsPage(vm);
+    root.innerHTML = renderSavingsSummary(vm, formatMoney) + renderSavingsPage(vm, formatMoney);
 
     stopForm = bindSavingsGoalForm(root, {
       settings: snapshot.settings,
