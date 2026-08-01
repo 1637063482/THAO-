@@ -335,4 +335,25 @@ describe("legacy accounting streak RED", () => {
       previousYearEntries: state.previousYearEntries,
     }).streak).toBe(2);
   });
+
+  it("keeps dashboard and streak panel on the same ledger-date anchor", async () => {
+    state.activeMonthId = 1;
+    state.appState.entries = {
+      "1_2_dining": "100000",
+      "1_3_dining": "100000",
+    };
+
+    const { buildDashboardViewModel } = await import("../../src/js/dashboard-view-model.js");
+    const dashboard = buildDashboardViewModel({
+      year: 2026,
+      month: 1,
+      today: 3,
+      streakDate: FIXED_NOW,
+      state: { appState: state.appState },
+    });
+    const panel = renderStreakPanel();
+
+    expect(panel.streak).toBe(0);
+    expect(dashboard.streak.streak).toBe(panel.streak);
+  });
 });

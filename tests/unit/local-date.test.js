@@ -32,7 +32,7 @@ vi.mock("../../src/js/icons.js", () => ({
 }));
 
 import { state } from "../../src/js/state.js";
-import { getLedgerToday } from "../../src/js/clock.js";
+import { getLedgerStreakDate, getLedgerToday } from "../../src/js/clock.js";
 import { openQuickAdd, submitQuickAdd } from "../../src/js/quick-add.js";
 import { renderMonthTable, renderStreakPanel } from "../../src/js/render.js";
 import { getAppDropdownValue, renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
@@ -65,6 +65,11 @@ describe("Vietnam ledger clock", () => {
 
   it("does not treat China midnight as Vietnam midnight", () => {
     expect(getLedgerToday(new Date("2026-03-31T16:30:00.000Z"))).toMatchObject({ year: 2026, month: 3, day: 31, dateKey: "2026-03-31" });
+  });
+
+  it("normalizes the streak anchor to the same Vietnam ledger day", () => {
+    expect(getLedgerStreakDate(new Date("2026-02-28T16:59:59.000Z")).toISOString()).toBe("2026-02-28T12:00:00.000Z");
+    expect(getLedgerStreakDate(new Date("2026-02-28T17:00:00.000Z")).toISOString()).toBe("2026-03-01T12:00:00.000Z");
   });
 
   it("handles leap day, month end, and year end with the Vietnam ledger date", () => {

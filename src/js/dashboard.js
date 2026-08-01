@@ -7,7 +7,7 @@
 
 import { t, getCurrentLocale } from "./i18n.js";
 import { state } from "./state.js";
-import { getLedgerToday } from "./clock.js";
+import { getLedgerStreakDate, getLedgerToday } from "./clock.js";
 import { buildDashboardViewModel } from "./dashboard-view-model.js";
 
 const dashboardLabels = {
@@ -96,11 +96,13 @@ export function initDashboard(containerId) {
   var container = document.getElementById(containerId);
   if (!container) return;
 
-  var today = getLedgerToday();
+  var now = new Date();
+  var today = getLedgerToday(now);
   var vm = buildDashboardViewModel({
     year: state.activeYear,
     month: state.activeMonthId,
     today: today.day,
+    streakDate: getLedgerStreakDate(now),
     state: { appState: state.appState },
     previousYearEntries: state.previousYearEntries,
   });

@@ -2,10 +2,11 @@ import { state } from "../state.js";
 import { t } from "../i18n.js";
 import { Icons } from "../icons.js";
 import { buildLegacyStreak } from "../streak.js";
+import { getLedgerStreakDate } from "../clock.js";
 import { showToast } from "../utils.js";
 
 function getDerivedStreak() {
-  return buildLegacyStreak(state.appState.entries, state.activeYear, new Date(), "Asia/Ho_Chi_Minh", {
+  return buildLegacyStreak(state.appState.entries, state.activeYear, getLedgerStreakDate(), "Asia/Ho_Chi_Minh", {
     previousYearEntries: state.previousYearEntries,
   });
 }

@@ -42,6 +42,7 @@ function evalEntry(formula) {
  * @param {number} options.year
  * @param {number} options.month
  * @param {number} [options.today] - Today's day-of-month (defaults to current date)
+ * @param {Date} [options.streakDate] - Canonical ledger date used for streak computation
  * @param {object} [options.state] - The application state module reference (for entries/settings)
  * @returns {object} dashboard ViewModel
  */
@@ -132,11 +133,8 @@ export function buildDashboardViewModel(options) {
   days.sort(function (a, b) { return b.day - a.day; });
   days = days.slice(0, 5);
 
-  // Streak data — build a proper Date from year/month/day so the
-  // streak computation doesn't receive a bare day-number as Date.
-  var streakDate = typeof today === "number" && today < 100
-    ? new Date(Date.UTC(year, month - 1, today))
-    : new Date();
+  // Streak data uses the canonical ledger date supplied by the caller.
+  var streakDate = options.streakDate || new Date();
   var streak = { streak: 0, hasRecordedToday: false };
   if (options.state && options.state.appState.entries) {
     try {

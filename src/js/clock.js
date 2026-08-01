@@ -21,6 +21,18 @@ export function getLedgerToday(date = new Date()) {
   };
 }
 
+/**
+ * Return a stable Date anchor for the current calendar day in the ledger timezone.
+ * Noon UTC avoids crossing the Vietnam local-date boundary when the value is
+ * later normalized by streak calculations.
+ * @param {Date} date
+ * @returns {Date}
+ */
+export function getLedgerStreakDate(date = new Date()) {
+  const today = getLedgerToday(date);
+  return new Date(Date.UTC(today.year, today.month - 1, today.day, 12));
+}
+
 export function getNextLedgerMidnightDelay(date = new Date()) {
   const today = getLedgerToday(date);
   const nextMidnightUtc = Date.UTC(today.year, today.month - 1, today.day + 1, -7, 0, 0, 0);
