@@ -22,7 +22,6 @@ describe("app shell components", () => {
 
     [
       "year-selector",
-      "display-year-text",
       "btn-lang-vi",
       "btn-lang-zh",
       "btn-curr-vnd",
@@ -36,6 +35,26 @@ describe("app shell components", () => {
       "sync-status-text",
       "import-file",
     ].forEach((id) => expect(document.getElementById(id)).not.toBeNull());
+  });
+
+  it("renders Apple-style shell landmarks without changing navigation contracts", async () => {
+    const { renderHeader } = await import("../../src/components/app-shell/header.js");
+    const { renderSidebar } = await import("../../src/components/app-shell/sidebar.js");
+    const { renderBottomNav } = await import("../../src/components/app-shell/bottom-nav.js");
+    const header = document.querySelector("[data-app-header-host]");
+    const sidebar = document.getElementById("sidebar");
+    const bottomNav = document.getElementById("bottom-nav");
+
+    renderHeader(header);
+    renderSidebar(sidebar);
+    renderBottomNav(bottomNav);
+
+    expect(header.classList.contains("app-header")).toBe(true);
+    expect(header.querySelector(".app-header-year-control")).not.toBeNull();
+    expect(header.querySelector("#sync-status").getAttribute("role")).toBe("status");
+    expect(header.querySelector("#sync-status").getAttribute("aria-live")).toBe("polite");
+    expect(sidebar.classList.contains("app-sidebar")).toBe(true);
+    expect(bottomNav.classList.contains("app-bottom-nav")).toBe(true);
   });
 
   it("generates desktop and mobile destinations from the same destination data", async () => {

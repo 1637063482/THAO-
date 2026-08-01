@@ -293,7 +293,7 @@ export interface DepositManagementBindings {
   onRollover?: (id: string) => void;
   onRecordInterest?: (id: string) => Promise<void> | void;
   onDelete?: (id: string) => Promise<void> | void;
-  confirm?: (message: string) => boolean;
+  confirm?: (message: string) => boolean | Promise<boolean>;
 }
 
 export interface DepositFormRenderOptions {
@@ -336,7 +336,7 @@ export interface DepositSettlementBindings {
   locale?: AppLocale;
   onSubmit?: (input: DepositSettlementInput) => Promise<void> | void;
   onClose?: () => void;
-  confirm?: (message: string) => boolean;
+  confirm?: (message: string) => boolean | Promise<boolean>;
 }
 
 export interface DepositSnapshotCallbacks {
@@ -364,7 +364,7 @@ export interface DepositControllerDependencies {
     dateKey: string;
     operationId: string;
   }) => Promise<unknown> | unknown;
-  confirm: (message: string) => boolean;
+  confirm: (message: string) => boolean | Promise<boolean>;
   isOnline: () => boolean;
   isDocumentHidden: () => boolean;
   addRuntimeListener: (
@@ -386,7 +386,7 @@ export interface DepositDependenciesInput {
   queueLegacyInterest: DepositControllerDependencies["queueLegacyInterest"];
   documentRoot?: Document;
   windowRoot?: Window;
-  confirm?: (message: string) => boolean;
+  confirm?: (message: string) => boolean | Promise<boolean>;
 }
 
 export interface DepositReminderControllerDependencies {

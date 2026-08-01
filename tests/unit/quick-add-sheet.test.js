@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { renderAppDropdown, setAppDropdownValue } from "../../src/components/feedback/app-dropdown.js";
 
 vi.mock("../../src/js/sync.js", () => ({ triggerCloudSave: vi.fn() }));
 
 const setupSheet = () => {
   document.body.innerHTML = [
     '<div id="quick-add-modal" aria-hidden="true"><div id="quick-add-panel" tabindex="-1"></div></div>',
-    '<select id="qa-day"><option value="1" selected>1</option></select>',
-    '<select id="qa-cat"><option value="dining" selected>dining</option></select>',
+    renderAppDropdown({ id: "qa-day", value: "1", options: [{ value: "1", label: "1", selected: true }] }),
+    renderAppDropdown({ id: "qa-cat", value: "dining", options: [{ value: "dining", label: "dining", selected: true }] }),
     '<input id="qa-amount">',
     '<input id="qa-remark">',
+    '<div id="toast"><span id="toast-icon"></span><span id="toast-msg"></span></div>',
   ].join("");
 };
 
@@ -98,5 +100,58 @@ describe("quick-add bottom sheet", () => {
     quickAdd.submitQuickAdd();
     expect(button.disabled).toBe(false);
     expect(button.hasAttribute("aria-busy")).toBe(false);
+  });
+
+  it("selects a valid day when the active month is not the current month", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    const today = new Date();
+    const originalMonth = stateModule.state.activeMonthId;
+    const originalYear = stateModule.state.activeYear;
+    const nonCurrentMonth = today.getUTCMonth() + 1 === 12 ? 1 : today.getUTCMonth() + 2;
+    stateModule.state.activeYear = today.getUTCFullYear();
+    stateModule.state.activeMonthId = nonCurrentMonth;
+
+    quickAdd.openQuickAdd();
+
+    const day = document.querySelector("#qa-day [data-app-dropdown-hidden]").value;
+    expect(day).toMatch(/^\d+$/);
+    expect(Number(day)).toBeGreaterThanOrEqual(1);
+    expect(Number(day)).toBeLessThanOrEqual(new Date(stateModule.state.activeYear, nonCurrentMonth, 0).getDate());
+
+    stateModule.state.activeMonthId = originalMonth;
+    stateModule.state.activeYear = originalYear;
+  });
+
+  it("rejects empty date or category before writing ledger entries", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.appState.entries = {};
+    stateModule.state.pendingUpdates = { entries: {} };
+    setAppDropdownValue(document.getElementById("qa-day"), "");
+    setAppDropdownValue(document.getElementById("qa-cat"), "");
+    document.getElementById("qa-amount").value = "1000";
+
+    quickAdd.submitQuickAdd();
+
+    expect(stateModule.state.appState.entries).toEqual({});
+    expect(stateModule.state.pendingUpdates.entries).toEqual({});
+    expect(document.getElementById("toast-msg").innerText).toContain("Vui lòng chọn ngày");
+  });
+
+  it("refreshes existing date and category labels after vi to zh-CN to vi", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const { setLocale } = await import("../../src/js/i18n.js");
+    quickAdd.openQuickAdd();
+
+    setLocale("zh-CN");
+    const labelsAfterZh = () => [...document.querySelectorAll("[data-app-dropdown-option]")].map(option => option.textContent);
+    expect(labelsAfterZh().some(label => label.includes("餐饮饮食"))).toBe(true);
+    expect(labelsAfterZh().some(label => label.includes("月"))).toBe(true);
+
+    setLocale("vi");
+    const labelsAfterVi = () => [...document.querySelectorAll("[data-app-dropdown-option]")].map(option => option.textContent);
+    expect(labelsAfterVi().some(label => label.includes("Ăn uống"))).toBe(true);
+    expect(labelsAfterVi().some(label => label.includes("Tháng"))).toBe(true);
   });
 });

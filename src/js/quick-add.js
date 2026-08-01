@@ -7,6 +7,7 @@ import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
 import { t } from "./i18n.js";
+import { bindAppDropdown, getAppDropdownValue, setAppDropdownOptions } from "../components/feedback/app-dropdown.js";
 
 let lastTrigger = null;
 let submitInFlight = false;
@@ -72,6 +73,45 @@ function resetSubmitControl() {
   if (submitButton) { submitButton.disabled = false; submitButton.removeAttribute("aria-busy"); }
 }
 
+function buildQuickAddDayOptions({ selectDefault = false } = {}) {
+  const today = getLedgerToday();
+  const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
+  const isCurrentMonth = state.activeYear === today.year && state.activeMonthId === today.month;
+  const defaultDay = isCurrentMonth ? Math.min(today.day, monthDays) : 1;
+  return Array.from({ length: monthDays }, (_, index) => {
+    const day = index + 1;
+    return {
+      value: String(day),
+      label: `${t("month_display", { month: state.activeMonthId })} ${t("day_display", { day })}`,
+      selected: selectDefault && day === defaultDay,
+    };
+  });
+}
+
+function buildQuickAddCategoryOptions() {
+  return [
+    ...expenseCategories.map((category) => ({ value: category.id, label: t(category.nameKey || category.name) })),
+    { value: "income", label: t("income_total") },
+  ];
+}
+
+function refreshQuickAddDropdownLabels({ selectDefaults = false } = {}) {
+  const dayHost = document.getElementById("qa-day");
+  if (dayHost) {
+    setAppDropdownOptions(dayHost, buildQuickAddDayOptions({ selectDefault: selectDefaults }), {
+      preserveValue: !selectDefaults,
+      autoSelectFirst: selectDefaults,
+    });
+  }
+  const catHost = document.getElementById("qa-cat");
+  if (catHost) {
+    setAppDropdownOptions(catHost, buildQuickAddCategoryOptions(), {
+      preserveValue: true,
+      autoSelectFirst: selectDefaults,
+    });
+  }
+}
+
 export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
@@ -83,22 +123,7 @@ export function openQuickAdd() {
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
 
-  const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
-  const daySel = document.getElementById("qa-day");
-  if (daySel) {
-    const today = getLedgerToday();
-    daySel.innerHTML = "";
-    for (let d = 1; d <= monthDays; d++) {
-      const isToday = d === today.day && state.activeMonthId === today.month && state.activeYear === today.year;
-      daySel.innerHTML += '<option value="' + d + '" ' + (isToday ? "selected" : "") + '>' + t("month_display", { month: state.activeMonthId }) + " " + t("day_display", { day: d }) + '</option>';
-    }
-  }
-
-  const catSel = document.getElementById("qa-cat");
-  if (catSel && catSel.options.length === 0) {
-    expenseCategories.forEach((c) => { catSel.innerHTML += '<option value="' + c.id + '">' + t(c.nameKey || c.name) + '</option>'; });
-    catSel.innerHTML += '<option value="income">' + t("income_total") + '</option>';
-  }
+  refreshQuickAddDropdownLabels({ selectDefaults: true });
 
   modal.style.display = 'flex';
   
@@ -121,6 +146,11 @@ export function closeQuickAdd() {
 }
 
 if (typeof document !== "undefined") {
+  bindAppDropdown(document.getElementById("qa-day"));
+  bindAppDropdown(document.getElementById("qa-cat"));
+  if (window.__quickAddLocaleHandler) window.removeEventListener("locale-changed", window.__quickAddLocaleHandler);
+  window.__quickAddLocaleHandler = () => refreshQuickAddDropdownLabels();
+  window.addEventListener("locale-changed", window.__quickAddLocaleHandler);
   if (window.__quickAddEscapeHandler) document.removeEventListener("keydown", window.__quickAddEscapeHandler);
   window.__quickAddEscapeHandler = (event) => {
     const modal = document.getElementById("quick-add-modal");
@@ -148,10 +178,25 @@ export function submitQuickAdd() {
   const submitButton = document.querySelector("#quick-add-panel [data-quick-add-submit]");
   if (submitButton) { submitButton.disabled = true; submitButton.setAttribute("aria-busy", "true"); }
 
-  const d = document.getElementById("qa-day")?.value;
-  const cat = document.getElementById("qa-cat")?.value;
+  const d = getAppDropdownValue(document.getElementById("qa-day"));
+  const cat = getAppDropdownValue(document.getElementById("qa-cat"));
   const rawAmt = document.getElementById("qa-amount")?.value;
   const remark = document.getElementById("qa-remark")?.value;
+
+  const month = Number(state.activeMonthId);
+  const year = Number(state.activeYear);
+  const day = Number(d);
+  const validCategories = new Set([...expenseCategories.map(category => category.id), "income"]);
+  if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(year) || !Number.isInteger(day) || day < 1 || day > getDaysInMonth(year, month)) {
+    showToast(t("quick_add_invalid_date"), true);
+    resetSubmitControl();
+    return;
+  }
+  if (!validCategories.has(cat)) {
+    showToast(t("quick_add_invalid_category"), true);
+    resetSubmitControl();
+    return;
+  }
 
   if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); resetSubmitControl(); return; }
 
@@ -170,8 +215,8 @@ export function submitQuickAdd() {
     return;
   }
 
-  const key = state.activeMonthId + "_" + d + "_" + cat;
-  const remarkKey = state.activeMonthId + "_" + d + "_remark";
+  const key = month + "_" + day + "_" + cat;
+  const remarkKey = month + "_" + day + "_remark";
 
   let existingFormula = state.appState.entries[key] || "0";
   if (String(existingFormula).startsWith("=")) existingFormula = existingFormula.substring(1);
@@ -188,11 +233,11 @@ export function submitQuickAdd() {
     let newRemark = oldRemark ? oldRemark + "," + remark : remark;
     state.appState.entries[remarkKey] = newRemark;
     state.pendingUpdates.entries[remarkKey] = newRemark;
-    const rEl = document.getElementById("entry-" + state.activeMonthId + "-" + d + "-remark");
+    const rEl = document.getElementById("entry-" + month + "-" + day + "-remark");
     if (rEl) { rEl.value = newRemark; rEl.dataset.raw = newRemark; }
   }
 
-  const iEl = document.getElementById("entry-" + state.activeMonthId + "-" + d + "-" + cat);
+  const iEl = document.getElementById("entry-" + month + "-" + day + "-" + cat);
   if (iEl) { iEl.dataset.raw = finalMath; iEl.value = formatDisplay(safeEval(finalMath)); }
 
   calculateAll();
@@ -213,8 +258,8 @@ export function submitQuickAdd() {
   resetSubmitControl();
 
   setTimeout(() => {
-    const el = document.getElementById("row-" + state.activeMonthId + "-" + d);
-    const scrollContainer = document.getElementById("table-scroll-container-" + state.activeMonthId);
+    const el = document.getElementById("row-" + month + "-" + day);
+    const scrollContainer = document.getElementById("table-scroll-container-" + month);
     if (el && scrollContainer) scrollContainer.scrollTo({ top: el.offsetTop - 40, behavior: "smooth" });
   }, 200);
 }

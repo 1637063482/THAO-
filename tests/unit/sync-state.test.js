@@ -191,7 +191,7 @@ describe("sync queue", () => {
     expect(state.isFirstLoad).toBe(false);
     await vi.advanceTimersByTimeAsync(300);
     expect(document.getElementById("loading-overlay").style.display).toBe("none");
-    expect(document.getElementById("sync-status").className).toContain("red");
+    expect(document.getElementById("sync-status").className).toContain("sync-status-error");
 
     consoleError.mockRestore();
     vi.useRealTimers();
@@ -212,7 +212,7 @@ describe("sync queue", () => {
 
     expect(document.getElementById("loading-overlay").style.opacity).toBe("0");
     expect(state.isFirstLoad).toBe(false);
-    expect(document.getElementById("sync-status").className).toContain("red");
+    expect(document.getElementById("sync-status").className).toContain("sync-status-error");
     await vi.advanceTimersByTimeAsync(300);
     expect(document.getElementById("loading-overlay").style.display).toBe("none");
 
@@ -231,7 +231,7 @@ describe("sync queue", () => {
 
     expect(document.getElementById("loading-overlay").style.opacity).toBe("0");
     expect(state.isFirstLoad).toBe(false);
-    expect(document.getElementById("sync-status").className).toContain("red");
+    expect(document.getElementById("sync-status").className).toContain("sync-status-error");
     await vi.advanceTimersByTimeAsync(300);
     expect(document.getElementById("loading-overlay").style.display).toBe("none");
     teardownListener();

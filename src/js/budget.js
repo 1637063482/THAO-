@@ -5,6 +5,16 @@ import { safeEval, formatDisplay, formatSymbol, getActiveRate } from "./utils.js
 import { updateCharts } from "./charts.js";
 import { triggerCloudSave } from "./sync.js";
 
+/** @param {HTMLInputElement} input */
+export function fitBudgetInputWidth(input) {
+  // Content-adaptive width: tabular digits at 13px are ~7.5px wide, plus
+  // 20px horizontal padding; the placeholder sets the empty-state width.
+  // The floor is small so the field hugs its text instead of leaving a
+  // large gap on the left of a right-aligned value.
+  const text = input.value || input.placeholder || "";
+  input.style.width = Math.max(48, text.length * 7.5 + 20) + "px";
+}
+
 export function getRawBudgetVND() {
   const settings = state.appState.settings;
   if (settings && settings["budget_" + state.activeMonthId] !== undefined) {
@@ -26,6 +36,7 @@ export function updateBudgetUI() {
   input.dataset.raw = vndVal;
   input.dataset.month = state.activeMonthId;
   input.value = formatDisplay(vndVal);
+  fitBudgetInputWidth(input);
 }
 
 export function saveBudgetAndCalculate() {
@@ -42,6 +53,7 @@ export function saveBudgetAndCalculate() {
   inputEl.dataset.raw = vndVal;
   inputEl.dataset.month = state.activeMonthId;
   inputEl.value = formatDisplay(vndVal);
+  fitBudgetInputWidth(inputEl);
   try { localStorage.setItem("thao_monthly_budget", vndVal); } catch { /* noop */ }
   if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
   state.pendingUpdates.settings["budget_" + state.activeMonthId] = vndVal;
@@ -81,8 +93,8 @@ export function updateBudgetProgress() {
   var dailyStr = dailyBudget >= 1000 ? Math.round(dailyBudget).toLocaleString("en-US") : dailyBudget.toFixed(2);
 
   var pctVal = pct.toFixed(1);
-  var pctColor = pct >= 90 ? "#dc2626" : pct >= 75 ? "#d97706" : "#059669";
-  var tipHtml = t("used") + ' <span class="budget-num" style="color:' + pctColor + '">' + pctVal + '%</span>';
+  var pctClass = pct >= 90 ? "budget-num-danger" : pct >= 75 ? "budget-num-caution" : "budget-num-safe";
+  var tipHtml = t("used") + ' <span class="budget-num ' + pctClass + '">' + pctVal + '%</span>';
   if (remainingDays > 0 && pct < 100) {
     tipHtml += ' · ' + t("remaining_days", { days: remainingDays });
     if (dailyBudget > 0) {
@@ -137,7 +149,8 @@ export function calculateAll() {
       if (elBal) {
         var bal = mInc - mExp;
         elBal.innerText = formatSymbol(bal);
-        elBal.style.color = bal > 0 ? "#dc2626" : bal < 0 ? "#059669" : "#64748b";
+        elBal.classList.remove("balance-positive", "balance-negative", "balance-neutral");
+        elBal.classList.add(bal > 0 ? "balance-positive" : bal < 0 ? "balance-negative" : "balance-neutral");
       }
 
       const sidebarInc = document.getElementById("sidebar-monthly-inc");
@@ -183,13 +196,16 @@ function updateGlobalStats(inc, exp) {
   if (elDiff) {
     elDiff.innerText = formatSymbol(reconDiff);
     if (reconDiff > 0) {
-      elDiff.style.color = "#dc2626";
+      elDiff.classList.remove("balance-positive", "balance-negative", "balance-neutral");
+      elDiff.classList.add("balance-positive");
       if (elLabel) elLabel.innerText = t("surplus");
     } else if (reconDiff < 0) {
-      elDiff.style.color = "#059669";
+      elDiff.classList.remove("balance-positive", "balance-negative", "balance-neutral");
+      elDiff.classList.add("balance-negative");
       if (elLabel) elLabel.innerText = t("deficit");
     } else {
-      elDiff.style.color = "#64748b";
+      elDiff.classList.remove("balance-positive", "balance-negative", "balance-neutral");
+      elDiff.classList.add("balance-neutral");
       if (elLabel) elLabel.innerText = t("balanced");
     }
   }

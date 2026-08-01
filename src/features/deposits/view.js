@@ -3,6 +3,8 @@ import { depositProductLabel } from "./terms.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
 import { renderDepositCard } from "./deposit-card.js";
 import { renderDepositTable } from "./deposit-table.js";
+import { requestAppConfirmation } from "../../components/feedback/confirmation-dialog.js";
+import { bindAppDropdown, renderAppDropdown } from "../../components/feedback/app-dropdown.js";
 import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "../../js/deposit-schema.js";
 
 const copy = {
@@ -98,7 +100,16 @@ export function renderDepositManagement(vm) {
   const capacityWarning = vm.acknowledgementCount >= ACKNOWLEDGEMENT_WARNING_THRESHOLD
     ? `<p class="deposit-capacity-warning" role="status">${escapeHtml(labels.acknowledgementCapacityWarning.replace("{count}", String(vm.acknowledgementCount)).replace("{limit}", String(MAX_ACKNOWLEDGEMENTS)))}</p>` : "";
   const metrics = `<div class="deposit-metrics"><div><span>${labels.principal}</span><strong class="blur-sensitive">${money(vm.totalPrincipalVnd, vm.locale)}</strong></div><div><span>${labels.interest}</span><strong class="blur-sensitive">${money(vm.summary.expectedInterestVnd, vm.locale)}</strong></div><div><span>${labels.maturityTotal}</span><strong class="blur-sensitive">${money(vm.summary.expectedMaturityTotalVnd, vm.locale)}</strong></div><div><span>${labels.nearest}</span><strong>${vm.nearest ? escapeHtml(vm.nearest.maturesOn) : labels.noNearest}</strong></div></div>`;
-  const filter = `<label class="deposit-filter"><span class="sr-only">${labels.status}</span><select data-deposit-filter><option value="all"${vm.filter === "all" ? " selected" : ""}>${labels.all}</option><option value="active"${vm.filter === "active" ? " selected" : ""}>${labels.active}</option><option value="maturing"${vm.filter === "maturing" ? " selected" : ""}>${labels.maturing}</option><option value="matured"${vm.filter === "matured" ? " selected" : ""}>${labels.matured}</option><option value="archived"${vm.filter === "archived" ? " selected" : ""}>${labels.archived}</option></select></label>`;
+  const filter = `<label class="deposit-filter"><span class="sr-only">${labels.status}</span>${renderAppDropdown({
+    className: "deposit-filter-dropdown", value: vm.filter, ariaLabel: labels.status,
+    options: [
+      { value: "all", label: labels.all, selected: vm.filter === "all" },
+      { value: "active", label: labels.active, selected: vm.filter === "active" },
+      { value: "maturing", label: labels.maturing, selected: vm.filter === "maturing" },
+      { value: "matured", label: labels.matured, selected: vm.filter === "matured" },
+      { value: "archived", label: labels.archived, selected: vm.filter === "archived" },
+    ],
+  })}</label>`;
   let content;
   if (vm.status === "loading" && vm.visible.length === 0) content = "";
   else if (vm.visible.length === 0) content = `<div class="deposit-empty"><p>${labels.empty}</p><button type="button" class="btn-primary" data-add-deposit>${labels.first}</button></div>`;
@@ -110,7 +121,7 @@ export function renderDepositManagement(vm) {
  * @param {HTMLElement} root
  * @param {import("../../types/app-state").DepositManagementBindings} [bindings]
  */
-export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete, confirm = globalThis.confirm } = {}) {
+export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter, onRedeem, onRollover, onRecordInterest, onDelete, confirm = message => requestAppConfirmation({ message, destructive: true }) } = {}) {
   const section = /** @type {HTMLElement | null} */ (
     root.querySelector("[data-deposit-management]")
     || (root.matches("[data-deposit-management]") ? root : null)
@@ -128,19 +139,18 @@ export function bindDepositManagement(root, { onAdd, onEdit, onArchive, onFilter
   }));
   buttons("[data-archive-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(normalizeLocale(section.dataset.locale));
-    if (confirm && !confirm(labels.archiveConfirm)) return;
+    if (confirm && !(await confirm(labels.archiveConfirm))) return;
     try { if (button.dataset.archiveDeposit) await onArchive?.(button.dataset.archiveDeposit); }
     catch (cause) { const error = /** @type {HTMLElement | null} */ (section.querySelector("[data-deposit-operation-error]")); if (error) { error.textContent = depositErrorMessage(cause, normalizeLocale(section.dataset.locale), "list"); error.hidden = false; } }
   }));
   buttons("[data-delete-deposit]").forEach(button => button.addEventListener("click", async () => {
     const labels = words(normalizeLocale(section.dataset.locale));
-    if (confirm && !confirm(labels.deleteConfirm)) return;
+    if (confirm && !(await confirm(labels.deleteConfirm))) return;
     try { if (button.dataset.deleteDeposit) await onDelete?.(button.dataset.deleteDeposit); }
     catch (cause) { const error = /** @type {HTMLElement | null} */ (section.querySelector("[data-deposit-operation-error]")); if (error) { error.textContent = depositErrorMessage(cause, normalizeLocale(section.dataset.locale), "list"); error.hidden = false; } }
   }));
-  section.querySelector("[data-deposit-filter]")?.addEventListener("change", event => {
-    if (event.target instanceof HTMLSelectElement) {
-      onFilter?.(/** @type {import("../../types/app-state").DepositFilter} */ (event.target.value));
-    }
-  });
+  const filterHost = section.querySelector(".deposit-filter [data-app-dropdown]");
+  if (filterHost) {
+    bindAppDropdown(filterHost, { onChange: value => onFilter?.(/** @type {import("../../types/app-state").DepositFilter} */ (value)) });
+  }
 }

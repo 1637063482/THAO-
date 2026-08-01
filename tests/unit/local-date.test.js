@@ -35,6 +35,7 @@ import { state } from "../../src/js/state.js";
 import { getLedgerToday } from "../../src/js/clock.js";
 import { openQuickAdd, submitQuickAdd } from "../../src/js/quick-add.js";
 import { renderMonthTable, renderStreakPanel } from "../../src/js/render.js";
+import { getAppDropdownValue, renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
 
 function resetState() {
   state.activeYear = 2026;
@@ -77,20 +78,20 @@ describe("Vietnam ledger clock", () => {
     document.body.innerHTML = [
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"></select>',
-      '<select id="qa-cat"></select>',
+      renderAppDropdown({ id: "qa-day" }),
+      renderAppDropdown({ id: "qa-cat" }),
       '<input id="qa-amount">',
     ].join("");
     state.activeYear = 2026;
     state.activeMonthId = 2;
     openQuickAdd();
-    expect(document.getElementById("qa-day").value).toBe("28");
+    expect(getAppDropdownValue(document.getElementById("qa-day"))).toBe("28");
 
     vi.setSystemTime(new Date("2026-02-28T17:00:00.000Z"));
     state.activeMonthId = 3;
     openQuickAdd();
 
-    expect(document.getElementById("qa-day").value).toBe("1");
+    expect(getAppDropdownValue(document.getElementById("qa-day"))).toBe("1");
   });
 
   it("moves the highlighted today row after month-end without reloading modules", () => {
@@ -123,8 +124,7 @@ describe("Vietnam ledger clock", () => {
   it("refreshes the current ledger month on visibilitychange after Vietnam midnight", async () => {
     vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
     document.body.innerHTML = [
-      '<select id="year-selector"></select>',
-      '<span id="display-year-text"></span>',
+      renderAppDropdown({ id: "year-selector" }),
       '<span id="ui-year-start"></span>',
       '<span id="ui-year-end"></span>',
       '<div id="months-container"></div>',
@@ -150,14 +150,13 @@ describe("Vietnam ledger clock", () => {
   it("refreshes a continuously visible app at Vietnam midnight without focus or visibility events", async () => {
     vi.setSystemTime(new Date("2026-02-28T16:59:59.000Z"));
     document.body.innerHTML = [
-      '<select id="year-selector"></select>',
-      '<span id="display-year-text"></span>',
+      renderAppDropdown({ id: "year-selector" }),
       '<span id="ui-year-start"></span>',
       '<span id="ui-year-end"></span>',
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"></select>',
-      '<select id="qa-cat"><option value="income">income</option></select>',
+      renderAppDropdown({ id: "qa-day" }),
+      renderAppDropdown({ id: "qa-cat", value: "income", options: [{ value: "income", label: "income", selected: true }] }),
       '<input id="qa-amount" value="50000">',
       '<input id="qa-remark" value="">',
       '<div id="months-container"></div>',
@@ -181,7 +180,7 @@ describe("Vietnam ledger clock", () => {
     expect(state.currentStreak).toBe(0);
 
     openQuickAdd();
-    expect(document.getElementById("qa-day").value).toBe("1");
+    expect(getAppDropdownValue(document.getElementById("qa-day"))).toBe("1");
     submitQuickAdd();
 
     expect(state.appState.entries["3_1_income"]).toBe("=50000");

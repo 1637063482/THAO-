@@ -89,7 +89,7 @@ describe("deposit management view", () => {
     document.querySelector("[data-add-deposit]").click();
     document.querySelector("[data-edit-deposit=active]").click();
     document.querySelector("[data-archive-deposit=active]").click();
-    const select = document.querySelector("[data-deposit-filter]"); select.value = "matured"; select.dispatchEvent(new Event("change", { bubbles: true }));
+    document.querySelector('[data-app-dropdown-option="matured"]').click();
     await vi.waitFor(() => expect(onArchive).toHaveBeenCalledWith("active"));
     expect(onAdd).toHaveBeenCalledOnce(); expect(onEdit).toHaveBeenCalledWith("active"); expect(onFilter).toHaveBeenCalledWith("matured");
     expect(confirm).toHaveBeenCalledOnce();
@@ -98,12 +98,10 @@ describe("deposit management view", () => {
   it("shows a classified error when a list operation fails", async () => {
     document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ active: deposit() }), today: "2026-06-01", locale: "zh-CN" }));
     const failure = Object.assign(new Error("conflict"), { code: "DEPOSIT_VERSION_CONFLICT" });
-    const originalConfirm = globalThis.confirm; globalThis.confirm = vi.fn(() => true);
-    bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure) });
+    bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure), confirm: vi.fn(() => true) });
     document.querySelector("[data-archive-deposit=active]").click();
     await vi.waitFor(() => expect(document.querySelector("[data-deposit-operation-error]").textContent).toBe("存款已被其他更改更新，请刷新后重试。"));
     expect(document.querySelector("[data-deposit-operation-error]").hidden).toBe(false);
-    globalThis.confirm = originalConfirm;
   });
 
   it.each([

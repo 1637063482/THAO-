@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createLedgerYearController } from "../../src/features/ledger/year-controller.js";
+import { getAppDropdownValue, renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
 
 function createHarness() {
   document.body.innerHTML = [
-    '<select id="year-selector"></select>',
-    '<span id="display-year-text"></span>',
+    renderAppDropdown({ id: "year-selector" }),
     '<span id="ui-year-start-label"></span>',
     '<span id="ui-year-end-label"></span>',
     '<div id="months-container">old ledger</div>',
@@ -47,7 +47,7 @@ describe("ledger year controller", () => {
     expect(controller.changeYear(2027)).toBe(false);
 
     expect(state.activeYear).toBe(2026);
-    expect(document.getElementById("year-selector").value).toBe("2026");
+    expect(getAppDropdownValue(document.getElementById("year-selector"))).toBe("2026");
     expect(dependencies.resetYearState).not.toHaveBeenCalled();
     expect(dependencies.resubscribe).not.toHaveBeenCalled();
   });

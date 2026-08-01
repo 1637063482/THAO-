@@ -55,6 +55,7 @@ export function showToast(msg, isError = false) {
   if (!toast || !icon || !text) return;
   icon.innerText = isError ? "\u274C" : "\u2705";
   text.innerText = msg;
+  toast.dataset.state = isError ? "error" : "success";
   toast.style.opacity = '1';
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.style.opacity = '0', 3000);

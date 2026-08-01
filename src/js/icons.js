@@ -45,6 +45,7 @@ export const Icons = {
 
   // 导航/UI
   menu: (cls, sz) => icon('<path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/>', cls, sz),
+  chevronDown: (cls, sz) => icon('<polyline points="6 9 12 15 18 9"/>', cls, sz),
   dotsHorizontal: (cls, sz) => icon('<circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/>', cls, sz),
   search: (cls, sz) => icon('<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>', cls, sz),
   lock: (cls, sz) => icon('<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>', cls, sz),
@@ -83,7 +84,11 @@ export function initIcons() {
     const cls = el.dataset.iconClass || 'w-5 h-5';
     const iconFn = Icons[name];
     if (iconFn) {
-      el.innerHTML = iconFn(cls);
+      // Icons take (className, size); the data-icon-class attribute is the
+      // size/utility string, so pass it in the size slot. Passing it as the
+      // className instead produced duplicate conflicting size classes
+      // (e.g. "w-5 h-5 … w-3.5 h-3.5") that left icons at the default size.
+      el.innerHTML = iconFn('', cls);
     }
   });
 }

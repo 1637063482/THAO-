@@ -10,4 +10,9 @@ describe("icons", () => {
     expect(svg).toContain('<path d="M6 18v3"/>');
     expect(svg).not.toContain("H25");
   });
+
+  it("provides the chevron used by the app-shell year picker", () => {
+    expect(typeof Icons.chevronDown).toBe("function");
+    expect(Icons.chevronDown("w-4 h-4")).toContain("polyline");
+  });
 });

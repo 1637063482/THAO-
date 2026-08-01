@@ -9,6 +9,8 @@ export default {
   password_placeholder: "Nhập mật khẩu",
   login: "Đăng nhập",
   login_hint: "Chỉ dành cho hai tài khoản đã được cấu hình",
+  show_password: "Hiện mật khẩu",
+  hide_password: "Ẩn mật khẩu",
   timeout_message: "Đã hết thời gian chờ, tự động đăng xuất",
 
   // Loading
@@ -48,6 +50,9 @@ export default {
   remark_optional: "Ghi chú (không bắt buộc)",
   amount_placeholder: "Nhập số tiền",
   confirm: "Xác nhận",
+  confirmation_title: "Xác nhận",
+  confirm_action: "Xác nhận",
+  cancel: "Hủy",
 
   // Update toast
   update_available: "Đã có phiên bản mới",
@@ -111,12 +116,15 @@ export default {
   // Messages
   login_success: "Đăng nhập thành công",
   login_failed: "Đăng nhập thất bại: sai tài khoản hoặc mật khẩu",
+  login_unavailable: "Không thể kết nối với dịch vụ đăng nhập. Vui lòng kiểm tra kết nối và thử lại.",
   login_timeout: "Đăng nhập mất quá nhiều thời gian. Vui lòng kiểm tra kết nối và thử lại.",
   logout_success: "Đã đăng xuất an toàn",
   manual_rate_prompt: "Vui lòng nhập tỷ giá thủ công hợp lệ!",
   manual_rate_applied: "Đã áp dụng tỷ giá thủ công",
   syncing_year_switch: "Dữ liệu đang đồng bộ, vui lòng chờ",
   enter_valid_amount: "Vui lòng nhập số tiền hợp lệ",
+  quick_add_invalid_date: "Vui lòng chọn ngày hợp lệ",
+  quick_add_invalid_category: "Vui lòng chọn danh mục",
   record_saved: "Đã ghi nhận",
   streak_achieved: "Chúc mừng! Bạn đã ghi chép liên tục {days} ngày!",
 

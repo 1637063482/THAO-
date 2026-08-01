@@ -13,6 +13,7 @@ const VALID_LOCALES = ["vi", "zh-CN"];
 const FALLBACK_LOCALE = "vi";
 
 let currentLocale = "vi";
+/** @type {Record<string, Record<string, string>>} */
 const dictionaries = { vi, "zh-CN": zhCN };
 
 /**
@@ -30,13 +31,14 @@ export function getCurrentLocale() {
  * @param {object} [params] - Optional interpolation parameters: {key: value}.
  * @returns {string} The translated string, or the key itself if not found.
  */
+/** @param {string} key @param {Record<string, unknown>} [params] @returns {string} */
 export function t(key, params) {
   const msg =
     dictionaries[currentLocale]?.[key] ??
     dictionaries[FALLBACK_LOCALE]?.[key];
   if (msg === undefined || msg === null) return key;
   if (!params || typeof params !== "object") return msg;
-  return msg.replace(/\{(\w+)\}/g, (_, k) =>
+  return msg.replace(/\{(\w+)\}/g, /** @param {string} _ @param {string} k */ (_, k) =>
     params[k] !== undefined ? String(params[k]) : `{${k}}`
   );
 }
@@ -66,10 +68,13 @@ export function setLocale(locale) {
  */
 export function applyI18n() {
   document.querySelectorAll("[data-i18n-aria-label]").forEach(function (el) {
-    el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label")));
+    el.setAttribute("aria-label", t(el.getAttribute("data-i18n-aria-label") || ""));
+  });
+  document.querySelectorAll("[data-i18n-placeholder]").forEach(function (el) {
+    el.setAttribute("placeholder", t(el.getAttribute("data-i18n-placeholder") || ""));
   });
   document.querySelectorAll("[data-i18n]").forEach(function (el) {
-    var key = el.getAttribute("data-i18n");
+    var key = el.getAttribute("data-i18n") || "";
     var params = null;
     var paramsRaw = el.getAttribute("data-i18n-params");
     if (paramsRaw) {
@@ -79,7 +84,7 @@ export function applyI18n() {
     // setting textContent would destroy them. Instead set the title attribute
     // so the tooltip is localized while preserving the icon children.
     if (el.children.length > 0) {
-      el.title = t(key, params || undefined);
+      /** @type {HTMLElement} */ (el).title = t(key, params || undefined);
     } else {
       el.textContent = t(key, params || undefined);
     }

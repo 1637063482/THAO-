@@ -3,6 +3,7 @@ import { db, projectId } from "./firebase.js";
 import { state, copyPending, clearPending, mergeBackPending, hasPending } from "./state.js";
 import { LEGACY_IMPORT_MAX_BYTES, serializeLegacyImport, validateLegacyImport } from "./import-schema.js";
 import { t } from "./i18n.js";
+import { requestAppConfirmation } from "../components/feedback/confirmation-dialog.js";
 
 let unsubscribeSnapshot = null;
 let unsubscribePreviousYearSnapshot = null;
@@ -86,14 +87,14 @@ export function updateSyncStatus(status) {
   if (!el) return;
   state.isSaving = status === "syncing";
   if (status === "syncing" || status === "delayed") {
-    el.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-yellow-50 text-yellow-600 text-sm font-medium transition-colors border border-yellow-200";
+    el.className = "app-sync-status sync-status-saving";
     const label = status === "delayed" ? t("saving") : t("saving");
     el.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> <span class="hidden sm:inline">' + label + '</span>';
   } else if (status === "synced") {
-    el.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-600 text-sm font-medium transition-colors border border-emerald-200";
+    el.className = "app-sync-status sync-status-synced";
     el.innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> <span class="hidden sm:inline">' + t("synced") + '</span>';
   } else if (status === "error") {
-    el.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-50 text-red-600 text-sm font-medium transition-colors border border-red-200";
+    el.className = "app-sync-status sync-status-error";
     el.innerHTML = '<span class="hidden sm:inline">' + t("offline") + '</span>';
   }
 }
@@ -298,7 +299,7 @@ export async function importLegacyLedgerWithRecovery({
     error.path = validation.path;
     throw error;
   }
-  if (!confirmOverwrite()) return { ok: false, reason: "cancelled" };
+  if (!(await confirmOverwrite())) return { ok: false, reason: "cancelled" };
 
   const currentLedger = normalizeLegacyLedger(await readCurrentLedger());
   const serialized = serializeLegacyImport(currentLedger);
@@ -344,7 +345,7 @@ async function importDataWithRecovery(file) {
   const result = await importLegacyLedgerWithRecovery({
     year: state.activeYear,
     importedText,
-    confirmOverwrite: () => confirm(t("confirm_import")),
+    confirmOverwrite: () => requestAppConfirmation({ message: t("confirm_import"), title: t("app_name"), destructive: true }),
     async readCurrentLedger() {
       const snapshot = await getDoc(docRef);
       return snapshot.exists() ? snapshot.data() : { balances: {}, entries: {}, settings: {} };

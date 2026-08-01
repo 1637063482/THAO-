@@ -35,6 +35,7 @@ import { state } from "../../src/js/state.js";
 import { convertCnyAmountToVnd, formatVndForCurrencyDisplay } from "../../src/js/currency-view.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
 import { triggerCloudSave } from "../../src/js/sync.js";
+import { renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
 
 function mountShell(extraHtml = "") {
   document.body.innerHTML = [
@@ -214,8 +215,8 @@ describe("currency view", () => {
     mountShell([
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="1" selected>1</option></select>',
-      '<select id="qa-cat"><option value="income" selected>income</option></select>',
+      renderAppDropdown({ id: "qa-day", value: "1", options: [{ value: "1", label: "1", selected: true }] }),
+      renderAppDropdown({ id: "qa-cat", value: "income", options: [{ value: "income", label: "income", selected: true }] }),
       '<input id="qa-amount" value="1.25">',
       '<input id="qa-remark" value="">',
       '<input id="entry-1-1-income">',
@@ -238,8 +239,8 @@ describe("currency view", () => {
       '<div id="toast-msg"></div>',
       '<div id="quick-add-modal"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="1" selected>1</option></select>',
-      '<select id="qa-cat"><option value="income" selected>income</option></select>',
+      renderAppDropdown({ id: "qa-day", value: "1", options: [{ value: "1", label: "1", selected: true }] }),
+      renderAppDropdown({ id: "qa-cat", value: "income", options: [{ value: "income", label: "income", selected: true }] }),
       '<input id="qa-amount" value="1.25">',
       '<input id="qa-remark" value="">',
       '<input id="entry-1-1-income">',

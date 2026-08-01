@@ -24,6 +24,15 @@ export function createLedgerInputController({
   /** @type {number | null} */
   let saveTimer = null;
 
+  /** @param {HTMLInputElement} input */
+  function fitBudgetInputWidth(input) {
+    // Mirrors src/js/budget.js fitBudgetInputWidth: tabular digits at 13px
+    // are ~7.5px wide, plus 20px horizontal padding; the placeholder sets
+    // the empty-state width. Low floor so the field hugs its text.
+    const text = input.value || input.placeholder || "";
+    input.style.width = Math.max(48, text.length * 7.5 + 20) + "px";
+  }
+
   /** @param {HTMLInputElement} element */
   function isMathOrCell(element) {
     if (element.classList.contains("remark-input")) return false;
@@ -59,7 +68,11 @@ export function createLedgerInputController({
   function onInput(event) {
     const target = event.target;
     if (!(target instanceof HTMLInputElement)) return;
-    if (target.tagName !== "INPUT" || target.id.startsWith("qa-") || target.id === "monthly-budget-input") return;
+    if (target.id === "monthly-budget-input") {
+      fitBudgetInputWidth(target);
+      return;
+    }
+    if (target.tagName !== "INPUT" || target.id.startsWith("qa-")) return;
     if (state.currentUser) updateActivity();
     const value = target.value;
     if (isMathOrCell(target)) {

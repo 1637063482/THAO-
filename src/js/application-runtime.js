@@ -250,15 +250,16 @@ function switchCurrency(curr) {
   var qaBadge = document.getElementById("qa-currency-badge");
   if (qaBadge) qaBadge.innerText = curr;
   var fxPanel = document.getElementById("fx-panel");
-  if (fxPanel) {
-    if (curr === "CNY") { fxPanel.classList.remove("hidden"); fxPanel.classList.add("flex"); }
-    else { fxPanel.classList.add("hidden"); fxPanel.classList.remove("flex"); }
-  }
+  if (fxPanel) fxPanel.classList.toggle("hidden", curr !== "CNY");
   ledgerController.refresh();
 }
 
 function changeFxMode(mode) {
   state.fxMode = mode;
+  var autoBtn = document.getElementById("fx-mode-auto");
+  var manualBtn = document.getElementById("fx-mode-manual");
+  if (autoBtn) autoBtn.classList.toggle("active", mode === "auto");
+  if (manualBtn) manualBtn.classList.toggle("active", mode === "manual");
   var input = document.getElementById("manual-rate-input");
   var btn = document.getElementById("btn-apply-rate");
   if (mode === "manual") { if (input) input.disabled = false; if (btn) btn.classList.remove("hidden"); }

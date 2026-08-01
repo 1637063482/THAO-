@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>UXS-014 synthetic settlement renderer</title>
   <link rel="stylesheet" href="/src/css/app.css">
+  <link rel="stylesheet" href="/src/features/deposits/deposits.css">
   <style>body{margin:0;padding:24px;background:var(--color-bg)}#fixture-root{width:min(1180px,100%);margin:auto}@media(max-width:767px){body{padding:12px}}</style>
 </head>
 <body>
   <main id="fixture-root"></main><div id="deposit-form-root"></div>
   <script type="module">
     import { buildDepositViewModel, renderDepositManagement } from "/src/features/deposits/view.js";
-    import { renderDepositSettlementForm } from "/src/features/deposits/form.js";
+    import { bindDepositSettlementForm, renderDepositSettlementForm } from "/src/features/deposits/form.js";
     const params = new URLSearchParams(location.search);
     const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
     const mode = params.get("mode") === "rollover" ? "rollover" : "redeem";
@@ -19,7 +20,9 @@
     const record = { institutionName:"Ngân hàng An Tâm",productName:"Tiền gửi 12 tháng",principalVnd:25000000,annualRatePpm:55000,openedOn:"2025-07-01",maturesOn:"2026-07-01",expectedInterestVnd:1375000,actualInterestVnd:null,reminderDays:[30,7,1],remindersEnabled:true,status:"ACTIVE",redeemedOn:null,rolledOverToDepositId:null,note:"",version:1,createdAt:new Date(),updatedAt:new Date(),createdBy:"fixture",updatedBy:"fixture",archivedAt:null };
     const documentFixture = {schemaVersion:1,depositsById:{"fixture-matured":record},acknowledgementsByKey:{},lastMutation:null};
     document.getElementById("fixture-root").innerHTML = renderDepositManagement(buildDepositViewModel({document:documentFixture,today:"2026-07-23",locale,status:"synced"}));
-    document.getElementById("deposit-form-root").innerHTML = renderDepositSettlementForm({locale,deposit:{id:"fixture-matured",...record},mode,today:"2026-07-23"});
+    const formRoot = document.getElementById("deposit-form-root");
+    formRoot.innerHTML = renderDepositSettlementForm({locale,deposit:{id:"fixture-matured",...record},mode,today:"2026-07-23"});
+    bindDepositSettlementForm(formRoot, { locale, onSubmit: () => {}, onClose: () => {}, confirm: () => true });
   </script>
 </body>
 </html>

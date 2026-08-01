@@ -36,6 +36,7 @@ import { Fireworks } from "../../src/js/fireworks.js";
 import { renderStreakPanel, updateStreakAfterRecord } from "../../src/js/render.js";
 import { buildLegacyStreak } from "../../src/js/streak.js";
 import { submitQuickAdd } from "../../src/js/quick-add.js";
+import { renderAppDropdown } from "../../src/components/feedback/app-dropdown.js";
 
 const FIXED_NOW = new Date("2026-02-03T05:00:00.000Z");
 const TODAY = "2026-02-03";
@@ -186,8 +187,8 @@ describe("legacy accounting streak RED", () => {
     document.body.innerHTML += [
       '<div id="quick-add-modal" style="display:flex"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="3" selected>2/3</option></select>',
-      '<select id="qa-cat"><option value="income" selected>income</option></select>',
+      renderAppDropdown({ id: "qa-day", value: "3", options: [{ value: "3", label: "2/3", selected: true }] }),
+      renderAppDropdown({ id: "qa-cat", value: "income", options: [{ value: "income", label: "income", selected: true }] }),
       '<input id="qa-amount" value="200000">',
       '<input id="qa-remark" value="">',
       '<input id="entry-2-3-income">',
@@ -205,8 +206,8 @@ describe("legacy accounting streak RED", () => {
     document.body.innerHTML += [
       '<div id="quick-add-modal" style="display:flex"></div>',
       '<div id="quick-add-panel"></div>',
-      '<select id="qa-day"><option value="2" selected>2/2</option></select>',
-      '<select id="qa-cat"><option value="income" selected>income</option></select>',
+      renderAppDropdown({ id: "qa-day", value: "2", options: [{ value: "2", label: "2/2", selected: true }] }),
+      renderAppDropdown({ id: "qa-cat", value: "income", options: [{ value: "income", label: "income", selected: true }] }),
       '<input id="qa-amount" value="200000">',
       '<input id="qa-remark" value="">',
       '<input id="entry-2-2-income">',

@@ -1,3 +1,5 @@
+import { bindAppDropdown, setAppDropdownOptions, setAppDropdownValue } from "../../components/feedback/app-dropdown.js";
+
 const BALANCE_INPUT_IDS = [
   "bal-bank",
   "bal-alipay",
@@ -22,36 +24,28 @@ export function createLedgerYearController({
   switchMonth,
 }) {
   let started = false;
+  let unbindDropdown = () => {};
 
-  /** @returns {HTMLSelectElement | null} */
+  /** @returns {HTMLElement | null} */
   function selector() {
-    return /** @type {HTMLSelectElement | null} */ (documentRoot.getElementById("year-selector"));
+    return documentRoot.getElementById("year-selector");
   }
 
   function refreshLabels() {
-    const displayYear = documentRoot.getElementById("display-year-text");
-    if (displayYear) displayYear.innerText = String(state.activeYear);
     documentRoot.title = `${state.activeYear} ${translate("app_name")}`;
     const startLabel = documentRoot.getElementById("ui-year-start-label");
     const endLabel = documentRoot.getElementById("ui-year-end-label");
     if (startLabel) startLabel.textContent = translate("year_start_assets", { year: state.activeYear });
     if (endLabel) endLabel.textContent = translate("year_end_assets", { year: state.activeYear });
-    const yearSelector = selector();
-    if (yearSelector) yearSelector.value = String(state.activeYear);
+    setAppDropdownValue(selector(), String(state.activeYear));
   }
 
   function populateOptions() {
-    const yearSelector = selector();
-    if (!yearSelector) return;
     const ledgerYear = getToday().year;
-    yearSelector.innerHTML = "";
-    for (let year = ledgerYear - 2; year <= ledgerYear + 3; year += 1) {
-      const option = documentRoot.createElement("option");
-      option.value = String(year);
-      option.textContent = String(year);
-      yearSelector.append(option);
-    }
-    yearSelector.value = String(state.activeYear);
+    setAppDropdownOptions(selector(), Array.from({ length: 6 }, (_, offset) => {
+      const year = ledgerYear - 2 + offset;
+      return { value: String(year), label: String(year), selected: year === state.activeYear };
+    }));
   }
 
   function clearRenderedYear() {
@@ -72,8 +66,7 @@ export function createLedgerYearController({
     if (!Number.isInteger(nextYear) || nextYear === state.activeYear) return false;
     if (state.isSaving && isOnline()) {
       showBlocked(translate("syncing_year_switch"));
-      const yearSelector = selector();
-      if (yearSelector) yearSelector.value = String(state.activeYear);
+      setAppDropdownValue(selector(), String(state.activeYear));
       return false;
     }
     state.activeYear = nextYear;
@@ -87,22 +80,17 @@ export function createLedgerYearController({
     return true;
   }
 
-  /** @param {Event} event */
-  function onYearChange(event) {
-    if (event.target instanceof HTMLSelectElement) changeYear(event.target.value);
-  }
-
   function start() {
     if (started) stop();
     populateOptions();
     refreshLabels();
-    selector()?.addEventListener("change", onYearChange);
+    unbindDropdown = bindAppDropdown(selector(), { onChange: value => changeYear(value) });
     started = true;
   }
 
   function stop() {
     if (!started) return;
-    selector()?.removeEventListener("change", onYearChange);
+    unbindDropdown();
     started = false;
   }
 

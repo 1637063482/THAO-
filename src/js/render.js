@@ -68,7 +68,7 @@ export function renderMonthTable(monthId) {
     var cellsHtml = "";
     expenseCategories.forEach(function(cat) {
       var key = monthId + "_" + d + "_" + cat.id;
-      cellsHtml += '<td><input type="text" id="entry-' + monthId + '-' + d + '-' + cat.id + '" data-type="entry" data-key="' + key + '" class="cell-input" value="" data-raw="" placeholder="·"></td>';
+      cellsHtml += '<td><input type="text" id="entry-' + monthId + '-' + d + '-' + cat.id + '" data-type="entry" data-key="' + key + '" class="cell-input" value="" data-raw="" placeholder="·" aria-label="' + t("date") + ' ' + monthId + '/' + d + ' ' + t(cat.nameKey) + '"></td>';
     });
 
     var incomeKey = monthId + "_" + d + "_income";
@@ -77,9 +77,9 @@ export function renderMonthTable(monthId) {
     rowsHtml += '<tr id="row-' + monthId + '-' + d + '" class="' + rowClass + '">';
     rowsHtml += '<td class="sticky-col">' + monthId + '/' + d + '</td>';
     rowsHtml += cellsHtml;
-    rowsHtml += '<td class="total-col"><input type="text" id="total-exp-' + monthId + '-' + d + '" class="cell-input total-exp-input" readonly placeholder="·"></td>';
-    rowsHtml += '<td class="income-col"><input type="text" id="entry-' + monthId + '-' + d + '-income" data-type="entry" data-key="' + incomeKey + '" class="cell-input income-input" value="" data-raw="" placeholder="·"></td>';
-    rowsHtml += '<td class="remark-col"><input type="text" id="entry-' + monthId + '-' + d + '-remark" data-type="entry" data-key="' + remarkKey + '" class="cell-input remark-input" value="" data-raw="" placeholder=""></td>';
+    rowsHtml += '<td class="total-col"><input type="text" id="total-exp-' + monthId + '-' + d + '" class="cell-input total-exp-input" readonly placeholder="·" aria-label="' + t("date") + ' ' + monthId + '/' + d + ' ' + t("expense") + '"></td>';
+    rowsHtml += '<td class="income-col"><input type="text" id="entry-' + monthId + '-' + d + '-income" data-type="entry" data-key="' + incomeKey + '" class="cell-input income-input" value="" data-raw="" placeholder="·" aria-label="' + t("date") + ' ' + monthId + '/' + d + ' ' + t("income") + '"></td>';
+    rowsHtml += '<td class="remark-col"><input type="text" id="entry-' + monthId + '-' + d + '-remark" data-type="entry" data-key="' + remarkKey + '" class="cell-input remark-input" value="" data-raw="" placeholder="" aria-label="' + t("date") + ' ' + monthId + '/' + d + ' ' + t("remark") + '"></td>';
     rowsHtml += '</tr>';
   }
 
@@ -93,13 +93,13 @@ export function renderMonthTable(monthId) {
     // Budget inline bar — sits above the table header
     + '<div class="budget-inline-bar">'
     + '<div class="budget-inline-left">'
-    + '<span data-icon="target" data-icon-class="w-4 h-4 text-amber-500"></span>'
+    + '<span data-icon="target" data-icon-class="w-4 h-4 text-[var(--color-accent)]"></span>'
     + '<span class="text-xs font-bold text-slate-600"><span id="budget-label-month">' + monthId + '</span> ' + t("budget") + '</span>'
-    + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" onchange="window.saveBudgetAndCalculate()">'
+    + '<input type="text" id="monthly-budget-input" class="budget-inline-input" placeholder="15,000,000" aria-label="' + t("budget") + '" onchange="window.saveBudgetAndCalculate()">'
     + '<span class="text-xs text-slate-400 font-medium shrink-0" id="qa-currency-badge">VND</span>'
     + '</div>'
     + '<div class="budget-inline-right">'
-    + '<div class="bg-slate-100 rounded-full h-2.5 overflow-hidden flex-1" style="min-width:80px;"><div id="budget-progress-bar" class="progress-bar h-full" style="width:0%"></div></div>'
+    + '<div class="bg-[var(--color-surface-secondary)] rounded-full h-2.5 overflow-hidden flex-1" style="min-width:80px;"><div id="budget-progress-bar" class="progress-bar h-full" style="width:0%"></div></div>'
     + '<div id="budget-text" class="text-xs text-slate-500 font-medium">' + t("used") + ' 0%</div>'
     + '</div>'
     + '</div>'
@@ -122,8 +122,8 @@ export function renderMonthTable(monthId) {
     + '<tfoot><tr>'
     + '<td class="sticky-col">' + t("total") + '</td>'
     + sumCellsHtml
-    + '<td class="total-col"><span id="sum-' + monthId + '-exp" class="blur-sensitive" style="color:#10b981;font-weight:700;">0</span></td>'
-    + '<td class="income-col"><span id="sum-' + monthId + '-inc" class="blur-sensitive" style="color:#ef4444;font-weight:700;">0</span></td>'
+    + '<td class="total-col"><span id="sum-' + monthId + '-exp" class="blur-sensitive total-exp-sum">0</span></td>'
+    + '<td class="income-col"><span id="sum-' + monthId + '-inc" class="blur-sensitive income-sum">0</span></td>'
     + '<td></td>'
     + '</tr></tfoot>'
     + '</table>'

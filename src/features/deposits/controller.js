@@ -235,7 +235,7 @@ export function createDepositController(dependencies) {
     const message = locale === "zh-CN"
       ? "确认只将实收利息记入收入？本金不会记作收入。"
       : "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc sẽ không được ghi.";
-    if (confirm && !confirm(message)) return;
+    if (confirm && !(await confirm(message))) return;
     uiStatus = "syncing";
     refresh();
     try {

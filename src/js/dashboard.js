@@ -41,7 +41,7 @@ export function renderDashboard(vm) {
 
   // Hero: budget remaining
   var heroAmount = vm.budgetRemaining.toLocaleString("en-US");
-  var heroClass = vm.isOverBudget ? "text-red-500" : "text-amber-600";
+  var heroClass = vm.isOverBudget ? "dashboard-budget-value over-budget" : "dashboard-budget-value";
 
   var heroHtml = '<div class="dashboard-hero card p-6 mb-4 text-center">'
     + '<p class="text-sm text-slate-500 mb-1">' + dashboardText("budget_remaining") + '</p>'
@@ -51,10 +51,10 @@ export function renderDashboard(vm) {
 
   // Stats row
   var statsHtml = '<div class="grid grid-cols-2 gap-3 mb-4">'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("today_spending") + '</p><p class="text-xl font-bold text-emerald-600 blur-sensitive">' + vm.todaySpending.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_spending") + '</p><p class="text-xl font-bold text-emerald-600 blur-sensitive">' + vm.totalSpending.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold text-rose-600 blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
-    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("streak_days") + '</p><p class="text-xl font-bold text-amber-600">' + vm.streak.streak + ' <span class="text-sm font-normal text-slate-400">' + t("streak_unit") + '</span></p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("today_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + vm.todaySpending.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_spending") + '</p><p class="text-xl font-bold dashboard-expense-value blur-sensitive">' + vm.totalSpending.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + dashboardText("month_income") + '</p><p class="text-xl font-bold dashboard-income-value blur-sensitive">' + vm.totalIncome.toLocaleString("en-US") + '</p></div>'
+    + '<div class="card p-4 text-center"><p class="text-xs text-slate-500">' + t("streak_days") + '</p><p class="text-xl font-bold text-slate-800">' + vm.streak.streak + ' <span class="text-sm font-normal text-slate-400">' + t("streak_unit") + '</span></p></div>'
     + '</div>';
 
   // Top categories

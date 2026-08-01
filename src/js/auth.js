@@ -11,6 +11,8 @@ import { loadCnyVndRate } from "./fx-display.js";
 import { state, emitAuthChange } from "./state.js";
 import { showToast, lsGet, lsSet, lsRemove } from "./utils.js";
 import { t } from "./i18n.js";
+import { initIcons } from "./icons.js";
+import { requestAppConfirmation } from "../components/feedback/confirmation-dialog.js";
 
 const SESSION_KEY = "family_expense_app_last_active";
 const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
@@ -42,6 +44,23 @@ function recoverLoginUiAfterTimeout() {
 }
 
 export { auth };
+
+export function bindAuthPasswordToggle() {
+  const toggle = document.getElementById("auth-password-toggle");
+  const input = document.getElementById("auth-password");
+  if (!toggle || !input) return;
+  toggle.addEventListener("click", () => {
+    const showing = input.type === "text";
+    input.type = showing ? "password" : "text";
+    toggle.setAttribute("aria-checked", String(!showing));
+    toggle.setAttribute("aria-pressed", String(!showing));
+    toggle.setAttribute("aria-label", t(showing ? "show_password" : "hide_password"));
+    const icon = toggle.querySelector("[data-icon]");
+    if (icon) { icon.dataset.icon = showing ? "eye" : "eyeOff"; initIcons(); }
+    input.focus();
+  });
+}
+bindAuthPasswordToggle();
 
 export function initAuth(onLoginCallback, onLogoutCallback) {
   fetchReliableAutoRate();
@@ -109,7 +128,8 @@ export async function handleLogin({ timeoutMs = 15000 } = {}) {
     clearLoginGuard();
     if (loadingOverlay) loadingOverlay.style.display = "none";
     const errEl = document.getElementById("auth-error");
-    if (errEl) { errEl.textContent = t("login_failed"); errEl.classList.remove("hidden"); }
+    const credentialError = ["auth/invalid-credential", "auth/user-not-found", "auth/wrong-password"].includes(e?.code);
+    if (errEl) { errEl.textContent = t(credentialError ? "login_failed" : "login_unavailable"); errEl.classList.remove("hidden"); }
   }
 }
 
@@ -124,6 +144,6 @@ export async function performLogout(isTimeout = false) {
   }
 }
 
-export function logoutApp() {
-  if (confirm(t("confirm_logout"))) performLogout(false);
+export async function logoutApp() {
+  if (await requestAppConfirmation({ message: t("confirm_logout"), title: t("app_name"), destructive: true })) performLogout(false);
 }

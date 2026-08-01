@@ -1,5 +1,6 @@
 import { DepositRepository } from "../../infrastructure/firebase/deposit-repository.ts";
 import { subscribeToDeposits } from "./sync.js";
+import { requestAppConfirmation } from "../../components/feedback/confirmation-dialog.js";
 
 /** @param {import("../../types/app-state").DepositDependenciesInput} input */
 export function createDepositDependencies({
@@ -12,7 +13,7 @@ export function createDepositDependencies({
   queueLegacyInterest,
   documentRoot = document,
   windowRoot = window,
-  confirm = /** @param {string} message */ message => typeof windowRoot.confirm !== "function" || windowRoot.confirm(message),
+  confirm = /** @param {string} message */ message => requestAppConfirmation({ message, destructive: true }),
 }) {
   /** @param {import("../../types/app-state").AuthUser} user */
   const createRepository = (user) => new DepositRepository(db, projectId, user.uid);

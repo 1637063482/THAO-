@@ -1,9 +1,20 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it, vi } from "vitest";
-import { bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/features/deposits/form.js";
+import { addMonths, bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/features/deposits/form.js";
 import { depositTermOptions } from "../../src/features/deposits/terms.js";
 
 describe("deposit form", () => {
+  it.each([
+    ["2026-01-29", 1, "2026-02-28"],
+    ["2026-01-30", 1, "2026-02-28"],
+    ["2026-01-31", 1, "2026-02-28"],
+    ["2028-01-31", 1, "2028-02-29"],
+    ["2026-11-30", 1, "2026-12-30"],
+    ["2026-12-31", 1, "2027-01-31"],
+  ])("clamps %s plus %s month(s) to the target month's last valid day", (opened, months, expected) => {
+    expect(addMonths(opened, months)).toBe(expected);
+  });
+
   it.each([["5.5", 55_000], ["0.01", 100], ["100", 1_000_000]])("converts %s percent to integer ppm", (input, expected) => {
     expect(parseAnnualRateToPpm(input)).toBe(expected);
   });
@@ -50,36 +61,90 @@ describe("deposit form", () => {
     expect(form.querySelector("button[type=submit]").disabled).toBe(false);
   });
 
-  it("labels the field as term and offers common Vietnamese deposit terms", () => {
+  it("labels the field as term and offers common Vietnamese deposit terms in a custom dropdown", () => {
     document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
-    const select = document.querySelector('[name="productName"]');
-    expect(select.closest("label").firstChild.textContent).toBe("Kỳ hạn");
+    const hidden = document.querySelector('[name="productName"]');
+    expect(hidden.closest("label").firstChild.textContent).toBe("Kỳ hạn");
     expect(depositTermOptions("vi").map(option => option.code)).toEqual([
       "1M", "3M", "6M", "9M", "1Y", "13M", "15M", "18M", "2Y", "3Y",
     ]);
-    expect([...select.options].map(option => option.textContent)).toEqual([
-      "-- Chọn kỳ hạn --", "1 tháng", "3 tháng", "6 tháng", "9 tháng",
+    expect([...document.querySelectorAll(".app-dropdown-option-label")].map(node => node.textContent)).toEqual([
+      "1 tháng", "3 tháng", "6 tháng", "9 tháng",
       "12 tháng", "13 tháng", "15 tháng", "18 tháng", "24 tháng", "36 tháng",
     ]);
-    expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain("<label>期限<select");
+    expect(document.querySelector('[data-app-dropdown-option="1M"]')).not.toBeNull();
+    expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain('<label>期限<span class="app-dropdown"');
   });
 
-  it("uses localized empty-date hints without removing the native date picker", () => {
+  it("uses localized empty-date hints in the custom date picker", () => {
     document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
-    expect([...document.querySelectorAll(".deposit-date-placeholder")].map(node => node.textContent)).toEqual([
+    expect([...document.querySelectorAll("[data-app-datepicker-trigger]")].map(node => node.getAttribute("data-app-datepicker-placeholder"))).toEqual([
       "ngày/tháng/năm", "ngày/tháng/năm",
     ]);
-    expect([...document.querySelectorAll('input[type="date"]')].every(input => input.lang === "vi")).toBe(true);
+    expect(document.querySelector('[name="openedOn"]').value).toBe("");
+    expect(document.querySelector('input[type="date"]')).toBeNull();
 
     document.body.innerHTML = renderDepositForm({ locale: "zh-CN", id: "fixture-id" });
-    expect([...document.querySelectorAll(".deposit-date-placeholder")].map(node => node.textContent)).toEqual([
+    expect([...document.querySelectorAll("[data-app-datepicker-trigger]")].map(node => node.getAttribute("data-app-datepicker-placeholder"))).toEqual([
       "年/月/日", "年/月/日",
     ]);
+  });
 
-    const css = readFileSync("src/features/deposits/deposits.css", "utf8");
-    expect(css).toContain(".deposit-date-control input:not(:valid)::-webkit-datetime-edit { opacity: 0;");
-    expect(css).toContain(".deposit-date-control input:not(:valid)::-webkit-datetime-edit-fields-wrapper");
-    expect(css).toContain("background-color: transparent;");
+  it("links the term to the maturity date and keeps the picker label in sync", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("host");
+    bindDepositForm(host);
+
+    // 选存入日期（datepicker 交互）
+    const openedHost = host.querySelector('[data-app-datepicker-hidden][name="openedOn"]').closest("[data-app-datepicker]");
+    openedHost.querySelector("[data-app-datepicker-trigger]").click();
+    document.querySelector('[data-app-datepicker-day="2026-08-15"]').click();
+    expect(document.querySelector('[data-app-datepicker-hidden][name="openedOn"]').value).toBe("2026-08-15");
+
+    // 选期限 3M → 到期日期自动算为 2026-11-15 且显示标签同步
+    document.querySelector('[data-app-dropdown-option="3M"]').click();
+    const maturesHidden = document.querySelector('[data-app-datepicker-hidden][name="maturesOn"]');
+    expect(maturesHidden.value).toBe("2026-11-15");
+    const maturesHost = maturesHidden.closest("[data-app-datepicker]");
+    expect(maturesHost.querySelector("[data-app-datepicker-value]").textContent).toBe("15/11/2026");
+  });
+
+  it("rejects a maturity date earlier than the opening date", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("host");
+    bindDepositForm(host);
+
+    const openedHost = host.querySelector('[data-app-datepicker-hidden][name="openedOn"]').closest("[data-app-datepicker]");
+    openedHost.querySelector("[data-app-datepicker-trigger]").click();
+    document.querySelector('[data-app-datepicker-day="2026-08-15"]').click();
+
+    // 到期日历打开时，早于存入日期的日期被禁用
+    const maturesHost = host.querySelector('[data-app-datepicker-hidden][name="maturesOn"]').closest("[data-app-datepicker]");
+    maturesHost.querySelector("[data-app-datepicker-trigger]").click();
+    const calendar = document.querySelector("[data-app-datepicker-calendar]:not([hidden])");
+    expect(calendar.querySelector('[data-app-datepicker-day="2026-08-14"]').disabled).toBe(true);
+    expect(calendar.querySelector('[data-app-datepicker-day="2026-08-15"]').disabled).toBe(true);
+    expect(calendar.querySelector('[data-app-datepicker-day="2026-08-16"]').disabled).toBe(false);
+  });
+
+  it("initially enforces opening date plus one day in edit mode", () => {
+    const deposit = {
+      institutionName: "Fixture Bank", productName: "1Y", principalVnd: 10_000_000,
+      annualRatePpm: 55_000, openedOn: "2026-08-15", maturesOn: "2027-08-15",
+      expectedInterestVnd: null, actualInterestVnd: null, remindersEnabled: true,
+      status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: "", version: 1,
+    };
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id", deposit }) + "</div>";
+    const host = document.getElementById("host");
+    bindDepositForm(host);
+    const matures = host.querySelector('[data-app-datepicker-hidden][name="maturesOn"]').closest("[data-app-datepicker]");
+    expect(matures.querySelector("[data-app-datepicker-trigger]").getAttribute("data-app-datepicker-min")).toBe("2026-08-16");
+  });
+
+  it("keeps the rollover maturity no earlier than the opening date", () => {
+    const settlement = renderDepositSettlementForm({ locale: "vi", deposit: { id: "x", institutionName: "B", productName: "P", principalVnd: 1, annualRatePpm: 100, openedOn: "2026-01-01", maturesOn: "2026-07-01", expectedInterestVnd: null, actualInterestVnd: null, remindersEnabled: true, status: "ACTIVE", redeemedOn: null, rolledOverToDepositId: null, note: "", version: 1 }, today: "2026-07-31", mode: "rollover" });
+    expect(settlement).toContain('name="maturesOn"');
+    expect(settlement).toContain('data-app-datepicker-min="2026-08-01"');
   });
 
   it("formats the deposit principal while keeping the parsed VND amount unchanged", () => {
@@ -101,28 +166,62 @@ describe("deposit form", () => {
     expect(parseDepositForm(host.querySelector("form")).principalVnd).toBe(12_345_678);
   });
 
-  it("opens the bank list only on request and keeps custom bank entry available", () => {
+  it("toggles the bank list on input click and keeps custom bank entry available", () => {
     document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("host");
     bindDepositForm(host);
 
     const dialog = host.querySelector(".deposit-form-sheet");
     const bankInput = host.querySelector('[name="institutionName"]');
-    const toggle = host.querySelector("[data-bank-picker-toggle]");
     const options = host.querySelector("[data-bank-picker-options]");
     expect(bankInput.hasAttribute("list")).toBe(false);
     expect(host.querySelector("datalist")).toBeNull();
+    expect(host.querySelector("[data-bank-picker-toggle]")).toBeNull();
+    expect(bankInput.getAttribute("placeholder")).toBe("-- Chọn ngân hàng --");
     expect(document.activeElement).toBe(dialog);
     expect(options.hidden).toBe(true);
 
-    toggle.click();
+    bankInput.click();
     expect(options.hidden).toBe(false);
+    expect(bankInput.getAttribute("aria-expanded")).toBe("true");
+    bankInput.click();
+    expect(options.hidden).toBe(true);
+    expect(bankInput.getAttribute("aria-expanded")).toBe("false");
+
+    bankInput.click();
     host.querySelector('[data-bank-option="Vietcombank"]').click();
     expect(bankInput.value).toBe("Vietcombank");
     expect(options.hidden).toBe(true);
+    expect(bankInput.getAttribute("aria-expanded")).toBe("false");
 
     bankInput.value = "Fixture Bank";
     expect(bankInput.value).toBe("Fixture Bank");
+  });
+
+  it("navigates the bank list with arrows, selects with Enter, and closes with Escape", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
+    const host = document.getElementById("host");
+    bindDepositForm(host);
+    const bankInput = host.querySelector('[name="institutionName"]');
+    const options = host.querySelector("[data-bank-picker-options]");
+
+    bankInput.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    expect(options.hidden).toBe(false);
+    const first = options.querySelector('[data-bank-option="Vietcombank"]');
+    expect(document.activeElement).toBe(first);
+
+    first.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    const second = options.querySelector('[data-bank-option="VietinBank"]');
+    expect(document.activeElement).toBe(second);
+
+    second.click();
+    expect(bankInput.value).toBe("VietinBank");
+    expect(options.hidden).toBe(true);
+
+    bankInput.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    options.querySelector('[data-bank-option="Vietcombank"]').dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    expect(options.hidden).toBe(true);
+    expect(document.activeElement).toBe(bankInput);
   });
 
   it("traps keyboard focus and closes with Escape", () => {
@@ -168,12 +267,34 @@ describe("deposit settlement form", () => {
     const host = document.getElementById("host"); const form = host.querySelector("form");
     form.elements.annualRatePercent.value = "5.25"; form.elements.maturesOn.value = "2027-07-02";
     form.elements.actualInterestVnd.value = "500000"; form.elements.writeInterestToLedger.checked = true;
-    const confirmBefore = globalThis.confirm; globalThis.confirm = vi.fn(() => true); const onSubmit = vi.fn();
-    bindDepositSettlementForm(host, { locale: "zh-CN", onSubmit });
+    const confirm = vi.fn(() => true); const onSubmit = vi.fn();
+    bindDepositSettlementForm(host, { locale: "zh-CN", onSubmit, confirm });
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(onSubmit).toHaveBeenCalledOnce());
-    expect(globalThis.confirm).toHaveBeenCalledOnce();
+    expect(confirm).toHaveBeenCalledOnce();
     expect(onSubmit.mock.calls[0][0]).toMatchObject({ mode: "rollover", rollover: { principalVnd: 10_000_000, annualRatePpm: 52_500 } });
-    globalThis.confirm = confirmBefore;
+  });
+
+  it("formats rollover VND fields and keeps bank/product controls interactive", () => {
+    document.body.innerHTML = '<div id="host">' + renderDepositSettlementForm({ locale: "vi", deposit: { ...deposit, productName: "1Y" }, mode: "rollover", today: "2026-07-02" }) + "</div>";
+    const host = document.getElementById("host");
+    const form = host.querySelector("form");
+    bindDepositSettlementForm(host, { locale: "vi" });
+    const principal = form.elements.principalVnd;
+    principal.value = "12345678";
+    principal.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(principal.value).toBe("12,345,678");
+    form.elements.annualRatePercent.value = "5";
+    form.elements.maturesOn.value = "2026-08-02";
+    expect(parseDepositSettlementForm(form).rollover.principalVnd).toBe(12_345_678);
+
+    const product = host.querySelector('[name="productName"]');
+    document.querySelector('[data-app-dropdown-option="3M"]').click();
+    expect(product.value).toBe("3M");
+
+    const bank = host.querySelector('[name="institutionName"]');
+    bank.click();
+    host.querySelector('[data-bank-option="Vietcombank"]').click();
+    expect(bank.value).toBe("Vietcombank");
   });
 });

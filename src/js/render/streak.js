@@ -32,15 +32,15 @@ export function renderStreakPanel() {
   var s = getDerivedStreak();
 
   panel.innerHTML = '<div class="card p-4">'
-    + '<div class="flex items-center justify-between">'
-    + '<div class="flex items-center gap-3">'
-    + '<div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center shadow-md shadow-amber-200/60">' + Icons.flame('w-7 h-7 text-white') + '</div>'
-    + '<div><div class="text-xs text-slate-500 dark:text-slate-400 font-medium">' + t("streak_days") + '</div>'
-    + '<div class="text-2xl font-black text-slate-800 dark:text-white">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">' + t("streak_unit") + '</span></div></div></div>'
-    + '<div class="text-right">'
+    + '<div class="flex items-center flex-wrap gap-x-2 gap-y-1.5">'
+    + '<div class="flex items-center gap-3 min-w-0">'
+    + '<div class="w-12 h-12 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shadow-md shrink-0">' + Icons.flame('w-7 h-7 text-white') + '</div>'
+    + '<div class="min-w-0"><div class="text-xs text-slate-500 dark:text-slate-400 font-medium whitespace-nowrap">' + t("streak_days") + '</div>'
+    + '<div class="text-2xl font-black text-slate-800 dark:text-white whitespace-nowrap">' + s.streak + ' <span class="text-sm font-normal text-slate-500 dark:text-slate-400">' + t("streak_unit") + '</span></div></div></div>'
+    + '<div class="text-right ml-auto min-w-0">'
     + (s.hasRecordedToday ? '<span class="streak-badge">' + Icons.check('w-3.5 h-3.5') + t("checked_in_today") + '</span>' : '<span class="text-xs text-slate-400 dark:text-slate-500">' + t("not_recorded_yet") + '</span>')
     + '</div></div>'
-    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-slate-100"><p class="text-xs text-amber-600 font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + t("streak_encouragement", { days: s.streak }) + '</p></div>' : '')
+    + (s.streak >= 7 ? '<div class="mt-3 pt-3 border-t border-[var(--color-separator)]"><p class="text-xs text-[var(--color-accent)] font-medium flex items-center gap-1">' + Icons.flame('w-4 h-4') + t("streak_encouragement", { days: s.streak }) + '</p></div>' : '')
     + '</div>';
 
   state.currentStreak = s.streak;

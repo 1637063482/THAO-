@@ -66,7 +66,7 @@ describe("savings view", () => {
     root.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input, locale: "zh-CN" }));
     const sync = document.getElementById("sync-status");
     const stop = installSavingsSyncBridge(root, sync);
-    const states = [["", "已同步"], ["bg-yellow-50", "正在同步"], ["bg-red-50", "保存失败"], ["bg-emerald-50", "已同步"]];
+    const states = [["", "已同步"], ["sync-status-saving", "正在同步"], ["sync-status-error", "保存失败"], ["sync-status-synced", "已同步"]];
     for (const [className, label] of states) {
       sync.className = className;
       await Promise.resolve();
@@ -85,7 +85,7 @@ describe("savings view", () => {
     const first = installSavingsSyncBridge(root, sync);
     first();
     root.remove();
-    sync.className = "bg-red-50";
+    sync.className = "sync-status-error";
     await Promise.resolve();
     expect(disconnect).toHaveBeenCalledOnce();
     globalThis.MutationObserver = OriginalObserver;
@@ -98,13 +98,11 @@ describe("savings view", () => {
     const settings = { savings_goal_month_3: 300 };
     const pending = {};
     root.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input, locale }));
-    const originalConfirm = globalThis.confirm;
-    let seen = "";
-    globalThis.confirm = (message) => { seen = message; return false; };
     bindSavingsGoalForm(root, { settings, pendingUpdates: pending, month: 3, locale });
     root.querySelector("[data-clear-goals]").click();
-    globalThis.confirm = originalConfirm;
-    expect(seen).toBe(prompt);
+    const dialog = document.querySelector("[role=alertdialog]");
+    expect(dialog?.textContent).toContain(prompt);
+    /** @type {HTMLButtonElement} */ (dialog?.querySelector("[data-confirm-cancel]")).click();
     expect(settings.savings_goal_month_3).toBe(300);
     expect(pending).toEqual({});
   });

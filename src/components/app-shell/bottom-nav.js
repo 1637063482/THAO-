@@ -5,6 +5,7 @@ import { NAV_ITEMS } from "../../js/navigation.js";
  */
 export function renderBottomNav(host) {
   if (!host) throw new Error("App bottom navigation host is required");
+  host.className = "app-bottom-nav";
   host.setAttribute("role", "navigation");
   host.setAttribute("data-i18n-aria-label", "main_navigation");
   host.innerHTML = NAV_ITEMS.map((item, index) => `

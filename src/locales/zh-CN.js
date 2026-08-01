@@ -9,6 +9,8 @@ export default {
   password_placeholder: "请输入密码",
   login: "登录",
   login_hint: "仅限已配置的两个账号登录",
+  show_password: "显示密码",
+  hide_password: "隐藏密码",
   timeout_message: "长时间未操作，已自动退出登录",
 
   // Loading
@@ -48,6 +50,9 @@ export default {
   remark_optional: "备注 (可选)",
   amount_placeholder: "输入金额",
   confirm: "确认记账",
+  confirmation_title: "确认",
+  confirm_action: "确认",
+  cancel: "取消",
 
   // Update toast
   update_available: "发现新版本",
@@ -111,12 +116,15 @@ export default {
   // Messages
   login_success: "登录成功",
   login_failed: "登录失败: 账号或密码错误",
+  login_unavailable: "无法连接登录服务，请检查网络后重试。",
   login_timeout: "登录等待超时，请检查网络后重试。",
   logout_success: "已安全退出",
   manual_rate_prompt: "请先输入有效的手动汇率数值！",
   manual_rate_applied: "手动汇率已应用",
   syncing_year_switch: "数据正在同步中，请稍后切换年份",
   enter_valid_amount: "请输入有效纯数字金额",
+  quick_add_invalid_date: "请选择有效日期",
+  quick_add_invalid_category: "请选择分类",
   record_saved: "记录已追加",
   streak_achieved: "恭喜！连续记账{days}天成就达成！",
 
