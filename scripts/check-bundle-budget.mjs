@@ -1,5 +1,6 @@
 import { readFile, stat } from "node:fs/promises";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 export const MAIN_ENTRY_BUDGET_BYTES = 650_000;
 export const FEATURE_CHUNK_BUDGET_BYTES = 350_000;
@@ -31,7 +32,7 @@ export async function checkBundleBudget(options = {}) {
   return { entry: { file: entry.file, size: entrySize }, chunks };
 }
 
-if (import.meta.url === new URL(process.argv[1], "file:").href) {
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try {
     const result = await checkBundleBudget();
     console.log(`Bundle budget passed: main ${result.entry.file} ${result.entry.size} B; ${result.chunks.length} feature chunks checked.`);
