@@ -1,13 +1,16 @@
 import { formatVndInputValue } from "./vnd-input.js";
 
+/** @param {unknown} rate @returns {rate is number} */
 export function isValidCurrencyRate(rate) {
   return typeof rate === "number" && Number.isFinite(rate) && rate > 0;
 }
 
+/** @param {unknown} rawValue */
 export function normalizeCurrencyInput(rawValue) {
   return String(rawValue ?? "").replace(/,/g, "").trim();
 }
 
+/** @param {unknown} rawValue @param {"VND" | "CNY"} currency */
 export function formatCurrencyInput(rawValue, currency) {
   const input = String(rawValue ?? "");
   if (input === "") return "";
@@ -26,21 +29,24 @@ export function formatCurrencyInput(rawValue, currency) {
   return decimalIndex === -1 ? groupedInteger : groupedInteger + "." + fractionPart;
 }
 
+/** @param {unknown} vndVal @param {"VND" | "CNY"} currency @param {unknown} rate */
 export function formatVndForCurrencyDisplay(vndVal, currency, rate) {
-  const val = parseFloat(vndVal) || 0;
+  const val = parseFloat(String(vndVal ?? "")) || 0;
   if (currency === "VND") return Math.round(val).toLocaleString("en-US");
   if (!isValidCurrencyRate(rate)) return "汇率不可用";
   return (val / rate).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
+/** @param {unknown} rawVnd @param {"VND" | "CNY"} currency @param {unknown} rate */
 export function formatVndForCurrencyInput(rawVnd, currency, rate) {
   if (rawVnd === undefined || rawVnd === null || rawVnd === "") return "";
   if (currency === "VND") return String(rawVnd);
   if (!isValidCurrencyRate(rate)) return "";
-  const vndVal = parseFloat(rawVnd) || 0;
+  const vndVal = parseFloat(String(rawVnd)) || 0;
   return vndVal ? String(parseFloat((vndVal / rate).toFixed(2))) : "";
 }
 
+/** @param {unknown} rawInput @param {{currency: "VND" | "CNY", rate: unknown, previousRawVnd?: string, previousViewValue?: string, evaluate: (value: string) => number}} options */
 export function parseCurrencyInputToVnd(rawInput, options) {
   const input = rawInput === undefined || rawInput === null ? "" : String(rawInput).trim();
   if (input === "") return "";
@@ -49,10 +55,11 @@ export function parseCurrencyInputToVnd(rawInput, options) {
   if (options.previousRawVnd !== undefined && input === String(options.previousViewValue || "").trim()) {
     return options.previousRawVnd;
   }
-  return (options.evaluate(input) * options.rate).toString();
+  return (options.evaluate(input) * /** @type {number} */ (options.rate)).toString();
 }
 
+/** @param {unknown} rawAmount @param {unknown} rate */
 export function convertCnyAmountToVnd(rawAmount, rate) {
   if (!isValidCurrencyRate(rate)) return null;
-  return (parseFloat(rawAmount) * rate).toString();
+  return (parseFloat(String(rawAmount)) * /** @type {number} */ (rate)).toString();
 }

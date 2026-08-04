@@ -5,6 +5,8 @@ export function createSavingsController({
   root = document.getElementById("savings-root"),
   getSavingsState,
   getLocale = () => "vi",
+  getCurrency = () => "VND",
+  getRate = () => null,
   getDashboardViewModel,
   formatMoney,
   triggerCloudSave = () => {},
@@ -47,6 +49,8 @@ export function createSavingsController({
       annualIncome,
       annualExpense,
       locale,
+      currency: getCurrency(),
+      fxRate: getRate(),
       status,
     });
 
@@ -58,6 +62,8 @@ export function createSavingsController({
       pendingUpdates: snapshot.pendingUpdates,
       month: snapshot.month,
       locale,
+      currency: vm.currency,
+      fxRate: vm.fxRate,
       onStatus: (next) => setSavingsStatus(root, next),
       onSave: () => {
         setSavingsStatus(root, "queued");

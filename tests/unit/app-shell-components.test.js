@@ -79,6 +79,27 @@ describe("app shell components", () => {
     expect(menu.getAttribute("aria-hidden")).toBe("true");
   });
 
+  it("starts the command menu FLIP transition from its trigger geometry", async () => {
+    const { renderHeader } = await import("../../src/components/app-shell/header.js");
+    const { bindCommandMenu, renderCommandMenu } = await import("../../src/components/app-shell/command-menu.js");
+    const header = document.querySelector("[data-app-header-host]");
+
+    renderHeader(header);
+    renderCommandMenu(header.querySelector("[data-app-command-menu-host]"));
+    bindCommandMenu(document);
+
+    const button = document.getElementById("nav-more-btn");
+    const dialog = document.querySelector(".app-command-menu-dialog");
+    button.getBoundingClientRect = () => ({ left: 100, top: 20, width: 80, height: 40 });
+
+    button.click();
+
+    expect(dialog.classList.contains("app-command-menu-dialog--flip-start")).toBe(true);
+    expect(dialog.style.getPropertyValue("--nav-secondary-flip-x")).toBe("-372px");
+    expect(dialog.style.getPropertyValue("--nav-secondary-flip-y")).toBe("-344px");
+    expect(dialog.style.getPropertyValue("--nav-secondary-flip-scale")).toBe("0.3");
+  });
+
   it("keeps the manual FX input hidden until manual mode is selected", async () => {
     const { renderHeader } = await import("../../src/components/app-shell/header.js");
     const { renderCommandMenu } = await import("../../src/components/app-shell/command-menu.js");
@@ -157,6 +178,7 @@ describe("app shell components", () => {
 
     document.getElementById("nav-secondary-close").click();
     expect(panel.classList.contains("open")).toBe(false);
+    expect(panel.classList.contains("closing")).toBe(true);
     expect(document.body.classList.contains("app-modal-open")).toBe(false);
     expect(document.activeElement).toBe(button);
 

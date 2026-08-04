@@ -92,6 +92,8 @@ const depositController = createDepositController({
 const savingsController = createSavingsController({
   getSavingsState: () => ({ settings: state.appState.settings, pendingUpdates: state.pendingUpdates.settings, month: state.activeMonthId }),
   getLocale: getCurrentLocale,
+  getCurrency: () => state.currentCurrency,
+  getRate: getActiveRate,
   getDashboardViewModel: (month) => buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } }),
   formatMoney: formatDisplay,
   triggerCloudSave,
@@ -257,8 +259,9 @@ function switchCurrency(curr) {
   if (fxPanel) fxPanel.classList.toggle("hidden", curr !== "CNY");
   refreshQuickAddAmountInput();
   ledgerController.refresh();
+  savingsController.update();
   if (curr === "CNY" && state.fxMode === "auto" && !isValidCurrencyRate(state.fxRateAuto)) {
-    refreshAutoRate().then(() => ledgerController.refresh());
+    refreshAutoRate().then(() => { ledgerController.refresh(); savingsController.update(); });
   }
 }
 
@@ -275,8 +278,9 @@ function changeFxMode(mode) {
   else {
     if (btn) btn.classList.add("hidden");
     ledgerController.refresh();
-    if (state.currentCurrency === "CNY" && !isValidCurrencyRate(state.fxRateAuto)) refreshAutoRate().then(() => ledgerController.refresh());
+    if (state.currentCurrency === "CNY" && !isValidCurrencyRate(state.fxRateAuto)) refreshAutoRate().then(() => { ledgerController.refresh(); savingsController.update(); });
   }
+  savingsController.update();
 }
 
 function applyManualRate() {
@@ -286,6 +290,7 @@ function applyManualRate() {
   state.fxRateManual = val;
   showToast(t("manual_rate_applied"));
   ledgerController.refresh();
+  savingsController.update();
 }
 
 function toggleDarkMode() {

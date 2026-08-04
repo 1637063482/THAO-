@@ -93,6 +93,8 @@ export interface SavingsControllerDependencies {
   root?: HTMLElement | null;
   getSavingsState?: () => SavingsState;
   getLocale?: () => AppLocale;
+  getCurrency?: () => "VND" | "CNY";
+  getRate?: () => number | null;
   getDashboardViewModel?: (month: number) => DashboardViewModel;
   formatMoney?: (value: number) => string;
   triggerCloudSave?: () => void;
@@ -107,11 +109,15 @@ export interface SavingsViewModelInput {
   annualExpense?: number;
   locale?: AppLocale;
   status?: string;
+  currency?: "VND" | "CNY";
+  fxRate?: number | null;
 }
 
 export interface SavingsViewModel {
   locale: AppLocale;
   month: number;
+  currency: "VND" | "CNY";
+  fxRate: number | null;
   goals: {
     monthly: Array<number | null>;
     annual: number | null;
@@ -128,6 +134,8 @@ export interface SavingsGoalFormOptions {
   pendingUpdates: LedgerSettings;
   month: number;
   locale?: AppLocale;
+  currency?: "VND" | "CNY";
+  fxRate?: number | null;
   onSave?: () => void;
   onStatus?: (status: string, error?: unknown) => void;
 }

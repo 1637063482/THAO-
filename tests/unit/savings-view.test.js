@@ -24,6 +24,25 @@ describe("savings view", () => {
     expect(renderSavingsPage(vm, formatCny)).toContain("1,142.86");
   });
 
+  it("renders and persists savings goals in CNY while keeping VND storage", () => {
+    document.body.innerHTML = '<div id="root"></div>';
+    const root = document.getElementById("root");
+    const settings = { savings_goal_month_3: 300000, savings_goal_annual: 4000000 };
+    const pendingUpdates = {};
+    const vm = buildSavingsViewModel({ ...input, settings, currency: "CNY", fxRate: 3500 });
+    root.innerHTML = renderSavingsPage(vm);
+
+    const monthly = root.querySelector('[name="monthly"]');
+    expect(monthly.value).toBe("85.71");
+
+    bindSavingsGoalForm(root, { settings, pendingUpdates, month: 3, currency: "CNY", fxRate: 3500 });
+    monthly.value = "100.50";
+    root.querySelector("form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    expect(settings.savings_goal_month_3).toBe(351750);
+    expect(pendingUpdates.savings_goal_month_3).toBe(351750);
+  });
+
   it("marks savings differences and goal inputs as privacy-sensitive", () => {
     document.body.innerHTML = renderSavingsPage(buildSavingsViewModel({ ...input }));
 

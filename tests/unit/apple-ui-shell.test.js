@@ -15,6 +15,8 @@ const topBackdropRule = extractRule("body::before");
 const bottomBackdropRule = extractRule("body::after");
 const commandBackdropRule = extractRule("#nav-secondary");
 const commandDialogRule = extractRule("\.app-command-menu-dialog");
+const commandFlipStartRule = extractRule("#nav-secondary \.app-command-menu-dialog--flip-start");
+const commandFlipCloseRule = extractRule("#nav-secondary\.closing \.app-command-menu-dialog--flip-close");
 const preferenceButtonRule = css.match(/\.app-command-menu-preferences \.btn-ghost,\s*\.app-command-menu-actions \.btn-ghost,\s*\.app-command-menu-actions \.btn-primary,\s*\.app-command-menu-actions \.btn-danger\s*\{([^}]*)\}/)?.[1] || "";
 const commandSegmentRule = css.match(/\.app-command-menu-preferences \.app-segment,\s*\.app-command-menu-currency \.app-segment\s*\{([^}]*)\}/)?.[1] || "";
 const commandSegmentButtonRule = css.match(/\.app-command-menu-preferences \.app-segment > \.month-tab,\s*\.app-command-menu-currency \.app-segment > \.month-tab\s*\{([^}]*)\}/)?.[1] || "";
@@ -76,6 +78,18 @@ describe("Apple UI shell chrome", () => {
     expect(commandDialogRule).toMatch(/width:\s*min\(560px,\s*100%\)/);
     expect(commandDialogRule).toMatch(/max-height:\s*calc\(100dvh - 2rem\)/);
     expect(commandDialogRule).toMatch(/overflow-y:\s*auto/);
+  });
+
+  it("uses trigger-origin FLIP motion without changing grid centering", () => {
+    expect(commandDialogRule).toMatch(/transform-origin:\s*center/);
+    expect(commandDialogRule).toMatch(/transition:\s*transform 1080ms/);
+    expect(commandDialogRule).toMatch(/backface-visibility:\s*hidden/);
+    expect(commandDialogRule).toMatch(/-webkit-backface-visibility:\s*hidden/);
+    expect(css).toMatch(/#nav-secondary\.open \.app-command-menu-dialog\s*\{[^}]*opacity:\s*1/);
+    expect(commandFlipStartRule).toMatch(/transform:\s*translate\(var\(--nav-secondary-flip-x\),\s*var\(--nav-secondary-flip-y\)\)\s*scale\(var\(--nav-secondary-flip-scale\)\)/);
+    expect(commandFlipCloseRule).toMatch(/transition:\s*transform 1200ms/);
+    expect(commandFlipCloseRule).toMatch(/opacity:\s*1/);
+    expect(css).toMatch(/#nav-secondary\.closing\s*\{[^}]*opacity:\s*0[^}]*transition:\s*opacity 1200ms/);
   });
 
   it("keeps command groups visually balanced inside the modal", () => {

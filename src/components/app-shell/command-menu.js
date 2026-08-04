@@ -98,18 +98,120 @@ export function bindCommandMenu(root = document) {
   const panelElement = panel;
   const buttonElement = button;
   const closeButton = root.getElementById("nav-secondary-close");
+  /** @type {HTMLElement|null} */
+  const dialogElement = panelElement.querySelector(".app-command-menu-dialog");
+  const windowRef = panelElement.ownerDocument.defaultView;
+  /** @type {number|null} */
+  let flipFrame = null;
+  /** @type {number|null} */
+  let closeTimer = null;
+  let flipSequence = 0;
+  const closeDuration = 1200;
   panelElement.setAttribute("aria-hidden", "true");
   const body = panelElement.ownerDocument.body;
+
+  /** @param {(timestamp: number) => void} callback */
+  function requestFrame(callback) {
+    if (windowRef?.requestAnimationFrame) return windowRef.requestAnimationFrame(callback);
+    return setTimeout(callback, 0);
+  }
+
+  /** @param {number|null} frame */
+  function cancelFrame(frame) {
+    if (frame === null || frame === undefined) return;
+    if (windowRef?.cancelAnimationFrame) windowRef.cancelAnimationFrame(frame);
+    else clearTimeout(frame);
+  }
+
+  function cancelFlip() {
+    flipSequence += 1;
+    cancelFrame(flipFrame);
+    flipFrame = null;
+  }
+
+  function cancelClose() {
+    if (closeTimer !== null) {
+      if (windowRef?.clearTimeout) windowRef.clearTimeout(closeTimer);
+      else clearTimeout(closeTimer);
+      closeTimer = null;
+    }
+  }
+
+  function setFlipGeometry() {
+    if (!dialogElement) return;
+    const viewportWidth = windowRef?.innerWidth || panelElement.ownerDocument.documentElement.clientWidth || 560;
+    const viewportHeight = windowRef?.innerHeight || panelElement.ownerDocument.documentElement.clientHeight || 768;
+    const triggerRect = buttonElement.getBoundingClientRect();
+    const triggerCenterX = triggerRect.left + triggerRect.width / 2;
+    const triggerCenterY = triggerRect.top + triggerRect.height / 2;
+    const targetWidth = Math.min(560, Math.max(viewportWidth - 32, 1));
+    const scale = Math.max(Math.min(triggerRect.width / targetWidth, 0.5), 0.3);
+
+    dialogElement.style.setProperty("--nav-secondary-flip-x", `${triggerCenterX - viewportWidth / 2}px`);
+    dialogElement.style.setProperty("--nav-secondary-flip-y", `${triggerCenterY - viewportHeight / 2}px`);
+    dialogElement.style.setProperty("--nav-secondary-flip-scale", String(scale));
+  }
+
+  function prepareFlip() {
+    if (!dialogElement) return;
+    setFlipGeometry();
+    dialogElement.style.setProperty("transition", "none");
+    dialogElement.classList.add("app-command-menu-dialog--flip-start");
+  }
+
+  function playFlip() {
+    if (!dialogElement) return;
+    const sequence = flipSequence;
+    flipFrame = requestFrame(() => {
+      flipFrame = requestFrame(() => {
+        flipFrame = null;
+        if (sequence === flipSequence) {
+          dialogElement.style.removeProperty("transition");
+          void dialogElement.offsetWidth;
+          dialogElement.classList.remove("app-command-menu-dialog--flip-start");
+        }
+      });
+    });
+  }
 
   /**
    * @param {boolean} open
    * @param {boolean} [restoreFocus]
    */
   function setOpen(open, restoreFocus = false) {
-    panelElement.classList.toggle("open", open);
+    cancelFlip();
+    cancelClose();
+    if (open) {
+      dialogElement?.classList.remove("app-command-menu-dialog--flip-close");
+      panelElement.style.removeProperty("transition");
+      panelElement.classList.remove("closing");
+      prepareFlip();
+      panelElement.classList.add("open");
+    } else if (panelElement.classList.contains("open")) {
+      dialogElement?.classList.remove("app-command-menu-dialog--flip-start");
+      dialogElement?.style.removeProperty("transition");
+      setFlipGeometry();
+      dialogElement?.style.setProperty("transition", `transform ${closeDuration}ms cubic-bezier(0.22, 1, 0.36, 1)`);
+      dialogElement?.classList.add("app-command-menu-dialog--flip-close");
+      panelElement.style.setProperty("transition", `opacity ${closeDuration}ms ease-out`);
+      panelElement.classList.remove("open");
+      panelElement.classList.add("closing");
+      closeTimer = /** @type {number} */ ((windowRef?.setTimeout || window.setTimeout)(() => {
+        closeTimer = null;
+        dialogElement?.classList.remove("app-command-menu-dialog--flip-close");
+        panelElement.classList.remove("closing");
+        panelElement.style.removeProperty("transition");
+      }, closeDuration));
+    } else {
+      dialogElement?.classList.remove("app-command-menu-dialog--flip-start", "app-command-menu-dialog--flip-close");
+      dialogElement?.style.removeProperty("transition");
+      panelElement.classList.remove("closing");
+      panelElement.style.removeProperty("transition");
+    }
     buttonElement.setAttribute("aria-expanded", String(open));
     panelElement.setAttribute("aria-hidden", String(!open));
     body.classList.toggle("app-modal-open", open);
+    if (open) playFlip();
     if (open) panelElement.querySelector("button")?.focus({ preventScroll: true });
     if (restoreFocus) buttonElement.focus();
   }
@@ -143,6 +245,12 @@ export function bindCommandMenu(root = document) {
   root.addEventListener("keydown", closeFromEscape);
 
   return function unbindCommandMenu() {
+    cancelFlip();
+    cancelClose();
+    dialogElement?.classList.remove("app-command-menu-dialog--flip-start");
+    dialogElement?.classList.remove("app-command-menu-dialog--flip-close");
+    dialogElement?.style.removeProperty("transition");
+    panelElement.style.removeProperty("transition");
     buttonElement.removeEventListener("click", toggle);
     closeButton?.removeEventListener("click", closeFromButton);
     panelElement.removeEventListener("click", closeFromBackdrop);
