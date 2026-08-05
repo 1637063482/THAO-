@@ -1,40 +1,53 @@
 # Firebase Access Contract
 
-## Owner-Confirmed Online Rules
+## Deployable repository Rules
 
-For T017, the project owner provided the current online Firestore Rules semantics:
+`firestore.rules` is the deployable source for this repository. It does not
+contain real email addresses, UIDs, credentials, or financial data.
 
-- The application is still a private two-account ledger.
-- The girlfriend account and the project owner account have identical ledger permissions.
-- Authorization is based on `request.auth.token.email`, compared case-insensitively.
-- The two real email addresses are intentionally not stored in this repository.
-- Authorized accounts may `read`, `create`, and `update` documents under `artifacts/{appId}/public/data/ledgers/{ledgerId}`.
-- Ledger `delete` is always denied.
-- Every other Firestore path is denied.
+Firebase Authentication establishes the caller identity. Firestore Rules then
+authorize the caller only when a server-managed member document exists at:
 
-## Repository Candidate Rules
+```text
+artifacts/{appId}/public/data/members/{uid}
+```
 
-`firestore.rules` mirrors the online rule shape for Emulator verification, but uses fixture emails:
+The member document must contain:
 
-- `girlfriend.fixture@example.invalid`
-- `owner.fixture@example.invalid`
+```json
+{ "access": "shared-ledger" }
+```
 
-These fixture emails are test-only placeholders. They must not be deployed as production access rules. If deployment is ever authorized separately, the private Firebase console values must be applied outside repository commits, or replaced through a secure deployment process that does not commit real emails, UIDs, passwords, or tokens.
+The two real household accounts are provisioned out of band by an authorized
+operator in the target Firebase project. The client cannot read or write the
+`members` path, so membership cannot be self-granted from the app.
 
-## Permission Matrix
+Authorized members may `read`, `create`, and `update` ledger documents under
+`artifacts/{appId}/public/data/ledgers/{ledgerId}`. Ledger `delete` is always
+denied, and every other Firestore path is denied by default.
 
-| Principal | Ledger read | Ledger create | Ledger update | Ledger delete | Other paths |
-|---|---:|---:|---:|---:|---:|
-| Girlfriend account | allow | allow | allow | deny | deny |
-| Project owner account | allow | allow | allow | deny | deny |
-| Anonymous user | deny | deny | deny | deny | deny |
-| Missing email token | deny | deny | deny | deny | deny |
-| Any third email/UID | deny | deny | deny | deny | deny |
+## Emulator contract
 
-## Boundaries
+Rules tests use synthetic UIDs and seed synthetic member documents through the
+Rules-test admin context. They do not use production email addresses or UIDs.
+This proves the authorization shape and the ledger mutation constraints without
+claiming that a production project has been provisioned or deployed.
 
-- This task does not deploy Firebase Rules.
-- This task does not modify Firebase Auth accounts.
-- This task does not write, migrate, or inspect production data.
-- This task does not add client-side role UI or account management.
-- Repository tests prove that the checked-in candidate rules match the owner-confirmed online semantics; they do not prove the live Firebase project has changed.
+## Permission matrix
+
+| Principal | Member document | Ledger read | Ledger create | Ledger update | Ledger delete | Other paths |
+|---|---:|---:|---:|---:|---:|---:|
+| Provisioned member | client denied | allow | allow | allow | deny | deny |
+| Authenticated but unprovisioned user | deny | deny | deny | deny | deny | deny |
+| Anonymous user | deny | deny | deny | deny | deny | deny |
+
+## Release boundaries
+
+- This change does not deploy Firebase Rules or modify Firebase Auth/data.
+- Before deploying this Rules source, the authorized operator must provision
+  the two real member documents in the target project using a private,
+  auditable process.
+- Deploying Rules before those documents exist will reproduce the blank-data
+  symptom: login can succeed while Firestore reads are denied.
+- A Rules deployment requires explicit authorization naming the target project,
+  candidate revision, release window, and rollback source.

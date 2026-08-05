@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import type { Firestore } from "firebase/firestore";
+import { doc, setDoc, type Firestore } from "firebase/firestore";
 import {
   DepositRepository,
   type DepositInput,
@@ -17,8 +17,8 @@ export const ACTOR_UID = "synthetic-deposit-owner";
 
 const auth = {
   uid: ACTOR_UID,
-  email: "owner.fixture@example.invalid",
 };
+const memberPath = `artifacts/${APP_PROJECT_ID}/public/data/members/${ACTOR_UID}`;
 
 export interface DepositEmulatorFixture {
   env: RulesTestEnvironment;
@@ -28,8 +28,14 @@ export interface DepositEmulatorFixture {
 }
 
 function repositoryFor(env: RulesTestEnvironment): DepositRepository {
-  const db = env.authenticatedContext(auth.uid, { email: auth.email }).firestore() as unknown as Firestore;
+  const db = env.authenticatedContext(auth.uid).firestore() as unknown as Firestore;
   return new DepositRepository(db, APP_PROJECT_ID, auth.uid);
+}
+
+async function seedAuthorizedMember(env: RulesTestEnvironment): Promise<void> {
+  await env.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), memberPath), { access: "shared-ledger" });
+  });
 }
 
 export async function createDepositEmulatorFixture(): Promise<DepositEmulatorFixture> {
@@ -37,11 +43,12 @@ export async function createDepositEmulatorFixture(): Promise<DepositEmulatorFix
     projectId: FIREBASE_PROJECT_ID,
     firestore: { rules: readFileSync("firestore.rules", "utf8") },
   });
+  await seedAuthorizedMember(env);
 
   return {
     env,
     repository: repositoryFor(env),
-    clear: () => env.clearFirestore(),
+    clear: async () => { await env.clearFirestore(); await seedAuthorizedMember(env); },
     freshRepository: () => repositoryFor(env),
   };
 }

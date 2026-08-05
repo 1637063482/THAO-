@@ -1,12 +1,13 @@
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { initializeTestEnvironment, type RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import type { Firestore } from "firebase/firestore";
+import { doc, setDoc, type Firestore } from "firebase/firestore";
 import { DepositRepository } from "../../src/infrastructure/firebase/deposit-repository";
 
 const firebaseProjectId = "demo-no-project";
 const appProjectId = "my-expense-app-test";
-const auth = { uid: "fixture-owner", email: "owner.fixture@example.invalid" };
+const auth = { uid: "fixture-owner" };
+const memberPath = `artifacts/${appProjectId}/public/data/members/${auth.uid}`;
 
 function input() {
   return {
@@ -37,7 +38,10 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("DepositRepository", () =>
   });
   beforeEach(async () => {
     await env.clearFirestore();
-    repository = new DepositRepository(env.authenticatedContext(auth.uid, { email: auth.email }).firestore() as unknown as Firestore, appProjectId, auth.uid);
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), memberPath), { access: "shared-ledger" });
+    });
+    repository = new DepositRepository(env.authenticatedContext(auth.uid).firestore() as unknown as Firestore, appProjectId, auth.uid);
   });
   afterAll(async () => env?.cleanup());
 

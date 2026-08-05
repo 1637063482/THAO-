@@ -1,9 +1,10 @@
 # Firebase Rules Release Checklist
 
-## Scope and candidate baseline
+## Scope and deployable baseline
 
-- Candidate Rules source: `firestore.rules` at commit `270245953476730473e84f4cdaa655547e8366af`.
+- Deployable Rules source: `firestore.rules`.
 - Emulator project: `demo-no-project` only. It is not a Firebase production project.
+- Repository Rules contain no real email addresses, UIDs, credentials, or financial data.
 - Required local gates:
 
   ```powershell
@@ -12,42 +13,80 @@
   git diff --check
   ```
 
-- A passing emulator gate proves only the checked candidate against local synthetic fixtures. It does not prove that any online Firebase project has received or enforces these Rules.
-- This checklist does not authorize or execute `firebase deploy`.
+- A passing emulator gate proves only the checked Rules against local synthetic
+  fixtures. It does not prove that an online Firebase project has received or
+  enforces them.
+- This checklist does not itself authorize or execute `firebase deploy`.
 
-## Release blocker in the current candidate
+## Required production precondition
 
-The current candidate allowlist contains only `.invalid` synthetic fixture addresses. Do not deploy it to a production project. Before a future release can proceed, the user must explicitly approve a production-safe authorization design that does not commit real email addresses, UIDs, credentials, or financial data to this repository. That design and its two-authorized-account contract require a fresh Rules review and emulator coverage before this checklist may continue.
+The Rules authorization source is the server-managed member document:
+
+```text
+artifacts/{appId}/public/data/members/{uid}
+```
+
+For each of the two real household accounts, an authorized operator must
+privately create the document with:
+
+```json
+{ "access": "shared-ledger" }
+```
+
+The member documents must be created in the target project before deploying
+these Rules. They must not be created by the client, committed to the
+repository, or copied into screenshots, tests, or release notes. If the
+documents cannot be provisioned and verified, stop the release; deploying the
+Rules alone will deny the accounts' Firestore reads and writes.
 
 ## Before deployment
 
-- [ ] Obtain new, explicit user authorization for this release. The authorization must name the target Firebase project ID, the candidate commit SHA, the release window, and the authorized operator. Do not write the production project ID in this repository.
-- [ ] Confirm the local checkout is at the approved candidate SHA and that `firebase.json` still maps Firestore Rules to `firestore.rules`.
-- [ ] Run all required local gates above with `demo-no-project`; record the command results in the user-approved release record, not as evidence that production is live.
-- [ ] In the Firebase Console for the user-confirmed target project, copy the currently active Firestore Rules source, active release timestamp, and project ID into a user-controlled private release record. Do not commit that export if it contains real identities or production configuration.
-- [ ] Compare the private current-Rules export with the candidate using `git diff --no-index --word-diff=plain <private-current.rules> firestore.rules`; resolve every intentional change before deployment.
-- [ ] Confirm the approved authorization design has two authorized-account contract checks and negative checks for anonymous and unauthorized access. Use only synthetic or blank validation identities; do not place their real identifiers in this document, source, tests, screenshots, or commit messages.
-- [ ] Confirm the rollback operator, private backup location, and stop conditions below are available before making any production change.
+- [ ] Obtain explicit user authorization naming the target Firebase project,
+      candidate revision, release window, and authorized operator.
+- [ ] Confirm the local checkout is at the approved candidate revision and that
+      `firebase.json` maps Firestore Rules to `firestore.rules`.
+- [ ] Run all required local gates above with `demo-no-project`.
+- [ ] In the target project, privately verify that exactly the two intended
+      member documents exist with `access: "shared-ledger"`; do not record the
+      real UIDs in Git.
+- [ ] Export the currently active Rules and release metadata to a private
+      rollback record. Do not commit that export if it contains production
+      identities or configuration.
+- [ ] Compare the private active Rules export with `firestore.rules` and
+      resolve every intentional change before deployment.
+- [ ] Confirm the rollback operator and stop conditions are available.
 
 ## During deployment
 
-- [ ] Reconfirm the target project ID with the user and operator immediately before the action. A matching local Firebase login or default project is not sufficient authorization.
-- [ ] The user-approved operator releases only `firestore.rules` to the user-confirmed project, following the Firebase CLI or Console procedure selected in the authorization record.
-- [ ] Record the deployment timestamp and resulting Rules release identifier in the private release record. Do not add a production ID, account identifier, credential, or financial data to Git.
-- [ ] Stop immediately if the target project, candidate SHA, or displayed Rules source differs from the approved release record.
+- [ ] Reconfirm the target project and candidate revision immediately before
+      the action.
+- [ ] Release only the approved `firestore.rules` source through the
+      user-approved operator and procedure.
+- [ ] Record the deployment timestamp and Rules release identifier in the
+      private release record.
+- [ ] Stop if the target project, candidate revision, or displayed Rules source
+      differs from the approved release record.
 
 ## After deployment
 
-- [ ] Reopen the Firestore Rules view for the user-confirmed project and compare the displayed source with the approved candidate SHA/source.
-- [ ] With only synthetic or blank validation accounts, verify the approved two-authorized-account contract and the anonymous/unauthorized denial contract against the deployed project. Do not create, read, or alter real financial records.
-- [ ] Verify the candidate boundary still holds: authorized users may read/create/update the savings document through valid mutations; physical document deletion remains denied; unmatched documents remain denied.
-- [ ] Record the results and any release identifier in the private release record. State separately that production validation passed; never infer it from an emulator result.
+- [ ] Reopen the target project's Rules view and compare the displayed source
+      with the approved candidate.
+- [ ] With synthetic or blank validation accounts only, verify that provisioned
+      members can read/create/update valid ledger documents and that anonymous
+      and unprovisioned users are denied.
+- [ ] Verify physical ledger deletion and client access to `members` remain
+      denied.
+- [ ] Record production validation separately from emulator results.
 
 ## Rollback
 
-Roll back immediately if any deployed source differs from the candidate, either authorized-account contract check fails, anonymous/unauthorized access succeeds, physical deletion succeeds, or validation could touch real financial data.
+Roll back immediately if the deployed source differs from the candidate, a
+member/denial contract check fails, deletion succeeds, or validation could
+touch real financial data.
 
-- [ ] Stop validation and preserve the observed error and timestamp without copying real data into the repository.
-- [ ] Reapply the pre-deployment Rules source from the private release record to the same user-confirmed project, using the user-approved operator.
-- [ ] Reopen the Rules view and verify that the restored source matches the private backup.
-- [ ] Repeat only synthetic/blank denial checks after rollback, notify the user, and require new explicit authorization before any retry.
+- [ ] Stop validation and preserve the observed error and timestamp privately.
+- [ ] Reapply the pre-deployment Rules source from the private rollback record
+      to the same target project using the approved operator.
+- [ ] Reopen the Rules view and verify the restored source matches the backup.
+- [ ] Repeat only synthetic/blank denial checks after rollback and require new
+      explicit authorization before retrying.
