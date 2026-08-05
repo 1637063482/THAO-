@@ -180,10 +180,10 @@ function syncDateLabel(host, value) {
 /**
  * Wire up open/close, calendar navigation, and day selection for one host.
  * @param {Element | null} host
- * @param {{ onChange?: (value: string) => void, locale?: string, minDate?: string }} [bindings]
+ * @param {{ onChange?: (value: string) => void, locale?: string, minDate?: string, portal?: boolean }} [bindings]
  * @returns {() => void} unbind
  */
-export function bindAppDatePicker(host, { onChange, locale = "vi", minDate = "" } = {}) {
+export function bindAppDatePicker(host, { onChange, locale = "vi", minDate = "", portal = true } = {}) {
   if (!host || CALENDARS.has(host)) return () => {};
   const trigger = host.querySelector("[data-app-datepicker-trigger]");
   const calendar = /** @type {HTMLElement | null} */ (host.querySelector("[data-app-datepicker-calendar]"));
@@ -199,9 +199,15 @@ export function bindAppDatePicker(host, { onChange, locale = "vi", minDate = "" 
   triggerEl.setAttribute("aria-controls", calendarEl.id);
   CALENDARS.set(hostEl, { trigger: triggerEl, calendar: calendarEl, hidden: hiddenEl, labels });
 
-  // Reparent to <body> so the calendar is never clipped by a scroll container.
-  if (calendarEl.parentElement !== hostEl.ownerDocument.body) {
-    hostEl.ownerDocument.body.appendChild(calendarEl);
+  // Global surfaces use a body portal to escape scroll-container clipping.
+  // Local forms can keep the calendar in their dialog's positioning context.
+  if (portal) {
+    calendarEl.classList.add("app-dropdown-menu-portal");
+    if (calendarEl.parentElement !== hostEl.ownerDocument.body) {
+      hostEl.ownerDocument.body.appendChild(calendarEl);
+    }
+  } else {
+    calendarEl.classList.remove("app-dropdown-menu-portal");
   }
 
   let view = (() => {
@@ -220,6 +226,7 @@ export function bindAppDatePicker(host, { onChange, locale = "vi", minDate = "" 
   }
 
   function positionCalendar() {
+    if (!portal) return;
     const triggerRect = triggerEl.getBoundingClientRect();
     const doc = hostEl.ownerDocument;
     const win = doc.defaultView;
@@ -358,6 +365,7 @@ export function bindAppDatePicker(host, { onChange, locale = "vi", minDate = "" 
     calendarEl.removeEventListener("click", onCalendarClick);
     calendarEl.removeEventListener("keydown", /** @type {EventListener} */ (onCalendarKeydown));
     /** @type {Document} */ (hostEl.ownerDocument).removeEventListener("click", onOutsideClick);
+    calendarEl.classList.remove("app-dropdown-menu-portal");
     if (calendarEl.parentElement !== hostEl) hostEl.appendChild(calendarEl);
   };
 }

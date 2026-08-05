@@ -60,45 +60,18 @@
 .deposit-table td:first-child { display: grid; gap: .15rem; }
 .deposit-empty { display: grid; justify-items: center; gap: .9rem; padding: 2.5rem 1rem; text-align: center; color: var(--color-label-secondary); }
 .deposit-operation-error { margin-top: .75rem; font-size: .8rem; }
-.deposit-form-backdrop { position: fixed; inset: 0; z-index: 80; display: flex; align-items: flex-end; justify-content: center; background: rgba(0, 0, 0, .36); backdrop-filter: blur(8px); }
-.deposit-form-sheet { width: 100%; max-height: 92dvh; overflow-y: auto; padding: 1rem; border-radius: 1.5rem 1.5rem 0 0; background: var(--color-surface); box-shadow: 0 -14px 48px rgba(0, 0, 0, .16); }
+.deposit-form-backdrop { z-index: 1100; display: grid; place-items: center; }
+.deposit-form-sheet { width: min(640px, 100%); max-height: calc(100dvh - 2rem); overflow-y: auto; padding: 1.25rem; border-radius: 28px; background: var(--color-surface); box-shadow: 0 24px 80px rgba(0, 0, 0, .22), 0 2px 8px rgba(0, 0, 0, .08); }
 .deposit-form-sheet h3 { color: var(--color-label); font-size: 1.1rem; font-weight: 800; }
 .deposit-form-close { width: 44px; height: 44px; border-radius: 50%; color: var(--color-label-secondary); background: var(--color-surface-secondary); font-size: 1.5rem; }
 .deposit-form-grid { display: grid; gap: .8rem; margin-top: 1rem; }
 .deposit-form-grid label, .deposit-form-field { display: grid; gap: .35rem; color: var(--color-label-secondary); font-size: .78rem; font-weight: 650; }
+.deposit-form-grid .app-dropdown,
+.deposit-form-grid .app-datepicker { width: 100%; }
+.deposit-form-grid .app-datepicker-calendar { width: 100%; }
 .deposit-form-grid input, .deposit-form-grid select, .deposit-form-grid textarea { width: 100%; padding: .625rem .75rem; border-color: var(--color-separator); border-radius: 10px; background: var(--color-surface-secondary); color: var(--color-label); font-family: var(--font-sans); font-size: 1rem; }
 .deposit-form-grid input::placeholder,
 .deposit-form-grid textarea::placeholder { color: var(--color-label-secondary); opacity: 1; }
-.deposit-bank-picker { position: relative; }
-.deposit-bank-control { position: relative; }
-.deposit-bank-control input { border-radius: 10px; padding-right: 2.75rem; }
-.deposit-bank-control input[aria-expanded="true"] {
-  border-color: var(--color-primary);
-  box-shadow: var(--focus-ring);
-}
-.deposit-bank-chevron {
-  position: absolute;
-  top: 50%;
-  right: .875rem;
-  transform: translateY(-50%);
-  display: inline-flex;
-  pointer-events: none;
-  color: var(--color-label-secondary);
-  transition: transform var(--transition-base), color var(--transition-base);
-}
-.deposit-bank-chevron svg { width: 1rem; height: 1rem; display: block; }
-.deposit-bank-control input[aria-expanded="true"] ~ .deposit-bank-chevron {
-  transform: translateY(-50%) rotate(180deg);
-  color: var(--color-primary);
-}
-.deposit-bank-options { position: absolute; z-index: 4; top: calc(100% + .35rem); inset-inline: 0; display: grid; max-height: min(42dvh, 18rem); overflow-y: auto; padding: .35rem; border: 1px solid var(--color-separator); border-radius: 12px; background: var(--color-surface); box-shadow: var(--shadow-pop); }
-.deposit-bank-options[hidden] { display: none; }
-.deposit-bank-options button { min-height: 44px; padding: .65rem .75rem; border-radius: 8px; color: var(--color-label); text-align: left; font-size: .95rem; font-weight: 600; }
-.deposit-bank-options button:hover, .deposit-bank-options button:focus-visible { background: #eaf3ff; color: #005dc0; outline: none; }
-.deposit-bank-options button[aria-selected="true"] { color: var(--color-primary); font-weight: 700; }
-.dark .deposit-bank-options { background: var(--color-surface-secondary); color: var(--color-label); border-color: var(--color-separator); }
-.dark .deposit-bank-options button { color: var(--color-label); }
-.dark .deposit-bank-options button:hover, .dark .deposit-bank-options button:focus-visible { background: rgba(10, 132, 255, 0.2); color: #64b5ff; }
 .deposit-form-grid input.deposit-calc-input { background: var(--color-surface-secondary); color: var(--color-label-secondary); font-weight: 600; cursor: default; }
 .deposit-reminder-toggle { grid-template-columns: auto 1fr !important; align-items: center; gap: .625rem !important; min-height: 44px; }
 .deposit-reminder-toggle input[type="checkbox"] {
@@ -149,20 +122,27 @@
 .deposit-reminder-item strong { color: var(--color-label); }
 .deposit-reminder-item p, .deposit-reminder-item span { color: var(--color-label-secondary); font-size: .76rem; }
 .deposit-reminder-item span { display: inline-block; margin-top: .25rem; color: var(--color-warning); font-weight: 750; }
+.deposit-reminder-item .deposit-reminder-principal { display: flex; align-items: baseline; justify-content: space-between; gap: .75rem; margin: .45rem 0 0; }
+.deposit-reminder-item .deposit-reminder-principal > span { margin-top: 0; color: var(--color-label-secondary); font-weight: 650; }
+.deposit-reminder-item .deposit-reminder-principal > strong { color: var(--color-label); font-size: .95rem; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .deposit-reminder-actions { display: flex; justify-content: flex-end; gap: .55rem; }
 .deposit-reminder-actions button { min-height: 42px; padding: .5rem .75rem; }
 .deposit-reminder-item-error { min-height: 1rem; color: var(--color-danger) !important; }
 .deposit-reminder-dialog > footer { display: flex; justify-content: flex-end; position: sticky; bottom: 0; padding-top: .8rem; background: inherit; }
 @media (min-width: 768px) {
   .deposit-management { padding: 1.25rem; }
-  .deposit-form-backdrop { align-items: center; padding: 1.5rem; }
-  .deposit-form-sheet { max-width: 760px; max-height: calc(100vh - 3rem); border-radius: 1.5rem; padding: 1.35rem; }
+  .deposit-form-backdrop { place-items: center; padding: 1.5rem; }
+  .deposit-form-sheet { max-width: 640px; max-height: calc(100vh - 3rem); border-radius: 28px; padding: 1.35rem; }
   .deposit-form-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
   .deposit-note-field, .deposit-reminder-toggle { grid-column: 1 / -1; }
   .deposit-reminder-backdrop { align-items: center; padding: 1.5rem; }
   .deposit-reminder-dialog { padding: 1.25rem; border-radius: 1.5rem; }
   .deposit-reminder-item { grid-template-columns: 1fr auto; align-items: center; }
   .deposit-reminder-item-error { grid-column: 1 / -1; }
+}
+@media (max-width: 767px) {
+  .deposit-form-backdrop { padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left)); }
+  .deposit-form-sheet { width: min(560px, 100%); max-height: calc(100dvh - 2rem); border-radius: 24px; padding: 1rem; }
 }
 @media (min-width: 1024px) {
   .deposit-card-list { display: none; }

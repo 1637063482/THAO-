@@ -4,6 +4,7 @@ import { buildDepositReminders } from "../../../src/application/deposits/build-r
 function deposit(overrides: Record<string, unknown> = {}) {
   return {
     institutionName: "Fixture Bank", productName: "Synthetic term deposit",
+    principalVnd: 10_000_000,
     maturesOn: "2026-07-31", reminderDays: [30, 7, 1], remindersEnabled: true,
     status: "ACTIVE", archivedAt: null, ...overrides,
   };
@@ -18,7 +19,7 @@ describe("buildDepositReminders", () => {
     ["2026-08-01", "OVERDUE"],
   ])("selects the most urgent reached stage on %s", (today, stage) => {
     const reminders = buildDepositReminders({ depositsById: { fixture: deposit() }, acknowledgementsByKey: {}, today });
-    expect(reminders).toMatchObject([{ depositId: "fixture", stage, key: `fixture|2026-07-31|${stage}` }]);
+    expect(reminders).toMatchObject([{ depositId: "fixture", principalVnd: 10_000_000, stage, key: `fixture|2026-07-31|${stage}` }]);
   });
 
   it("does not replay missed stages and respects configured advance days", () => {

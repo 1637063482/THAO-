@@ -204,23 +204,84 @@ describe("applyI18n()", () => {
 describe("real locale dictionaries", () => {
   it("vi and zh-CN have identical key sets with non-empty values", async () => {
     // Import real dictionaries (not mocked)
-    var vi = (await import("../../src/locales/vi.js")).default;
-    var zh = (await import("../../src/locales/zh-CN.js")).default;
+    var viLocale = (await vi.importActual("../../src/locales/vi.js")).default;
+    var zhLocale = (await vi.importActual("../../src/locales/zh-CN.js")).default;
 
-    var viKeys = Object.keys(vi).sort();
-    var zhKeys = Object.keys(zh).sort();
+    var viKeys = Object.keys(viLocale).sort();
+    var zhKeys = Object.keys(zhLocale).sort();
 
     // Same keys
     expect(viKeys).toEqual(zhKeys);
 
     // No empty values
     viKeys.forEach(function (k) {
-      expect(vi[k], "vi." + k + " should not be empty").toBeTruthy();
-      expect(zh[k], "zh." + k + " should not be empty").toBeTruthy();
+      expect(viLocale[k], "vi." + k + " should not be empty").toBeTruthy();
+      expect(zhLocale[k], "zh." + k + " should not be empty").toBeTruthy();
+    });
+
+    // Interpolation contracts are part of the translation contract: a locale
+    // must not silently drop a value used by the rendering code.
+    const placeholders = value => [...String(value).matchAll(/\{(\w+)\}/g)].map(match => match[1]).sort();
+    viKeys.forEach(function (k) {
+      expect(placeholders(viLocale[k]), "vi." + k + " placeholders").toEqual(placeholders(zhLocale[k]));
     });
 
     // Vietnamese contains expected diacritics
-    expect(vi["category_dining"]).toMatch(/ă/i);
-    expect(vi["login"]).toMatch(/đ/i);
+    expect(viLocale["category_dining"]).toMatch(/ă/i);
+    expect(viLocale["login"]).toMatch(/đ/i);
+  });
+
+  it("keeps audited contextual translations aligned", async () => {
+    var viLocale = (await vi.importActual("../../src/locales/vi.js")).default;
+    var zhLocale = (await vi.importActual("../../src/locales/zh-CN.js")).default;
+
+    expect(viLocale.app_subtitle).toBe("Đồng bộ đám mây · Chia sẻ gia đình · An toàn dữ liệu");
+    expect(zhLocale.app_subtitle).toBe("云端协同 · 家人共享 · 数据安全");
+    expect(viLocale.monthly).toBe("Tháng {month}");
+    expect(zhLocale.monthly).toBe("{month}月");
+    expect(viLocale.category_utilities).toBe("Điện, nước & gas");
+    expect(zhLocale.category_utilities).toBe("水电燃气");
+    expect(viLocale.syncing_year_switch).toBe("Dữ liệu đang đồng bộ, vui lòng chờ đồng bộ xong rồi đổi năm");
+    expect(zhLocale.syncing_year_switch).toBe("数据正在同步中，请稍后切换年份");
+  });
+
+  it("uses approved Vietnamese wording for ledger actions, categories, and reconciliation", async () => {
+    var viLocale = (await vi.importActual("../../src/locales/vi.js")).default;
+    var zhLocale = (await vi.importActual("../../src/locales/zh-CN.js")).default;
+
+    expect(viLocale.loading_data).toBe("Đang tải dữ liệu đám mây...");
+    expect(viLocale.yearly_expense_record).toBe("Ghi chép chi tiêu năm");
+    expect(viLocale.switch_year).toBe("Đổi năm");
+    expect(viLocale.import_label).toBe("Nhập dữ liệu");
+    expect(viLocale.quick_add).toBe("Ghi chép");
+    expect(viLocale.confirm).toBe("Lưu thu chi");
+    expect(viLocale.wechat).toBe("Ví WeChat Pay");
+    expect(viLocale.year_end_wechat).toBe("Ví WeChat Pay cuối năm");
+    expect(viLocale.category_shopping).toBe("Mua sắm & quần áo");
+    expect(viLocale.category_rent).toBe("Tiền thuê nhà & trả góp mua nhà");
+    expect(viLocale.category_transport).toBe("Đi lại");
+    expect(viLocale.category_telecom).toBe("Điện thoại & Internet");
+    expect(viLocale.category_entertainment).toBe("Giải trí & thư giãn");
+    expect(viLocale.category_health).toBe("Y tế & sức khỏe");
+    expect(viLocale.category_other).toBe("Chi tiêu khác");
+    expect(viLocale.reconciliation_diff).toBe("Chênh lệch đối chiếu (③-②)");
+    expect(viLocale.no_data).toBe("Chưa có dữ liệu");
+    expect(viLocale.surplus).toBe("Thừa · thực tế nhiều hơn sổ sách");
+    expect(viLocale.deficit).toBe("Thiếu · có thể có khoản chưa ghi");
+    expect(viLocale.balanced).toBe("Khớp sổ sách ✓");
+    expect(viLocale.link_copy_failed).toBe("Sao chép liên kết thất bại, vui lòng sao chép thủ công địa chỉ trong trình duyệt");
+    expect(viLocale.enter_valid_amount).toBe("Vui lòng nhập số tiền hợp lệ (chỉ nhập số)");
+    expect(viLocale.total).toBe("Tổng cộng");
+    expect(viLocale.year_month_title).toBe("Tháng {month}/{year}");
+    expect(viLocale.not_recorded_yet).toBe("THAO ơi, hôm nay chưa ghi chép nhé~");
+    expect(viLocale.streak_encouragement).toBe("Tuyệt vời, THAO! Bạn đã duy trì {days} ngày, hãy tiếp tục nhé!");
+    expect(viLocale.login_timeout).toBe("Hết thời gian chờ đăng nhập. Vui lòng kiểm tra kết nối rồi thử lại.");
+    expect(viLocale.import_dangerous_text).toBe("Nội dung tệp chứa văn bản không an toàn");
+    expect(viLocale.syncing_year_switch).toBe("Dữ liệu đang đồng bộ, vui lòng chờ đồng bộ xong rồi đổi năm");
+
+    expect(zhLocale.year_end_assets).toBe("{year}年末资产盘点");
+    expect(zhLocale.wechat).toBe("微信钱包");
+    expect(zhLocale.year_end_wechat).toBe("年末微信钱包");
+    expect(zhLocale.link_copy_failed).toBe("链接复制失败，请手动复制浏览器地址");
   });
 });

@@ -1,7 +1,7 @@
 export default {
   // App
   app_name: "Sổ thu chi của Thao",
-  app_subtitle: "Đồng bộ đám mây · Riêng tư · An toàn",
+  app_subtitle: "Đồng bộ đám mây · Chia sẻ gia đình · An toàn dữ liệu",
 
   // Auth
   email: "Email",
@@ -14,12 +14,12 @@ export default {
   timeout_message: "Đã hết thời gian chờ, tự động đăng xuất",
 
   // Loading
-  loading_data: "Đang tải dữ liệu...",
+  loading_data: "Đang tải dữ liệu đám mây...",
   loading: "Đang tải...",
 
   // Nav
-  yearly_expense_record: "chi tiêu năm",
-  switch_year: "Chuyển đổi năm",
+  yearly_expense_record: "Ghi chép chi tiêu năm",
+  switch_year: "Đổi năm",
   fx_label: "1 CNY =",
   fx_loading: "(đang tải...)",
   auto: "Tự động",
@@ -30,7 +30,7 @@ export default {
   more: "Thêm",
 
   // Nav actions
-  import_label: "Nhập",
+  import_label: "Nhập dữ liệu",
   logout: "Đăng xuất",
   share: "Chia sẻ",
   export_csv: "Xuất CSV",
@@ -41,7 +41,7 @@ export default {
 
   // Bottom nav
   overview: "Tổng quan",
-  quick_add: "Ghi nhanh",
+  quick_add: "Ghi chép",
   savings: "Tiết kiệm",
   close: "Đóng",
   main_navigation: "Điều hướng chính",
@@ -54,7 +54,7 @@ export default {
   amount: "Số tiền",
   remark_optional: "Ghi chú (không bắt buộc)",
   amount_placeholder: "Nhập số tiền",
-  confirm: "Xác nhận",
+  confirm: "Lưu thu chi",
   confirmation_title: "Xác nhận",
   confirm_action: "Xác nhận",
   cancel: "Hủy",
@@ -68,11 +68,11 @@ export default {
   year_end_assets: "Kiểm kê tài sản cuối năm {year}",
   bank_card: "Thẻ ngân hàng",
   alipay: "Alipay",
-  wechat: "WeChat",
+  wechat: "Ví WeChat Pay",
   cash_other: "Tiền mặt & khác",
   year_end_bank: "Thẻ ngân hàng cuối năm",
   year_end_alipay: "Alipay cuối năm",
-  year_end_wechat: "WeChat cuối năm",
+  year_end_wechat: "Ví WeChat Pay cuối năm",
   year_end_cash: "Tiền mặt & khác cuối năm",
   double_verify: "Xác minh kép",
 
@@ -91,19 +91,19 @@ export default {
   initial_assets: "① Tổng tài sản đầu kỳ",
   theoretical_balance: "② Số dư lý thuyết",
   actual_balance: "③ Kiểm kê thực tế",
-  reconciliation_diff: "Chênh lệch (③-②)",
+  reconciliation_diff: "Chênh lệch đối chiếu (③-②)",
 
   // Categories
   category_dining: "Ăn uống",
-  category_shopping: "Mua sắm",
-  category_rent: "Nhà ở",
-  category_transport: "Di chuyển",
-  category_telecom: "Viễn thông",
-  category_utilities: "Điện nước",
-  category_entertainment: "Giải trí",
-  category_health: "Sức khỏe",
+  category_shopping: "Mua sắm & quần áo",
+  category_rent: "Tiền thuê nhà & trả góp mua nhà",
+  category_transport: "Đi lại",
+  category_telecom: "Điện thoại & Internet",
+  category_utilities: "Điện, nước & gas",
+  category_entertainment: "Giải trí & thư giãn",
+  category_health: "Y tế & sức khỏe",
   category_social: "Xã giao",
-  category_other: "Khác",
+  category_other: "Chi tiêu khác",
   income_total: "Tổng thu nhập trong ngày",
   daily_total_expense: "Tổng chi tiêu trong ngày",
   remark: "Ghi chú",
@@ -113,7 +113,7 @@ export default {
   offline: "Mất kết nối",
   saving: "Đang lưu...",
   deposit_error_permission: "Bạn không có quyền thực hiện thao tác này.",
-  deposit_error_conflict: "Khoản tiền gửi đã được cập nhật. Vui lòng làm mới rồi thử lại.",
+  deposit_error_conflict: "Khoản tiền gửi đã được người khác cập nhật. Vui lòng làm mới rồi thử lại.",
   deposit_error_validation: "Vui lòng kiểm tra thông tin tiền gửi rồi thử lại.",
   deposit_error_offline: "Bạn đang ngoại tuyến. Vui lòng kết nối lại rồi thử lại.",
   deposit_error_unknown: "Không thể hoàn tất thao tác. Vui lòng thử lại.",
@@ -122,12 +122,12 @@ export default {
   login_success: "Đăng nhập thành công",
   login_failed: "Đăng nhập thất bại: sai tài khoản hoặc mật khẩu",
   login_unavailable: "Không thể kết nối với dịch vụ đăng nhập. Vui lòng kiểm tra kết nối và thử lại.",
-  login_timeout: "Đăng nhập mất quá nhiều thời gian. Vui lòng kiểm tra kết nối và thử lại.",
+  login_timeout: "Hết thời gian chờ đăng nhập. Vui lòng kiểm tra kết nối rồi thử lại.",
   logout_success: "Đã đăng xuất an toàn",
   manual_rate_prompt: "Vui lòng nhập tỷ giá thủ công hợp lệ!",
   manual_rate_applied: "Đã áp dụng tỷ giá thủ công",
-  syncing_year_switch: "Dữ liệu đang đồng bộ, vui lòng chờ",
-  enter_valid_amount: "Vui lòng nhập số tiền hợp lệ",
+  syncing_year_switch: "Dữ liệu đang đồng bộ, vui lòng chờ đồng bộ xong rồi đổi năm",
+  enter_valid_amount: "Vui lòng nhập số tiền hợp lệ (chỉ nhập số)",
   quick_add_invalid_date: "Vui lòng chọn ngày hợp lệ",
   quick_add_invalid_category: "Vui lòng chọn danh mục",
   record_saved: "Đã ghi nhận",
@@ -137,24 +137,24 @@ export default {
   confirm_logout: "Bạn có chắc muốn đăng xuất?",
   confirm_import: "Cảnh báo: nhập dữ liệu sẽ ghi đè toàn bộ dữ liệu hiện tại trên đám mây. Bạn có chắc muốn tiếp tục?",
   // Chart
-  no_data: "Không có dữ liệu",
+  no_data: "Chưa có dữ liệu",
 
   // Reconciliation
-  surplus: "Dư · thực tế lớn hơn sổ sách",
-  deficit: "Thiếu · có thể thiếu ghi chép",
-  balanced: "Khớp ✓",
+  surplus: "Thừa · thực tế nhiều hơn sổ sách",
+  deficit: "Thiếu · có thể có khoản chưa ghi",
+  balanced: "Khớp sổ sách ✓",
 
   // Errors
   fx_unavailable: "Tỷ giá không khả dụng, không thể chuyển đổi CNY",
 
   // Share
   link_copied: "Đã sao chép liên kết!",
-  link_copy_failed: "Sao chép liên kết thất bại, vui lòng sao chép thủ công",
+  link_copy_failed: "Sao chép liên kết thất bại, vui lòng sao chép thủ công địa chỉ trong trình duyệt",
 
   // Import
   import_success: "Nhập dữ liệu thành công",
   import_file_too_large: "Tệp nhập quá lớn",
-  import_dangerous_text: "Nội dung nhập chứa văn bản không an toàn",
+  import_dangerous_text: "Nội dung tệp chứa văn bản không an toàn",
   import_format_error: "Định dạng tệp không được hỗ trợ",
 
   // Navigation
@@ -164,12 +164,12 @@ export default {
   unsaved_warning: "Dữ liệu chưa được đồng bộ, bạn có chắc muốn rời đi?",
 
   // Budget / table headers
-  total: "Tổng",
+  total: "Tổng cộng",
   budget: "Ngân sách",
   used: "Đã dùng",
   remaining_days: "còn {days} ngày",
   daily_available: "TB mỗi ngày {amount}",
-  year_month_title: "{year} T{month}",
+  year_month_title: "Tháng {month}/{year}",
   balance: "Số dư",
   expense: "Chi tiêu",
   income: "Thu nhập",
@@ -178,8 +178,8 @@ export default {
   streak_days: "Số ngày ghi chép liên tục",
   streak_unit: "ngày",
   checked_in_today: "Hôm nay đã điểm danh",
-  not_recorded_yet: "THAO, hôm nay chưa ghi chép nhé~",
-  streak_encouragement: "Quá tuyệt! THAO! Bạn đã duy trì {days} ngày, hãy tiếp tục nhé!",
+  not_recorded_yet: "THAO ơi, hôm nay chưa ghi chép nhé~",
+  streak_encouragement: "Tuyệt vời, THAO! Bạn đã duy trì {days} ngày, hãy tiếp tục nhé!",
 
   // Month tab
   month_tab: "T{month}",

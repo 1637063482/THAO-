@@ -1,4 +1,5 @@
 import { t } from "../../js/i18n.js";
+import { createGlobalModalController } from "./global-modal.js";
 
 /** @type {{ host: HTMLElement, close: (accepted: boolean) => void } | null} */
 let activeDialog = null;
@@ -13,8 +14,8 @@ export function requestAppConfirmation({ message, title = t("confirmation_title"
   return new Promise(resolve => {
     const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const host = document.createElement("div");
-    host.className = "app-confirmation-backdrop";
-    host.innerHTML = `<section class="app-confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="app-confirmation-title" aria-describedby="app-confirmation-message"><h2 id="app-confirmation-title"></h2><p id="app-confirmation-message"></p><footer><button type="button" class="btn-secondary" data-confirm-cancel></button><button type="button" class="btn-primary" data-confirm-accept></button></footer></section>`;
+    host.className = "app-confirmation-backdrop app-global-modal";
+    host.innerHTML = `<section class="app-confirmation-dialog app-global-modal-dialog" role="alertdialog" aria-modal="true" aria-labelledby="app-confirmation-title" aria-describedby="app-confirmation-message"><h2 id="app-confirmation-title"></h2><p id="app-confirmation-message"></p><footer><button type="button" class="btn-secondary" data-confirm-cancel></button><button type="button" class="btn-primary" data-confirm-accept></button></footer></section>`;
     const dialog = /** @type {HTMLElement} */ (host.firstElementChild);
     const titleNode = /** @type {HTMLElement} */ (host.querySelector("#app-confirmation-title"));
     const messageNode = /** @type {HTMLElement} */ (host.querySelector("#app-confirmation-message"));
@@ -26,12 +27,15 @@ export function requestAppConfirmation({ message, title = t("confirmation_title"
     acceptButton.textContent = confirmLabel;
     if (destructive) acceptButton.className = "btn-danger";
 
+    /** @type {ReturnType<typeof createGlobalModalController> | null} */
+    let modalController = null;
+    let settled = false;
     /** @param {boolean} accepted */
     const close = accepted => {
-      if (activeDialog?.host !== host) return;
+      if (activeDialog?.host !== host || settled) return;
+      settled = true;
       activeDialog = null;
-      host.remove();
-      opener?.focus?.({ preventScroll: true });
+      modalController?.close();
       resolve(accepted);
     };
     activeDialog = { host, close };
@@ -47,6 +51,13 @@ export function requestAppConfirmation({ message, title = t("confirmation_title"
       else if (!event.shiftKey && index === focusables.length - 1) { event.preventDefault(); cancelButton.focus(); }
     });
     document.body.append(host);
-    cancelButton.focus({ preventScroll: true });
+    modalController = createGlobalModalController({
+      root: host,
+      dialog,
+      trigger: opener,
+      targetWidth: 352,
+      onClosed: () => host.remove(),
+    });
+    modalController.open();
   });
 }

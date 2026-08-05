@@ -15,8 +15,8 @@
     const params = new URLSearchParams(location.search);
     const locale = params.get("locale") === "zh-CN" ? "zh-CN" : "vi";
     document.documentElement.lang = locale === "zh-CN" ? "zh-Hans" : "vi";
-    const record = (institutionName, maturesOn) => ({ institutionName, productName: "Tiền gửi tổng hợp", maturesOn, reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", archivedAt: null });
-    const depositDocument = { schemaVersion: 1, depositsById: { first: record("Ngân hàng An Tâm", "2026-07-24"), second: record("Ngân hàng Hạnh Phúc", "2026-07-30") }, acknowledgementsByKey: {}, lastMutation: null };
+    const record = (institutionName, maturesOn, principalVnd) => ({ institutionName, productName: "Tiền gửi tổng hợp", principalVnd, maturesOn, reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", archivedAt: null });
+    const depositDocument = { schemaVersion: 1, depositsById: { first: record("Ngân hàng An Tâm", "2026-07-24", 10_000_000), second: record("Ngân hàng Hạnh Phúc", "2026-07-30", 25_000_000) }, acknowledgementsByKey: {}, lastMutation: null };
     const memoryStorage = { value: null, getItem() { return this.value; }, setItem(_key, value) { this.value = value; } };
     const controller = createDepositReminderController({
       root: document.getElementById("reminder-root"), getDocument: () => depositDocument,

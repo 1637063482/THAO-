@@ -64,15 +64,15 @@ export default {
   update_now: "立即更新",
 
   // Year start/end assets
-  year_start_assets: "{year}年 年初资产",
-  year_end_assets: "{year}年 年末资产盘点",
+  year_start_assets: "{year}年年初资产",
+  year_end_assets: "{year}年末资产盘点",
   bank_card: "银行卡",
   alipay: "支付宝",
   wechat: "微信钱包",
   cash_other: "现金及其他",
   year_end_bank: "年末银行卡",
   year_end_alipay: "年末支付宝",
-  year_end_wechat: "年末微信",
+  year_end_wechat: "年末微信钱包",
   year_end_cash: "年末现金及其他",
   double_verify: "双重验证",
 
@@ -81,7 +81,7 @@ export default {
   yearly_income: "年度总收入",
   yearly_expense: "年度总支出",
   system_balance: "系统结余",
-  monthly: "月度",
+  monthly: "{month}月",
   monthly_income: "当月收入",
   monthly_expense: "当月支出",
   monthly_balance: "当月结余",
@@ -113,7 +113,7 @@ export default {
   offline: "网络断开",
   saving: "保存中...",
   deposit_error_permission: "您没有权限执行此操作。",
-  deposit_error_conflict: "存款已被其他更改更新，请刷新后重试。",
+  deposit_error_conflict: "存款已被其他人更新，请刷新后重试。",
   deposit_error_validation: "请检查存款信息后重试。",
   deposit_error_offline: "当前离线，请恢复网络后重试。",
   deposit_error_unknown: "操作未完成，请重试。",
@@ -149,7 +149,7 @@ export default {
 
   // Share
   link_copied: "链接已复制！",
-  link_copy_failed: "链接复制失败请手动复制浏览器地址",
+  link_copy_failed: "链接复制失败，请手动复制浏览器地址",
 
   // Import
   import_success: "数据导入成功",

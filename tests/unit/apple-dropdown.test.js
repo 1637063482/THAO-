@@ -36,6 +36,7 @@ describe("Apple custom dropdown", () => {
     expect(host.querySelector("[data-app-dropdown-hidden]").value).toBe("1Y");
     expect(host.querySelector("[data-app-dropdown-value]").textContent).toBe("12 months");
     expect(document.querySelector('[data-app-dropdown-option="1Y"]').getAttribute("aria-selected")).toBe("true");
+    expect(document.querySelector(".app-dropdown-option-check")).toBeNull();
     expect(document.querySelector("[data-app-dropdown-menu]").hidden).toBe(true);
   });
 
@@ -214,5 +215,33 @@ describe("Apple custom dropdown", () => {
     menu.querySelector('[data-app-dropdown-option="3M"]').click();
     expect(menu.classList.contains("app-dropdown-menu-fixed")).toBe(false);
     expect(menu.hidden).toBe(true);
+  });
+
+  it("keeps the menu inside its host when portal mode is disabled", () => {
+    document.body.innerHTML = `<section class="app-global-modal-dialog">${renderAppDropdown({ id: "term-in-dialog", options: [{ value: "1M", label: "1 tháng" }, { value: "3M", label: "3 tháng" }] })}</section>`;
+    const host = document.getElementById("term-in-dialog");
+    bindAppDropdown(host, { portal: false });
+    const trigger = host.querySelector("[data-app-dropdown-trigger]");
+    const menu = host.querySelector("[data-app-dropdown-menu]");
+
+    trigger.click();
+
+    expect(menu.parentElement).toBe(host);
+    expect(menu.classList.contains("app-dropdown-menu-portal")).toBe(false);
+    expect(menu.classList.contains("app-dropdown-menu-fixed")).toBe(false);
+  });
+
+  it("keeps a portaled menu above a body-level entry modal", () => {
+    document.body.innerHTML = `<div class="app-global-modal open"><section class="app-global-modal-dialog">${renderAppDropdown({ id: "deposit-term-fixture", name: "productName", options: [{ value: "1M", label: "1 tháng" }, { value: "3M", label: "3 tháng" }] })}</section></div>`;
+    const host = document.getElementById("deposit-term-fixture");
+    bindAppDropdown(host);
+    const trigger = host.querySelector("[data-app-dropdown-trigger]");
+    const menu = document.querySelector("[data-app-dropdown-menu]");
+
+    trigger.click();
+
+    expect(menu.hidden).toBe(false);
+    expect(menu.parentElement).toBe(document.body);
+    expect(menu.classList.contains("app-dropdown-menu-portal")).toBe(true);
   });
 });

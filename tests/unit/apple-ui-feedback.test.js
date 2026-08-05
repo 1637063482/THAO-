@@ -15,7 +15,14 @@ describe("Apple UI feedback system", () => {
 
   it("gives quick add and confirmations an app-owned surface rather than a browser prompt", () => {
     expect(appCss).toContain("#quick-add-panel");
+    expect(appCss).toContain(".app-global-modal");
+    expect(appCss).toContain(".app-global-modal-dialog");
     expect(appCss).toContain(".app-confirmation-dialog");
     expect(appCss).toContain("env(safe-area-inset-bottom)");
+  });
+
+  it("keeps body-portaled dropdown menus above global entry modals", () => {
+    expect(appCss).toContain(".app-dropdown-menu-portal");
+    expect(appCss).toContain("z-index: 1200");
   });
 });

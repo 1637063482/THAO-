@@ -4,6 +4,7 @@ const STORAGE_KEY = "myExpenseApp.depositReminderSnoozes.v1";
 const copy = {
   vi: {
     title: "Nhắc nhở đáo hạn tiền gửi", intro: "Kiểm tra các khoản tiền gửi cần xử lý.",
+    principal: "Tiền gốc",
     offline: "Dữ liệu ngoại tuyến, có thể chưa phải mới nhất.", close: "Đóng", acknowledge: "Đã biết",
     snooze: "Nhắc lại sau", saveError: "Không thể lưu xác nhận. Vui lòng thử lại.",
     D30: "Còn trong vòng 30 ngày", D7: "Còn trong vòng 7 ngày", D1: "Đáo hạn ngày mai",
@@ -11,6 +12,7 @@ const copy = {
   },
   "zh-CN": {
     title: "存款到期提醒", intro: "请检查以下需要处理的存款。", offline: "离线数据，可能不是最新。",
+    principal: "本金金额",
     close: "关闭", acknowledge: "知道了", snooze: "稍后提醒", saveError: "无法保存确认，请重试。",
     D30: "30天内到期", D7: "7天内到期", D1: "明天到期", D0: "今天到期", OVERDUE: "已经逾期",
   },
@@ -23,6 +25,11 @@ function escapeHtml(value) {
   /** @type {Record<string, string>} */
   const entities = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
   return String(value ?? "").replace(/[&<>"']/g, char => entities[char] || char);
+}
+
+/** @param {number | null | undefined} value @param {import("../../types/app-state").AppLocale} locale */
+function money(value, locale) {
+  return `${Number(value || 0).toLocaleString(locale === "zh-CN" ? "zh-CN" : "vi-VN")} ₫`;
 }
 
 /** @param {Storage | null | undefined} storage @returns {Record<string, number>} */
@@ -54,8 +61,9 @@ function writeSnooze(storage, key, until, nowMs) {
  */
 function renderReminderDialog(reminders, locale, offline) {
   const labels = words(locale);
-  const items = reminders.map(reminder => `<li class="deposit-reminder-item" data-reminder-key="${escapeHtml(reminder.key)}"><div><strong>${escapeHtml(reminder.institutionName)}</strong><p>${escapeHtml(reminder.productName)}</p><span>${escapeHtml(labels[reminder.stage])} · <span class="blur-sensitive">${escapeHtml(reminder.maturesOn)}</span></span></div><div class="deposit-reminder-actions"><button type="button" class="btn-secondary" data-snooze-reminder>${labels.snooze}</button><button type="button" class="btn-primary" data-acknowledge-reminder>${labels.acknowledge}</button></div><p class="deposit-reminder-item-error" data-reminder-error role="alert"></p></li>`).join("");
-  return `<div class="deposit-reminder-backdrop" data-reminder-backdrop><section class="deposit-reminder-dialog safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-reminder-title" tabindex="-1"><header><div><p class="deposit-eyebrow">${labels.D0}</p><h2 id="deposit-reminder-title">${labels.title}</h2><p>${labels.intro}</p></div><button type="button" class="deposit-form-close" data-close-reminders aria-label="${labels.close}">×</button></header>${offline ? `<p class="deposit-reminder-offline" role="status">${labels.offline}</p>` : ""}<ul>${items}</ul><footer><button type="button" class="btn-secondary" data-close-reminders>${labels.close}</button></footer></section></div>`;
+  const headerStage = reminders[0]?.stage || "D0";
+  const items = reminders.map(reminder => `<li class="deposit-reminder-item" data-reminder-key="${escapeHtml(reminder.key)}"><div><strong>${escapeHtml(reminder.institutionName)}</strong><p>${escapeHtml(reminder.productName)}</p><p class="deposit-reminder-principal"><span>${escapeHtml(labels.principal)}</span><strong class="blur-sensitive">${escapeHtml(money(reminder.principalVnd, locale))}</strong></p><span>${escapeHtml(labels[reminder.stage])} · <span class="blur-sensitive">${escapeHtml(reminder.maturesOn)}</span></span></div><div class="deposit-reminder-actions"><button type="button" class="btn-secondary" data-snooze-reminder>${labels.snooze}</button><button type="button" class="btn-primary" data-acknowledge-reminder>${labels.acknowledge}</button></div><p class="deposit-reminder-item-error" data-reminder-error role="alert"></p></li>`).join("");
+  return `<div class="deposit-reminder-backdrop" data-reminder-backdrop><section class="deposit-reminder-dialog safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-reminder-title" tabindex="-1"><header><div><p class="deposit-eyebrow">${escapeHtml(labels[headerStage])}</p><h2 id="deposit-reminder-title">${labels.title}</h2><p>${labels.intro}</p></div><button type="button" class="deposit-form-close" data-close-reminders aria-label="${labels.close}">×</button></header>${offline ? `<p class="deposit-reminder-offline" role="status">${labels.offline}</p>` : ""}<ul>${items}</ul><footer><button type="button" class="btn-secondary" data-close-reminders>${labels.close}</button></footer></section></div>`;
 }
 
 /** @param {import("../../types/app-state").DepositReminderControllerDependencies} dependencies */

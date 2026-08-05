@@ -35,8 +35,10 @@ describe("Apple UI mobile layout (iPhone 15 Pro Max 430px)", () => {
   it("keeps the quick-add sheet, dropdowns, and forms inside the viewport", () => {
     const css = read("src/css/app.css");
     expect(css).toContain("#quick-add-panel");
-    expect(css).toContain("max-height: calc(100vh - 0.75rem)");
-    expect(css).toContain("max-height: calc(100dvh - 0.75rem)");
+    expect(css).toContain(".app-global-modal");
+    expect(css).toContain("place-items: center");
+    expect(css).toContain("max-height: calc(100dvh - 2rem)");
+    expect(css).toContain("-webkit-backdrop-filter: blur(28px) saturate(135%)");
     expect(css).toContain("overflow-y: auto");
     expect(css).toContain(".app-dropdown-menu");
     expect(css).toContain("max-height: min(56dvh, 24rem)");

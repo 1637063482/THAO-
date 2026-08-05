@@ -8,9 +8,12 @@ import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
 import { t } from "./i18n.js";
 import { bindAppDropdown, getAppDropdownValue, setAppDropdownOptions } from "../components/feedback/app-dropdown.js";
+import { createGlobalModalController } from "../components/feedback/global-modal.js";
 
 let lastTrigger = null;
 let submitInFlight = false;
+/** @type {ReturnType<typeof createGlobalModalController> | null} */
+let quickAddModalController = null;
 
 const LEGACY_OPERATION_ID_RE = /^[A-Za-z0-9_-]{1,120}$/;
 
@@ -106,6 +109,20 @@ export function refreshQuickAddAmountInput() {
   if (input) formatQuickAddAmountInput(input);
 }
 
+/** @param {HTMLElement} modal @param {HTMLElement} panel */
+function ensureQuickAddPortal(modal, panel) {
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
+  if (!quickAddModalController) {
+    quickAddModalController = createGlobalModalController({
+      root: modal,
+      dialog: panel,
+      trigger: lastTrigger,
+      focusSelector: "#qa-amount",
+      targetWidth: 560,
+    });
+  }
+}
+
 function buildQuickAddDayOptions({ selectDefault = false } = {}) {
   const today = getLedgerToday();
   const monthDays = getDaysInMonth(state.activeYear, state.activeMonthId);
@@ -149,40 +166,39 @@ export function openQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
+  lastTrigger = document.getElementById("fab-btn") || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
+  ensureQuickAddPortal(modal, panel);
   bindQuickAddAmountInput();
   resetSubmitControl();
-  lastTrigger = document.getElementById("fab-btn") || (document.activeElement instanceof HTMLElement ? document.activeElement : null);
-  modal.setAttribute("aria-hidden", "false");
-  modal.classList.add("is-open");
   modal.setAttribute("role", "dialog");
   modal.setAttribute("aria-modal", "true");
 
   refreshQuickAddDropdownLabels({ selectDefaults: true });
-
-  modal.style.display = 'flex';
-  
-  setTimeout(() => {
-    modal.style.opacity = '1';
-    panel.style.transform = 'scale(1)';
-    document.getElementById("qa-amount")?.focus();
-  }, 10);
+  modal.classList.add("is-open");
+  quickAddModalController.open();
 }
 
 export function closeQuickAdd() {
   const modal = document.getElementById("quick-add-modal");
   const panel = document.getElementById("quick-add-panel");
   if (!modal || !panel) return;
-  modal.setAttribute("aria-hidden", "true");
   modal.classList.remove("is-open");
-  modal.style.opacity = '0';
-  panel.style.transform = 'scale(0.95)';
-  setTimeout(() => { modal.style.display = 'none'; if (lastTrigger && typeof lastTrigger.focus === "function") lastTrigger.focus(); }, 300);
+  if (quickAddModalController) quickAddModalController.close();
+  else modal.setAttribute("aria-hidden", "true");
 }
 
 if (typeof document !== "undefined") {
   bindQuickAddAmountInput();
   bindAppDropdown(document.getElementById("qa-day"));
   bindAppDropdown(document.getElementById("qa-cat"));
+  const quickAddModal = document.getElementById("quick-add-modal");
+  if (quickAddModal) {
+    if (window.__quickAddBackdropHandler) quickAddModal.removeEventListener("click", window.__quickAddBackdropHandler);
+    window.__quickAddBackdropHandler = event => {
+      if (event.target === event.currentTarget) closeQuickAdd();
+    };
+    quickAddModal.addEventListener("click", window.__quickAddBackdropHandler);
+  }
   if (window.__quickAddLocaleHandler) window.removeEventListener("locale-changed", window.__quickAddLocaleHandler);
   window.__quickAddLocaleHandler = () => refreshQuickAddDropdownLabels();
   window.addEventListener("locale-changed", window.__quickAddLocaleHandler);
@@ -190,7 +206,7 @@ if (typeof document !== "undefined") {
   window.__quickAddEscapeHandler = (event) => {
     const modal = document.getElementById("quick-add-modal");
     const panel = document.getElementById("quick-add-panel");
-    if (!modal?.classList.contains("is-open")) return;
+    if (!modal?.classList.contains("open")) return;
     if (event.key === "Escape") {
       closeQuickAdd();
       return;

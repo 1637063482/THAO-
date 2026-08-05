@@ -265,7 +265,6 @@ body::before {
 .app-dropdown-menu.app-dropdown-menu-year {
   min-width: 5.5rem;
 }
-.app-dropdown-menu-year .app-dropdown-option-check { display: none; }
 .app-sync-status {
   display: inline-flex;
   min-height: 32px;
@@ -520,7 +519,8 @@ body::before {
   top: calc(100% + 0.35rem);
   left: 0;
   right: 0;
-  /* Reparented to <body>, so it must sit above the app sheets (z-80/100). */
+  /* The default is kept for non-modal shell menus. Portaled menus use the
+     explicit layer below so they remain above body-level entry modals. */
   z-index: 120;
   display: grid;
   /* Narrow triggers (e.g. the header year pill) must not shrink the menu
@@ -543,6 +543,7 @@ body::before {
   bottom: auto;
   margin: 0;
 }
+.app-dropdown-menu.app-dropdown-menu-portal { z-index: 1200; }
 .app-dropdown-option {
   display: flex;
   align-items: center;
@@ -564,13 +565,10 @@ body::before {
   color: #005dc0;
   outline: none;
 }
-.app-dropdown-option[aria-selected="true"] { color: var(--color-primary); font-weight: 700; }
-.app-dropdown-option[aria-selected="true"] .app-dropdown-option-check::after { content: "✓"; }
-.app-dropdown-option-check {
-  display: inline-flex;
-  flex-shrink: 0;
+.app-dropdown-option[aria-selected="true"] {
+  background: rgba(0, 122, 255, .1);
   color: var(--color-primary);
-  font-weight: 800;
+  font-weight: 700;
 }
 .dark .app-dropdown-trigger:hover { background: var(--color-surface-secondary); }
 .dark .app-dropdown-option:hover,
@@ -578,7 +576,7 @@ body::before {
   background: rgba(10, 132, 255, 0.2);
   color: #64b5ff;
 }
-.dark .app-dropdown-option[aria-selected="true"] { color: #64b5ff; }
+.dark .app-dropdown-option[aria-selected="true"] { background: rgba(10, 132, 255, .2); color: #64b5ff; }
 
 /* Hide native number spinners — the app owns the input chrome. */
 input[type="number"]::-webkit-inner-spin-button,
@@ -990,7 +988,16 @@ input[type="number"] {
   transition: top var(--transition-base), color var(--transition-base), font-size var(--transition-base), line-height var(--transition-base), transform var(--transition-base);
 }
 .auth-field:focus-within .auth-field-label,
-.auth-field:has(.auth-input:not(:placeholder-shown)) .auth-field-label {
+.auth-field:has(.auth-input:not(:placeholder-shown)) .auth-field-label,
+.auth-field.is-filled .auth-field-label {
+  top: 0.625rem;
+  color: var(--color-label-secondary);
+  font-size: 0.75rem;
+  line-height: 1;
+  transform: none;
+}
+.auth-field:has(.auth-input:-webkit-autofill) .auth-field-label,
+.auth-field:has(.auth-input:autofill) .auth-field-label {
   top: 0.625rem;
   color: var(--color-label-secondary);
   font-size: 0.75rem;
@@ -1315,24 +1322,73 @@ tr:hover td:not(.sticky-col) {
 #fab-btn:active { background: #005dc0; }
 #fab-btn:focus-visible { box-shadow: var(--focus-ring), 0 6px 18px rgba(0, 122, 255, 0.28); }
 
-/* ===== Quick-Add Modal ===== */
-#quick-add-modal {
-  @apply fixed inset-0 z-[100] flex items-center justify-center;
-  background: rgba(0,0,0,0.35);
-  backdrop-filter: blur(12px);
-  transition: opacity 0.3s;
+/* ===== Body-level entry modals ===== */
+.app-global-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  background: rgba(0, 0, 0, .7);
+  backdrop-filter: blur(28px) saturate(135%);
+  -webkit-backdrop-filter: blur(28px) saturate(135%);
+  transition: opacity 1200ms ease-out;
 }
-#quick-add-panel {
-  @apply p-6 w-full max-w-md mx-4;
+.dark .app-global-modal { background: rgba(0, 0, 0, .82); }
+.app-global-modal.open {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+.app-global-modal.closing {
+  visibility: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1200ms ease-out;
+}
+.app-global-modal-dialog {
+  width: min(560px, 100%);
+  max-height: calc(100dvh - 2rem);
+  overflow-y: auto;
   border: 1px solid var(--color-separator);
-  border-radius: 14px;
+  border-radius: 28px;
   background: var(--color-surface);
-  box-shadow: var(--shadow-pop);
-  transition: transform var(--transition-base);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .22), 0 2px 8px rgba(0, 0, 0, .08);
+  transform-origin: center;
+  transform: translate(0, 0) scale(1);
+  opacity: 0;
+  transition: transform 1080ms cubic-bezier(.22, 1, .36, 1), opacity 432ms ease-out;
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
-#quick-add-modal.is-open { display: flex !important; opacity: 1 !important; }
-#quick-add-modal[aria-hidden="true"] { pointer-events: none; }
-#quick-add-panel { padding-bottom: calc(1.5rem + env(safe-area-inset-bottom)); }
+.app-confirmation-dialog.app-global-modal-dialog {
+  width: min(22rem, 100%);
+  padding: 1.25rem;
+  border-radius: 14px;
+}
+.app-global-modal.open .app-global-modal-dialog { opacity: 1; }
+.app-global-modal.open .app-global-modal-dialog.app-global-modal-dialog--flip-start { opacity: 0; }
+.app-global-modal-dialog--flip-start {
+  opacity: 0;
+  transform: translate(var(--app-global-modal-flip-x), var(--app-global-modal-flip-y)) scale(var(--app-global-modal-flip-scale));
+}
+.app-global-modal.closing .app-global-modal-dialog--flip-close {
+  opacity: 1;
+  transform: translate(var(--app-global-modal-flip-x), var(--app-global-modal-flip-y)) scale(var(--app-global-modal-flip-scale));
+  transition: transform 1200ms cubic-bezier(.22, 1, .36, 1);
+}
+#quick-add-panel.app-global-modal-dialog {
+  width: min(560px, 100%);
+  margin: 0;
+  padding: 1.5rem;
+  padding-bottom: calc(1.5rem + env(safe-area-inset-bottom));
+}
+.dark #quick-add-panel { background: var(--color-surface); }
 
 #daily-ledger-container { display: none; }
 #daily-ledger-container.ledger-view-active { display: block; }
@@ -2016,15 +2072,14 @@ tr:hover td:not(.sticky-col) {
 /* ===== Responsive ===== */
 @media (max-width: 640px) {
   .card { @apply rounded-xl; }
-  #quick-add-modal { align-items: flex-end; }
-  #quick-add-panel {
-    @apply rounded-t-3xl rounded-b-none p-4 mx-0;
-    width: 100%;
-    max-width: none;
-    min-height: 60dvh;
-    max-height: calc(100vh - 0.75rem);
-    max-height: calc(100dvh - 0.75rem);
-    overflow-y: auto;
+  #quick-add-modal { place-items: center; }
+  #quick-add-panel.app-global-modal-dialog {
+    width: min(560px, 100%);
+    max-width: 100%;
+    max-height: calc(100dvh - 2rem);
+    border-radius: 24px;
+    padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
   }
   #fab-btn { @apply bottom-20 right-4; }
 }

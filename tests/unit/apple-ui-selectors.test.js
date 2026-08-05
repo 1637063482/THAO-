@@ -29,7 +29,7 @@ describe("Apple UI selector system", () => {
       today: "2026-07-31",
       deposit: { id: "deposit-1", institutionName: "Bank", productName: "1Y", principalVnd: 10_000_000, maturesOn: "2026-07-31" },
     });
-    expect(settlement).toContain('data-bank-option="Vietcombank"');
+    expect(settlement).toContain('data-app-dropdown-option="Vietcombank"');
     expect(settlement).toContain('data-app-dropdown-option="1M"');
     expect(settlement).toContain('name="principalVnd"');
     expect(settlement).toContain('value="10,000,000"');
@@ -40,11 +40,12 @@ describe("Apple UI selector system", () => {
 
   it("keeps the bank picker semantic while giving its options a shared focus treatment", () => {
     const form = renderDepositForm({ id: "deposit-1" });
-    const css = read("src/features/deposits/deposits.css");
+    const css = read("src/css/app.css");
     expect(form).toContain('role="listbox"');
     expect(form).toContain('role="option"');
-    expect(form).toContain('data-bank-option="Vietcombank"');
-    expect(css).toContain("var(--focus-ring)");
+    expect(form).toContain('data-app-dropdown-option="Vietcombank"');
+    expect(form).toContain('class="app-dropdown deposit-bank-dropdown"');
+    expect(css).toContain(".app-dropdown-option:focus-visible");
   });
 
   it("defines visible focus, expanded, disabled, and mobile-safe dropdown states", () => {

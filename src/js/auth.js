@@ -19,6 +19,7 @@ const SESSION_TIMEOUT_MS = 20 * 60 * 1000;
 let sessionCheckIntervalId = null;
 let loginGuardTimerId = null;
 let autoRateRefreshPromise = null;
+const authFieldStateBoundInputs = new WeakSet();
 
 function clearLoginGuard() {
   if (loginGuardTimerId !== null) {
@@ -45,6 +46,28 @@ function recoverLoginUiAfterTimeout() {
 }
 
 export { auth };
+
+/** @param {HTMLInputElement} input */
+function syncAuthFieldState(input) {
+  const field = input.closest(".auth-field");
+  if (!field) return;
+  field.classList.toggle("is-filled", input.value.length > 0);
+}
+
+/** Keep floating labels correct for initial values and ordinary edits. */
+export function bindAuthFieldState() {
+  document.querySelectorAll(".auth-field .auth-input").forEach(element => {
+    if (!(element instanceof HTMLInputElement)) return;
+    syncAuthFieldState(element);
+    if (authFieldStateBoundInputs.has(element)) return;
+    authFieldStateBoundInputs.add(element);
+    const sync = () => syncAuthFieldState(element);
+    element.addEventListener("input", sync);
+    element.addEventListener("change", sync);
+  });
+}
+
+bindAuthFieldState();
 
 export function bindAuthPasswordToggle() {
   const toggle = document.getElementById("auth-password-toggle");

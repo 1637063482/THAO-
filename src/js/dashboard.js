@@ -13,7 +13,7 @@ import { buildDashboardViewModel } from "./dashboard-view-model.js";
 
 const dashboardLabels = {
   vi: {
-    budget_remaining: "Ngân sách còn lại", budget_of: "trên tổng ngân sách",
+    budget_remaining: "Số dư có thể chi trong tháng", budget_of: "trên tổng ngân sách",
     today_spending: "Chi tiêu hôm nay", month_spending: "Chi tiêu tháng này",
     month_income: "Thu nhập tháng này", top_categories: "Hạng mục chi tiêu nhiều nhất",
     recent_entries: "Ghi chép gần đây", recent_entries_note: "Tổng hợp theo ngày và hạng mục, không phải từng giao dịch riêng lẻ",

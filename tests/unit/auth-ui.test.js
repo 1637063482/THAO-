@@ -12,6 +12,9 @@ describe("login interface focus contract", () => {
     expect(css).toMatch(/\.auth-field\s*\{[\s\S]*?border:\s*1px solid var\(--color-separator\)[\s\S]*?border-radius:\s*14px/);
     expect(css).toMatch(/\.auth-field-group:focus-within\s*\{[\s\S]*?box-shadow:\s*none/);
     expect(css).toMatch(/\.auth-field:has\(\.auth-input:not\(:placeholder-shown\)\) \.auth-field-label/);
+    expect(css).toMatch(/\.auth-field\.is-filled \.auth-field-label/);
+    expect(css).toMatch(/\.auth-field:has\(\.auth-input:-webkit-autofill\) \.auth-field-label/);
+    expect(css).toMatch(/\.auth-field:has\(\.auth-input:autofill\) \.auth-field-label/);
     expect(css).toMatch(/\.auth-input:focus-visible\s*\{[\s\S]*?box-shadow:\s*none/);
     expect(css).toMatch(/\.auth-password-toggle:focus-visible\s*\{[\s\S]*?box-shadow:\s*none/);
   });

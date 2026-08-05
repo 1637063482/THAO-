@@ -119,4 +119,49 @@ describe("deposit feature controller lifecycle", () => {
       dependencies.createRepository.mock.invocationCallOrder[1],
     );
   });
+
+  it("opens the add deposit form as a centered body-level FLIP modal", () => {
+    const { controller, dependencies } = createHarness();
+    controller.start({ uid: "fixture-user" });
+    dependencies.subscribe.mock.calls[0][0].onChange();
+
+    const trigger = dependencies.hosts.root.querySelector("[data-add-deposit]");
+    trigger.getBoundingClientRect = () => ({ left: 120, top: 40, width: 120, height: 44 });
+    trigger.focus();
+    trigger.click();
+
+    const backdrop = dependencies.hosts.form.querySelector("[data-deposit-form-backdrop]");
+    const dialog = dependencies.hosts.form.querySelector(".deposit-form-sheet");
+    expect(dependencies.hosts.form.parentElement).toBe(document.body);
+    expect(backdrop.classList.contains("app-global-modal")).toBe(true);
+    expect(dialog.classList.contains("app-global-modal-dialog")).toBe(true);
+    expect(dialog.classList.contains("app-global-modal-dialog--flip-start")).toBe(true);
+    expect(document.body.classList.contains("app-modal-open")).toBe(true);
+
+    backdrop.querySelector("[data-close-deposit-form]").click();
+    expect(backdrop.getAttribute("aria-hidden")).toBe("true");
+    expect(backdrop.classList.contains("closing")).toBe(true);
+    expect(document.body.classList.contains("app-modal-open")).toBe(false);
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it("uses precise Vietnamese banking wording when retrying interest recording", async () => {
+    const { controller, dependencies, state } = createHarness();
+    controller.start({ uid: "fixture-user" });
+    state.depositDocument.depositsById.done = {
+      institutionName: "Fixture Bank", productName: "1Y", principalVnd: 10_000_000,
+      annualRatePpm: 55_000, openedOn: "2026-01-01", maturesOn: "2026-07-01",
+      expectedInterestVnd: 500_000, actualInterestVnd: 500_000, reminderDays: [30, 7, 1],
+      remindersEnabled: true, status: "REDEEMED", redeemedOn: "2026-07-02", rolledOverToDepositId: null,
+      note: "", version: 1, createdAt: new Date(), updatedAt: new Date(), createdBy: "fixture",
+      updatedBy: "fixture", archivedAt: null,
+    };
+    dependencies.subscribe.mock.calls[0][0].onChange();
+
+    dependencies.hosts.root.querySelector('[data-record-interest="done"]').click();
+
+    await vi.waitFor(() => expect(dependencies.confirm).toHaveBeenCalledWith(
+      "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc không được ghi nhận là thu nhập.",
+    ));
+  });
 });

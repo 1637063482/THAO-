@@ -42,10 +42,25 @@ describe("Apple date picker", () => {
     const calendar = openCalendar(host);
     expect(calendar.hidden).toBe(false);
     expect(calendar.classList.contains("app-dropdown-menu-fixed")).toBe(true);
+    expect(calendar.classList.contains("app-dropdown-menu-portal")).toBe(true);
     expect(calendar.getAttribute("aria-label")).toBe("Tháng 8 2026");
     expect(calendar.querySelector(".app-datepicker-calendar-title").textContent).toBe("Tháng 8 2026");
     expect(calendar.querySelector('[data-app-datepicker-day="2026-08-15"]').getAttribute("aria-selected")).toBe("true");
     expect(calendar.querySelector('[data-app-datepicker-day="2026-08-15"]').classList.contains("is-selected")).toBe(true);
+  });
+
+  it("keeps the calendar inside its host when portal mode is disabled", () => {
+    document.body.innerHTML = `<section class="app-global-modal-dialog">${renderAppDatePicker({ name: "openedOn", value: "2026-08-15", placeholder: "ngày/tháng/năm", locale: "vi" })}</section>`;
+    const host = document.querySelector("[data-app-datepicker]");
+    bindAppDatePicker(host, { locale: "vi", portal: false });
+    const trigger = host.querySelector("[data-app-datepicker-trigger]");
+    const calendar = host.querySelector("[data-app-datepicker-calendar]");
+
+    trigger.click();
+
+    expect(calendar.parentElement).toBe(host);
+    expect(calendar.classList.contains("app-dropdown-menu-portal")).toBe(false);
+    expect(calendar.classList.contains("app-dropdown-menu-fixed")).toBe(false);
   });
 
   it("selects a day: updates the value, label, fires change, and closes", () => {

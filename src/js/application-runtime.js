@@ -172,10 +172,6 @@ ledgerController.mount();
   document.addEventListener("keydown", onUserActivity, true);
 })();
 
-document.getElementById("quick-add-modal")?.addEventListener("click", function(e) {
-  if (e.target === e.currentTarget) closeQuickAdd();
-});
-
 var LEDGER_LABELS = {
   vi: { table: "Bảng", daily: "Theo ngày" },
   "zh-CN": { table: "表格", daily: "按日" },

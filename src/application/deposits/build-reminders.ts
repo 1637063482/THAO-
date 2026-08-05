@@ -3,6 +3,7 @@ export type DepositReminderStage = "D30" | "D7" | "D1" | "D0" | "OVERDUE";
 export interface ReminderDepositRecord {
   readonly institutionName: string;
   readonly productName: string;
+  readonly principalVnd: number;
   readonly maturesOn: string;
   readonly reminderDays: readonly number[];
   readonly remindersEnabled: boolean;
@@ -15,6 +16,7 @@ export interface DepositReminder {
   readonly depositId: string;
   readonly institutionName: string;
   readonly productName: string;
+  readonly principalVnd: number;
   readonly maturesOn: string;
   readonly stage: DepositReminderStage;
   readonly daysUntilMaturity: number;
@@ -70,6 +72,7 @@ export function buildDepositReminders({
       depositId,
       institutionName: record.institutionName,
       productName: record.productName,
+      principalVnd: record.principalVnd,
       maturesOn: record.maturesOn,
       stage,
       daysUntilMaturity,

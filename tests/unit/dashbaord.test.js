@@ -50,6 +50,7 @@ describe("dashboard rendering", () => {
     expect(html).toContain("3 <span");
     expect(html).toContain("ngày");
     expect(html).toContain("hạng mục");
+    expect(html).toContain("Số dư có thể chi trong tháng");
   });
 
   it("renderDashboard handles noData gracefully", async () => {

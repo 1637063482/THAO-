@@ -5,11 +5,12 @@ vi.mock("../../src/js/sync.js", () => ({ triggerCloudSave: vi.fn() }));
 
 const setupSheet = () => {
   document.body.innerHTML = [
-    '<div id="quick-add-modal" aria-hidden="true"><div id="quick-add-panel" tabindex="-1"></div></div>',
+    '<div id="quick-add-modal" aria-hidden="true"><div id="quick-add-panel" tabindex="-1">',
     renderAppDropdown({ id: "qa-day", value: "1", options: [{ value: "1", label: "1", selected: true }] }),
     renderAppDropdown({ id: "qa-cat", value: "dining", options: [{ value: "dining", label: "dining", selected: true }] }),
     '<input id="qa-amount">',
     '<input id="qa-remark">',
+    '</div></div>',
     '<div id="toast"><span id="toast-icon"></span><span id="toast-msg"></span></div>',
   ].join("");
 };
@@ -29,14 +30,34 @@ describe("quick-add bottom sheet", () => {
     expect(document.activeElement.id).toBe("qa-amount");
   });
 
+  it("opens as a body-level centered FLIP modal and locks page scrolling", async () => {
+    document.body.insertAdjacentHTML("afterbegin", '<button id="fab-btn"></button>');
+    const { openQuickAdd } = await import("../../src/js/quick-add.js");
+    const trigger = document.getElementById("fab-btn");
+    trigger.getBoundingClientRect = () => ({ left: 100, top: 20, width: 56, height: 56 });
+    trigger.focus();
+
+    openQuickAdd();
+
+    const modal = document.getElementById("quick-add-modal");
+    const panel = document.getElementById("quick-add-panel");
+    expect(modal.parentElement).toBe(document.body);
+    expect(modal.classList.contains("app-global-modal")).toBe(true);
+    expect(panel.classList.contains("app-global-modal-dialog")).toBe(true);
+    expect(panel.classList.contains("app-global-modal-dialog--flip-start")).toBe(true);
+    expect(document.body.classList.contains("app-modal-open")).toBe(true);
+  });
+
   it("closes on Escape and returns focus to the trigger", async () => {
     document.body.insertAdjacentHTML("afterbegin", '<button id="fab-btn"></button>');
     const { openQuickAdd } = await import("../../src/js/quick-add.js");
     document.getElementById("fab-btn").focus();
     openQuickAdd();
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
-    await new Promise((resolve) => setTimeout(resolve, 320));
-    expect(document.getElementById("quick-add-modal").getAttribute("aria-hidden")).toBe("true");
+    const modal = document.getElementById("quick-add-modal");
+    expect(modal.getAttribute("aria-hidden")).toBe("true");
+    expect(modal.classList.contains("closing")).toBe(true);
+    expect(document.body.classList.contains("app-modal-open")).toBe(false);
     expect(document.getElementById("fab-btn")).toBe(document.activeElement);
   });
 

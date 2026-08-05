@@ -1,6 +1,7 @@
 import { createEmptyDepositDocument } from "../../js/deposit-schema.js";
 import { depositErrorMessage } from "../../js/deposit-errors.js";
 import { createDepositId } from "../../js/deposit-id.js";
+import { createGlobalModalController } from "../../components/feedback/global-modal.js";
 import {
   bindDepositForm,
   bindDepositSettlementForm,
@@ -65,6 +66,8 @@ export function createDepositController(dependencies) {
   let filter = "all";
   let dataReady = false;
   let snapshotFromCache = false;
+  /** @type {ReturnType<typeof createGlobalModalController> | null} */
+  let formModalController = null;
 
   const reminderController = createDepositReminderController({
     root: hosts.reminder,
@@ -82,8 +85,50 @@ export function createDepositController(dependencies) {
     return repository;
   }
 
-  function closeForm() {
+  function clearForm() {
     if (hosts.form) hosts.form.innerHTML = "";
+    formModalController = null;
+  }
+
+  function destroyForm() {
+    formModalController?.destroy();
+    clearForm();
+  }
+
+  function closeForm() {
+    if (formModalController?.isOpen()) {
+      formModalController.close();
+      return;
+    }
+    if (!hosts.form?.querySelector(".deposit-form-backdrop.closing")) destroyForm();
+  }
+
+  /** @param {HTMLElement | null | undefined} trigger */
+  function resolveFormTrigger(trigger) {
+    if (trigger && typeof trigger.getBoundingClientRect === "function") return trigger;
+    const active = hosts.root?.ownerDocument.activeElement;
+    return active instanceof HTMLElement ? active : null;
+  }
+
+  /** @param {string} markup @param {HTMLElement | null} trigger */
+  function mountFormModal(markup, trigger) {
+    if (!hosts.form) return null;
+    destroyForm();
+    hosts.form.innerHTML = markup;
+    const backdrop = /** @type {HTMLElement | null} */ (hosts.form.querySelector("[data-deposit-form-backdrop]"));
+    const dialog = /** @type {HTMLElement | null} */ (hosts.form.querySelector(".deposit-form-sheet"));
+    if (!backdrop || !dialog) {
+      clearForm();
+      return null;
+    }
+    formModalController = createGlobalModalController({
+      root: backdrop,
+      dialog,
+      trigger,
+      targetWidth: 640,
+      onClosed: clearForm,
+    });
+    return formModalController;
   }
 
   /** @param {string} id @returns {import("../../types/app-state").StoredDeposit} */
@@ -156,14 +201,16 @@ export function createDepositController(dependencies) {
     };
   }
 
-  /** @param {string | null} [id] */
-  function openForm(id = null) {
+  /** @param {string | null} [id] @param {HTMLElement | null} [trigger] */
+  function openForm(id = null, trigger = null) {
     if (!hosts.form) return;
     const deposit = id ? state.depositDocument.depositsById[id] : null;
     const formId = id || createDepositId();
     const locale = getLocale();
+    const triggerElement = resolveFormTrigger(trigger);
     hosts.form.dataset.locale = locale;
-    hosts.form.innerHTML = renderDepositForm({ locale, id: formId, deposit });
+    const modal = mountFormModal(renderDepositForm({ locale, id: formId, deposit }), triggerElement);
+    if (!modal) return;
     bindDepositForm(hosts.form, {
       onClose: closeForm,
       locale,
@@ -182,16 +229,19 @@ export function createDepositController(dependencies) {
         refresh();
       },
     });
+    modal.open();
   }
 
-  /** @param {string} id @param {"redeem" | "rollover"} mode */
-  function openSettlement(id, mode) {
+  /** @param {string} id @param {"redeem" | "rollover"} mode @param {HTMLElement | null} [trigger] */
+  function openSettlement(id, mode, trigger = null) {
     if (!hosts.form) return;
     void loadSettlementModule().catch(() => {});
     const deposit = settlementRecord(id);
     const locale = getLocale();
+    const triggerElement = resolveFormTrigger(trigger);
     hosts.form.dataset.locale = locale;
-    hosts.form.innerHTML = renderDepositSettlementForm({ locale, deposit, mode, today: getToday() });
+    const modal = mountFormModal(renderDepositSettlementForm({ locale, deposit, mode, today: getToday() }), triggerElement);
+    if (!modal) return;
     bindDepositSettlementForm(hosts.form, {
       locale,
       confirm,
@@ -227,6 +277,7 @@ export function createDepositController(dependencies) {
         }
       },
     });
+    modal.open();
   }
 
   /** @param {string} id */
@@ -235,7 +286,7 @@ export function createDepositController(dependencies) {
     const locale = getLocale();
     const message = locale === "zh-CN"
       ? "确认只将实收利息记入收入？本金不会记作收入。"
-      : "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc sẽ không được ghi.";
+      : "Chỉ ghi tiền lãi thực nhận vào thu nhập? Tiền gốc không được ghi nhận là thu nhập.";
     if (confirm && !(await confirm(message))) return;
     uiStatus = "syncing";
     refresh();
@@ -368,7 +419,7 @@ export function createDepositController(dependencies) {
     filter = "all";
     dataReady = false;
     snapshotFromCache = false;
-    closeForm();
+    destroyForm();
     reminderController.destroy();
     state.depositDocument = createEmptyDepositDocument();
     refresh();

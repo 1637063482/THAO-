@@ -70,10 +70,6 @@
         <aside id="sidebar" data-app-sidebar-host></aside>
 
         <main class="flex-1 min-w-0 px-4 md:px-6 py-6 pb-24 md:pb-6">
-            <!-- Global overlays (outside view containers so they work on any tab) -->
-            <div id="deposit-form-root" data-deposit-form-host></div>
-            <div id="deposit-reminder-root"></div>
-
             <!-- Overview content -->
             <div id="overview-content" class="space-y-5">
                 <!-- Dashboard -->
@@ -223,8 +219,8 @@
     </button>
 
     <!-- Quick-add modal -->
-    <div id="quick-add-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="quick-add-title" style="display:none;opacity:0;">
-        <div id="quick-add-panel" class="p-6 w-full max-w-md mx-4">
+    <div id="quick-add-modal" class="app-global-modal" aria-hidden="true" aria-labelledby="quick-add-title">
+        <div id="quick-add-panel" class="app-global-modal-dialog p-6 w-full max-w-md mx-4" role="dialog" aria-modal="true" aria-labelledby="quick-add-title">
             <div class="flex items-center justify-between mb-5">
                 <h3 id="quick-add-title" class="text-lg font-black text-slate-800 font-heading">
                     <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-blue-500"></span><span data-i18n="quick_add_title"></span>
@@ -244,6 +240,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Body-level global overlays -->
+    <div id="deposit-form-root" data-deposit-form-host></div>
+    <div id="deposit-reminder-root"></div>
 
     <!-- Bottom Navigation (Mobile) -->
     <nav id="bottom-nav" class="md:hidden" data-app-bottom-nav-host></nav>

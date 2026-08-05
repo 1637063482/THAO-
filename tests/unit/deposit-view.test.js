@@ -37,6 +37,21 @@ describe("deposit management view", () => {
     expect(renderDepositManagement(vm, { formatMoney: formatCny })).toContain("¥ 2,857.14");
   });
 
+  it("uses banking terminology for projected maturity interest and realized-interest recording", () => {
+    const html = renderDepositManagement(buildDepositViewModel({
+      document: storageDocument({
+        active: deposit({ maturesOn: "2027-01-01" }),
+        done: deposit({ status: "REDEEMED", redeemedOn: "2027-01-02", maturesOn: "2027-01-01", actualInterestVnd: 500_000 }),
+      }),
+      today: "2027-01-03",
+      locale: "vi",
+    }));
+
+    expect(html).toContain("Tổng lãi dự kiến");
+    expect(html).toContain("Tổng dự kiến khi đáo hạn");
+    expect(html).toContain("Ghi nhận lãi thực nhận");
+  });
+
   it("sorts by maturity, derives states, excludes archived totals and renders card/table parity", () => {
     const vm = buildDepositViewModel({
       document: storageDocument({
@@ -111,7 +126,7 @@ describe("deposit management view", () => {
     const failure = Object.assign(new Error("conflict"), { code: "DEPOSIT_VERSION_CONFLICT" });
     bindDepositManagement(document.body, { onArchive: vi.fn().mockRejectedValue(failure), confirm: vi.fn(() => true) });
     document.querySelector("[data-archive-deposit=active]").click();
-    await vi.waitFor(() => expect(document.querySelector("[data-deposit-operation-error]").textContent).toBe("存款已被其他更改更新，请刷新后重试。"));
+    await vi.waitFor(() => expect(document.querySelector("[data-deposit-operation-error]").textContent).toBe("存款已被其他人更新，请刷新后重试。"));
     expect(document.querySelector("[data-deposit-operation-error]").hidden).toBe(false);
   });
 

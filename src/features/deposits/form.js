@@ -6,7 +6,7 @@ import { bindAppDropdown, renderAppDropdown } from "../../components/feedback/ap
 import { bindAppDatePicker, renderAppDatePicker, setAppDatePickerMinDate, setAppDatePickerValue } from "../../components/feedback/app-datepicker.js";
 
 const copy = {
-  vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", chooseBank: "-- Chọn ngân hàng --", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", datePlaceholder: "ngày/tháng/năm", expected: "Lợi nhuận dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --" },
+  vi: { add: "Thêm khoản tiền gửi", edit: "Sửa khoản tiền gửi", institution: "Ngân hàng", chooseBank: "-- Chọn ngân hàng --", term: "Kỳ hạn", principal: "Số tiền gửi (VND)", rate: "Lãi suất năm (%)", opened: "Ngày gửi", matures: "Ngày đáo hạn", datePlaceholder: "ngày/tháng/năm", expected: "Lãi dự kiến (không bắt buộc)", note: "Ghi chú", reminders: "Nhắc trước ngày đáo hạn", save: "Lưu khoản tiền gửi", cancel: "Hủy", saveError: "Không thể lưu. Bản nháp vẫn được giữ lại.", invalid: "Vui lòng kiểm tra dữ liệu đã nhập.", termBlank: "-- Chọn kỳ hạn --" },
   "zh-CN": { add: "新增存款", edit: "编辑存款", institution: "银行", chooseBank: "-- 请选择银行 --", term: "期限", principal: "存款金额（VND）", rate: "年利率（%）", opened: "存入日期", matures: "到期日期", datePlaceholder: "年/月/日", expected: "预计收益（可选）", note: "备注", reminders: "到期前提醒", save: "保存存款", cancel: "取消", saveError: "保存失败，草稿已保留。", invalid: "请检查输入内容。", termBlank: "-- 请选择期限 --" },
 };
 
@@ -17,7 +17,7 @@ const settlementCopy = {
     principalWarning: "Tiền gốc không bao giờ được ghi là thu nhập.", confirmInterest: "Chỉ ghi tiền lãi thực nhận vào thu nhập?",
     nextInstitution: "Ngân hàng mới", nextProduct: "Sản phẩm mới", nextPrincipal: "Tiền gốc kỳ mới (VND)",
     nextRate: "Lãi suất kỳ mới (%)", nextOpened: "Ngày bắt đầu kỳ mới", nextMatures: "Ngày đáo hạn kỳ mới",
-    nextExpected: "Lợi nhuận dự kiến kỳ mới", saveRedeem: "Xác nhận tất toán", saveRollover: "Xác nhận tái tục",
+    nextExpected: "Lãi dự kiến kỳ mới", saveRedeem: "Xác nhận tất toán", saveRollover: "Xác nhận tái tục",
     cancel: "Hủy", saveError: "Không thể hoàn tất. Dữ liệu đã nhập vẫn được giữ lại.",
   },
   "zh-CN": {
@@ -48,10 +48,27 @@ function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, char => entities[char] || char);
 }
 
-/** @param {{ inputId: string, optionsId: string, placeholder: string, value?: unknown }} options */
-function renderBankPicker({ inputId, optionsId, placeholder, value = "" }) {
-  const bankOptions = VIETNAM_BANKS.map(bank => `<button type="button" role="option" aria-selected="false" data-bank-option="${escapeHtml(bank)}">${escapeHtml(bank)}</button>`).join("");
-  return `<div class="deposit-bank-picker"><div class="deposit-bank-control"><input id="${escapeHtml(inputId)}" name="institutionName" required maxlength="120" autocomplete="organization" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${escapeHtml(optionsId)}" placeholder="${escapeHtml(placeholder)}" value="${escapeHtml(value)}"><span class="deposit-bank-chevron" aria-hidden="true"><svg class="app-dropdown-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></span></div><div id="${escapeHtml(optionsId)}" class="deposit-bank-options" data-bank-picker-options role="listbox" hidden>${bankOptions}</div></div>`;
+/** @param {unknown} value @returns {Array<{ value: string, label: string }>} */
+function bankDropdownOptions(value = "") {
+  const current = String(value ?? "").trim();
+  const options = current && !VIETNAM_BANKS.includes(current)
+    ? [{ value: current, label: current }]
+    : [];
+  VIETNAM_BANKS.forEach(bank => options.push({ value: bank, label: bank }));
+  return options;
+}
+
+/** @param {{ id: string, placeholder: string, ariaLabel: string, value?: unknown }} options */
+function renderBankDropdown({ id, placeholder, ariaLabel, value = "" }) {
+  return renderAppDropdown({
+    id,
+    name: "institutionName",
+    value: String(value ?? ""),
+    placeholder,
+    ariaLabel,
+    className: "deposit-bank-dropdown",
+    options: bankDropdownOptions(value),
+  });
 }
 /** @overload @param {unknown} value @param {true} optional @returns {number | null} */
 /** @overload @param {unknown} value @param {false} [optional] @returns {number} */
@@ -160,14 +177,17 @@ export function parseDepositForm(form) {
 export function renderDepositForm({ locale = "vi", id, deposit = null }) {
   const labels = words(locale); const editing = Boolean(deposit);
   const rate = deposit ? String(deposit.annualRatePpm / 10_000) : "";
-  const bankOptions = VIETNAM_BANKS.map(b => `<button type="button" role="option" aria-selected="false" data-bank-option="${escapeHtml(b)}">${escapeHtml(b)}</button>`).join("");
-  const bankInputId = `deposit-bank-${escapeHtml(id)}`;
-  const bankOptionsId = `deposit-bank-options-${escapeHtml(id)}`;
   const dateLang = normalizeLocale(locale) === "vi" ? "vi" : "zh-CN";
   const selectedTerm = normalizeDepositTermCode(deposit?.productName);
   const termOptions = [];
   if (deposit?.productName && !selectedTerm) termOptions.push({ value: deposit.productName, label: deposit.productName, selected: true });
   depositTermOptions(locale).forEach(term => { termOptions.push({ value: term.code, label: term.label, selected: selectedTerm === term.code }); });
+  const bankDropdown = renderBankDropdown({
+    id: `deposit-bank-${id}`,
+    placeholder: labels.chooseBank,
+    ariaLabel: labels.institution,
+    value: deposit?.institutionName,
+  });
   const termDropdown = renderAppDropdown({
     id: `deposit-term-${escapeHtml(id)}`,
     name: "productName",
@@ -176,7 +196,7 @@ export function renderDepositForm({ locale = "vi", id, deposit = null }) {
     ariaLabel: labels.term,
     options: termOptions,
   });
-  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title" tabindex="-1"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><div class="deposit-form-field"><label for="${bankInputId}">${labels.institution}</label><div class="deposit-bank-picker"><div class="deposit-bank-control"><input id="${bankInputId}" name="institutionName" required maxlength="120" autocomplete="organization" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${bankOptionsId}" placeholder="${escapeHtml(labels.chooseBank)}" value="${escapeHtml(deposit?.institutionName)}"><span class="deposit-bank-chevron" aria-hidden="true"><svg class="app-dropdown-chevron-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></span></div><div id="${bankOptionsId}" class="deposit-bank-options" data-bank-picker-options role="listbox" hidden>${bankOptions}</div></div></div><label>${labels.term}${termDropdown}</label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(formatVndInputValue(deposit?.principalVnd))}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}${renderAppDatePicker({ name: "openedOn", value: deposit?.openedOn, placeholder: labels.datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.matures}${renderAppDatePicker({ name: "maturesOn", value: deposit?.maturesOn, placeholder: labels.datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
+  return `<div class="deposit-form-backdrop app-global-modal" data-deposit-form-backdrop aria-hidden="true"><section class="deposit-form-sheet app-global-modal-dialog safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-form-title" tabindex="-1"><header><h3 id="deposit-form-title">${editing ? labels.edit : labels.add}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-form data-deposit-id="${escapeHtml(id)}" data-version="${deposit?.version || 0}" data-status="${deposit?.status || "ACTIVE"}" data-actual-interest-vnd="${deposit?.actualInterestVnd ?? ""}" data-redeemed-on="${deposit?.redeemedOn ?? ""}" data-rolled-over-to-deposit-id="${deposit?.rolledOverToDepositId ?? ""}"><div class="deposit-form-grid"><label>${labels.institution}${bankDropdown}</label><label>${labels.term}${termDropdown}</label><label>${labels.principal}<input name="principalVnd" required inputmode="numeric" pattern="[0-9,. ]+" value="${escapeHtml(formatVndInputValue(deposit?.principalVnd))}"></label><label>${labels.rate}<input name="annualRatePercent" required inputmode="decimal" value="${escapeHtml(rate)}"></label><label>${labels.opened}${renderAppDatePicker({ name: "openedOn", value: deposit?.openedOn, placeholder: labels.datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.matures}${renderAppDatePicker({ name: "maturesOn", value: deposit?.maturesOn, placeholder: labels.datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.expected}<input name="expectedInterestVnd" readonly class="deposit-calc-input" value=""></label><label class="deposit-reminder-toggle"><input name="remindersEnabled" type="checkbox"${deposit?.remindersEnabled === false ? "" : " checked"}><span>${labels.reminders} · D-30 / D-7 / D-1 / D0</span></label><label class="deposit-note-field">${labels.note}<textarea name="note" maxlength="1000">${escapeHtml(deposit?.note)}</textarea></label></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${labels.save}</button></div></form></section></div>`;
 }
 
 /** @param {HTMLElement} root @param {import("../../types/app-state").DepositFormBindings} [bindings] */
@@ -216,6 +236,7 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     const dateName = dateHost.querySelector("[data-app-datepicker-hidden]")?.getAttribute("name") || "";
     bindAppDatePicker(dateHost, {
       locale: normalizeLocale(locale),
+      portal: false,
       onChange: dateName === "maturesOn"
         // 手动选到期日不重算期限，但不得早于存入日。
         ? () => { enforceMaturityOrder(); recalcExpected(); }
@@ -256,8 +277,10 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     recalcExpected();
   }
 
-  const termHost = form.querySelector("[data-app-dropdown]");
-  if (termHost) bindAppDropdown(termHost, { onChange: onFieldChange });
+  form.querySelectorAll("[data-app-dropdown]").forEach(dropdown => {
+    const name = dropdown.querySelector("[data-app-dropdown-hidden]")?.getAttribute("name");
+    bindAppDropdown(dropdown, { onChange: name === "productName" ? onFieldChange : undefined, portal: false });
+  });
   productSelect?.addEventListener("change", onFieldChange);
   if (principalInput instanceof HTMLInputElement) bindVndInputFormatting(principalInput, recalcExpected);
   rateInput?.addEventListener("input", recalcExpected);
@@ -276,71 +299,7 @@ export function bindDepositForm(root, { onSubmit, onClose, locale = "vi" } = {})
     }
     finally { submit.disabled = false; }
   });
-  const bankInput = /** @type {HTMLInputElement | null} */ (formControl(form, "institutionName"));
-  const bankOptions = /** @type {HTMLElement | null} */ (form.querySelector("[data-bank-picker-options]"));
-  /** @param {boolean} open */
-  const setBankPickerOpen = (open) => {
-    if (!bankInput || !bankOptions) return;
-    bankOptions.hidden = !open;
-    bankInput.setAttribute("aria-expanded", String(open));
-    if (open) {
-      const current = bankInput.value.trim();
-      bankOptions.querySelectorAll("[data-bank-option]").forEach(option => {
-        option.setAttribute("aria-selected", String(option.getAttribute("data-bank-option") === current));
-      });
-    }
-  };
-  // 点击银行输入框在打开/收起之间切换；手动输入时收起（仍可输入自定义银行名）。
-  bankInput?.addEventListener("click", () => setBankPickerOpen(Boolean(bankOptions?.hidden)));
-  bankOptions?.addEventListener("click", event => {
-    const option = event.target instanceof Element ? event.target.closest("[data-bank-option]") : null;
-    if (!option || !bankInput) return;
-    bankInput.value = option.getAttribute("data-bank-option") || "";
-    bankInput.dispatchEvent(new Event("input", { bubbles: true }));
-    setBankPickerOpen(false);
-    bankInput.focus();
-  });
-  bankInput?.addEventListener("input", () => setBankPickerOpen(false));
   /** @param {KeyboardEvent} event */
-  function onBankInputKeydown(event) {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    event.preventDefault();
-    setBankPickerOpen(true);
-    const list = /** @type {HTMLElement[]} */ (bankOptions ? [...bankOptions.querySelectorAll("[data-bank-option]")] : []);
-    if (list.length) list[event.key === "ArrowUp" ? list.length - 1 : 0].focus();
-  }
-  /** @param {KeyboardEvent} event */
-  function onBankOptionsKeydown(event) {
-    if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); setBankPickerOpen(false); bankInput?.focus(); return; }
-    if (event.key === "Tab") { setBankPickerOpen(false); return; }
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const list = /** @type {HTMLElement[]} */ (bankOptions ? [...bankOptions.querySelectorAll("[data-bank-option]")] : []);
-    if (!list.length) return;
-    const index = list.indexOf(/** @type {HTMLElement} */ (document.activeElement));
-    let next = 0;
-    if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = list.length - 1;
-    else if (event.key === "ArrowDown") next = index === -1 ? 0 : (index + 1) % list.length;
-    else next = index === -1 ? list.length - 1 : (index - 1 + list.length) % list.length;
-    list[next].focus();
-  }
-  bankInput?.addEventListener("keydown", onBankInputKeydown);
-  bankOptions?.addEventListener("keydown", onBankOptionsKeydown);
-  root.addEventListener("click", event => {
-    const target = event.target instanceof Element ? event.target : null;
-    if (target && !target.closest(".deposit-bank-picker")) setBankPickerOpen(false);
-  });
-  /** @param {KeyboardEvent} event */
-  function onRootBankEscape(event) {
-    if (event.key === "Escape" && bankOptions && !bankOptions.hidden) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      setBankPickerOpen(false);
-      bankInput?.focus();
-    }
-  }
-  root.addEventListener("keydown", onRootBankEscape, true);
   const dialog = /** @type {HTMLElement | null} */ (root.querySelector(".deposit-form-sheet"));
   if (dialog) {
     try { dialog.focus({ preventScroll: true }); }
@@ -364,78 +323,23 @@ function bindDialogKeyboard(root, onClose) {
   });
 }
 
-/** @param {HTMLElement} root */
-function bindSettlementBankPicker(root) {
-  const form = /** @type {HTMLFormElement | null} */ (root.querySelector("form"));
-  const bankInput = /** @type {HTMLInputElement | null} */ (form ? formControl(form, "institutionName") : null);
-  const bankOptions = /** @type {HTMLElement | null} */ (form?.querySelector("[data-bank-picker-options]"));
-  if (!bankInput || !bankOptions) return;
-  /** @param {boolean} open */
-  const setBankPickerOpen = (open) => {
-    bankOptions.hidden = !open;
-    bankInput.setAttribute("aria-expanded", String(open));
-    if (open) {
-      const current = bankInput.value.trim();
-      bankOptions.querySelectorAll("[data-bank-option]").forEach(option => {
-        option.setAttribute("aria-selected", String(option.getAttribute("data-bank-option") === current));
-      });
-    }
-  };
-  bankInput.addEventListener("click", () => setBankPickerOpen(Boolean(bankOptions.hidden)));
-  bankOptions.addEventListener("click", event => {
-    const option = event.target instanceof Element ? event.target.closest("[data-bank-option]") : null;
-    if (!option) return;
-    bankInput.value = option.getAttribute("data-bank-option") || "";
-    bankInput.dispatchEvent(new Event("input", { bubbles: true }));
-    setBankPickerOpen(false);
-    bankInput.focus();
-  });
-  bankInput.addEventListener("input", () => setBankPickerOpen(false));
-  bankInput.addEventListener("keydown", event => {
-    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-    event.preventDefault();
-    setBankPickerOpen(true);
-    const list = /** @type {HTMLElement[]} */ ([...bankOptions.querySelectorAll("[data-bank-option]")]);
-    list[event.key === "ArrowUp" ? list.length - 1 : 0]?.focus();
-  });
-  bankOptions.addEventListener("keydown", /** @param {KeyboardEvent} event */ event => {
-    if (event.key === "Escape") { event.preventDefault(); event.stopImmediatePropagation(); setBankPickerOpen(false); bankInput.focus(); return; }
-    if (event.key === "Tab") { setBankPickerOpen(false); return; }
-    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
-    event.preventDefault();
-    const list = /** @type {HTMLElement[]} */ ([...bankOptions.querySelectorAll("[data-bank-option]")]);
-    if (!list.length) return;
-    const index = list.indexOf(/** @type {HTMLElement} */ (document.activeElement));
-    const next = event.key === "Home" ? 0 : event.key === "End" ? list.length - 1 : event.key === "ArrowDown" ? (index + 1 + list.length) % list.length : (index - 1 + list.length) % list.length;
-    list[next].focus();
-  });
-  root.addEventListener("click", event => {
-    const target = event.target instanceof Element ? event.target : null;
-    if (target && !target.closest(".deposit-bank-picker")) setBankPickerOpen(false);
-  });
-  root.addEventListener("keydown", /** @param {KeyboardEvent} event */ event => {
-    if (event.key === "Escape" && !bankOptions.hidden) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      setBankPickerOpen(false);
-      bankInput.focus();
-    }
-  }, true);
-}
-
 /** @param {import("../../types/app-state").DepositSettlementRenderOptions} options */
 export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "redeem", today }) {
   const labels = settlementCopy[locale] || settlementCopy.vi;
   const rollover = mode === "rollover";
   const datePlaceholder = words(locale).datePlaceholder;
   const nextMaturityMin = addDays(today, 1);
-  const settlementBankInputId = `settlement-bank-${escapeHtml(deposit.id)}`;
-  const settlementBankOptionsId = `settlement-bank-options-${escapeHtml(deposit.id)}`;
   const selectedTerm = normalizeDepositTermCode(deposit.productName);
   const productValue = selectedTerm || deposit.productName || "";
   const productOptions = [];
   if (deposit.productName && !selectedTerm) productOptions.push({ value: deposit.productName, label: deposit.productName, selected: true });
   depositTermOptions(locale).forEach(term => productOptions.push({ value: term.code, label: term.label, selected: selectedTerm === term.code }));
+  const bankDropdown = renderBankDropdown({
+    id: `settlement-bank-${deposit.id}`,
+    placeholder: labels.nextInstitution,
+    ariaLabel: labels.nextInstitution,
+    value: deposit.institutionName,
+  });
   const productDropdown = renderAppDropdown({
     id: `settlement-product-${escapeHtml(deposit.id)}`,
     name: "productName",
@@ -444,8 +348,8 @@ export function renderDepositSettlementForm({ locale = "vi", deposit, mode = "re
     ariaLabel: labels.nextProduct,
     options: productOptions,
   });
-  const nextFields = rollover ? `<label>${labels.nextInstitution}${renderBankPicker({ inputId: settlementBankInputId, optionsId: settlementBankOptionsId, placeholder: labels.nextInstitution, value: deposit.institutionName })}</label><label>${labels.nextProduct}${productDropdown}</label><label>${labels.nextPrincipal}<input name="principalVnd" data-vnd-input required inputmode="numeric" value="${escapeHtml(formatVndInputValue(deposit.principalVnd))}"></label><label>${labels.nextRate}<input name="annualRatePercent" required inputmode="decimal"></label><label>${labels.nextOpened}${renderAppDatePicker({ name: "openedOn", value: today, placeholder: datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.nextMatures}${renderAppDatePicker({ name: "maturesOn", value: "", placeholder: datePlaceholder, locale: normalizeLocale(locale), minDate: nextMaturityMin })}</label><label>${labels.nextExpected}<input name="expectedInterestVnd" inputmode="numeric"></label>` : `<label>${labels.settledOn}${renderAppDatePicker({ name: "settledOn", value: today, placeholder: datePlaceholder, locale: normalizeLocale(locale), minDate: deposit.maturesOn })}</label>`;
-  return `<div class="deposit-form-backdrop" data-deposit-form-backdrop><section class="deposit-form-sheet safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-settlement-title"><header><h3 id="deposit-settlement-title">${rollover ? labels.rollover : labels.redeem}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-settlement-form data-mode="${mode}" data-deposit-id="${escapeHtml(deposit.id)}"><div class="deposit-form-grid">${nextFields}<label>${labels.actualInterest}<input name="actualInterestVnd" data-vnd-input inputmode="numeric"></label><label class="deposit-reminder-toggle"><input name="writeInterestToLedger" type="checkbox"><span>${labels.writeInterest}</span></label><p class="deposit-principal-warning" role="note">${labels.principalWarning}</p></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${rollover ? labels.saveRollover : labels.saveRedeem}</button></div></form></section></div>`;
+  const nextFields = rollover ? `<label>${labels.nextInstitution}${bankDropdown}</label><label>${labels.nextProduct}${productDropdown}</label><label>${labels.nextPrincipal}<input name="principalVnd" data-vnd-input required inputmode="numeric" value="${escapeHtml(formatVndInputValue(deposit.principalVnd))}"></label><label>${labels.nextRate}<input name="annualRatePercent" required inputmode="decimal"></label><label>${labels.nextOpened}${renderAppDatePicker({ name: "openedOn", value: today, placeholder: datePlaceholder, locale: normalizeLocale(locale) })}</label><label>${labels.nextMatures}${renderAppDatePicker({ name: "maturesOn", value: "", placeholder: datePlaceholder, locale: normalizeLocale(locale), minDate: nextMaturityMin })}</label><label>${labels.nextExpected}<input name="expectedInterestVnd" inputmode="numeric"></label>` : `<label>${labels.settledOn}${renderAppDatePicker({ name: "settledOn", value: today, placeholder: datePlaceholder, locale: normalizeLocale(locale), minDate: deposit.maturesOn })}</label>`;
+  return `<div class="deposit-form-backdrop app-global-modal" data-deposit-form-backdrop aria-hidden="true"><section class="deposit-form-sheet app-global-modal-dialog safe-area-bottom" role="dialog" aria-modal="true" aria-labelledby="deposit-settlement-title"><header><h3 id="deposit-settlement-title">${rollover ? labels.rollover : labels.redeem}</h3><button type="button" class="deposit-form-close" data-close-deposit-form aria-label="${labels.cancel}">×</button></header><form data-deposit-settlement-form data-mode="${mode}" data-deposit-id="${escapeHtml(deposit.id)}"><div class="deposit-form-grid">${nextFields}<label>${labels.actualInterest}<input name="actualInterestVnd" data-vnd-input inputmode="numeric"></label><label class="deposit-reminder-toggle"><input name="writeInterestToLedger" type="checkbox"><span>${labels.writeInterest}</span></label><p class="deposit-principal-warning" role="note">${labels.principalWarning}</p></div><p class="deposit-form-error" data-form-error role="alert"></p><div class="deposit-form-actions"><button type="button" class="btn-secondary" data-close-deposit-form>${labels.cancel}</button><button type="submit" class="btn-primary">${rollover ? labels.saveRollover : labels.saveRedeem}</button></div></form></section></div>`;
 }
 
 /** @param {HTMLFormElement} form @returns {import("../../types/app-state").DepositSettlementInput} */
@@ -496,16 +400,15 @@ export function bindDepositSettlementForm(root, { locale = "vi", onSubmit, onClo
     const dateName = dateHost.querySelector("[data-app-datepicker-hidden]")?.getAttribute("name") || "";
     bindAppDatePicker(dateHost, {
       locale: normalizeLocale(locale),
+      portal: false,
       onChange: dateName === "openedOn" || dateName === "maturesOn" ? enforceRolloverMaturity : undefined,
     });
   });
   if (openedHost || maturesHost) enforceRolloverMaturity();
-  const productHost = form.querySelector("[data-app-dropdown]");
-  if (productHost) bindAppDropdown(productHost);
+  form.querySelectorAll("[data-app-dropdown]").forEach(dropdown => bindAppDropdown(dropdown, { portal: false }));
   form.querySelectorAll("[data-vnd-input]").forEach(input => {
     if (input instanceof HTMLInputElement) bindVndInputFormatting(input);
   });
-  bindSettlementBankPicker(root);
   form.addEventListener("submit", async event => {
     event.preventDefault(); const errorNode = form.querySelector("[data-form-error]"); const submit = /** @type {HTMLButtonElement | null} */ (form.querySelector("button[type=submit]"));
     if (!submit) return;

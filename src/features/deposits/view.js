@@ -10,14 +10,14 @@ import { ACKNOWLEDGEMENT_WARNING_THRESHOLD, MAX_ACKNOWLEDGEMENTS } from "../../j
 const copy = {
   vi: {
     title: "Tiền gửi có kỳ hạn", add: "Thêm khoản tiền gửi", first: "Thêm khoản tiền gửi đầu tiên",
-    empty: "Ghi lại khoản tiền gửi để biết tổng vốn, lợi nhuận dự kiến và ngày đáo hạn.",
+    empty: "Ghi lại khoản tiền gửi để biết tổng vốn, lãi dự kiến và ngày đáo hạn.",
     loading: "Đang tải tiền gửi…", syncing: "Đang lưu thay đổi…", offline: "Ngoại tuyến — đang hiển thị dữ liệu gần nhất",
     error: "Không thể tải tiền gửi. Vui lòng thử lại.", principal: "Tổng tiền gửi",
-    interest: "Tổng lợi nhuận dự kiến", maturityTotal: "Tổng khi đáo hạn", nearest: "Đáo hạn gần nhất",
+    interest: "Tổng lãi dự kiến", maturityTotal: "Tổng dự kiến khi đáo hạn", nearest: "Đáo hạn gần nhất",
     institution: "Ngân hàng", product: "Sản phẩm", amount: "Số tiền", rate: "Lãi suất",
     opened: "Ngày gửi", matures: "Ngày đáo hạn", status: "Trạng thái", actions: "Thao tác",
     edit: "Sửa", archive: "Lưu trữ", archiveConfirm: "Lưu trữ khoản tiền gửi này? Bạn vẫn có thể xem trong bộ lọc lưu trữ.", delete: "Xóa", deleteConfirm: "Xóa vĩnh viễn khoản tiền gửi này? Hành động này không thể hoàn tác.",
-    redeem: "Tất toán", rollover: "Tái tục", recordInterest: "Ghi lại tiền lãi",
+    redeem: "Tất toán", rollover: "Tái tục", recordInterest: "Ghi nhận lãi thực nhận",
     all: "Tất cả", active: "Đang hoạt động", maturing: "Sắp đáo hạn", matured: "Đã đáo hạn", archived: "Đã lưu trữ",
     ACTIVE: "Đang hoạt động", MATURING: "Sắp đáo hạn", MATURED: "Đã đáo hạn", REDEEMED: "Đã tất toán", ROLLED_OVER: "Đã tái tục",
     noNearest: "Chưa có", vnd: "₫", syncError: "Thao tác thất bại; dữ liệu chưa được đánh dấu là đã đồng bộ.",

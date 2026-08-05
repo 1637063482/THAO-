@@ -25,7 +25,7 @@ vi.mock("../../src/components/feedback/confirmation-dialog.js", () => ({
   requestAppConfirmation: vi.fn(),
 }));
 
-import { bindAuthPasswordToggle, initAuth, handleLogin } from "../../src/js/auth.js";
+import { bindAuthFieldState, bindAuthPasswordToggle, initAuth, handleLogin } from "../../src/js/auth.js";
 import * as authModule from "../../src/js/auth.js";
 import { loadCnyVndRate } from "../../src/js/fx-display.js";
 import { requestAppConfirmation } from "../../src/components/feedback/confirmation-dialog.js";
@@ -102,6 +102,32 @@ describe("auth FX display integration", () => {
     expect(document.activeElement).toBe(input);
   });
 
+  it("floats labels for prefilled auth values and tracks later edits", () => {
+    document.body.innerHTML = `
+      <div class="auth-field">
+        <label class="auth-field-label" for="auth-email">Email</label>
+        <input id="auth-email" class="auth-input" value="fixture@example.invalid">
+      </div>
+      <div class="auth-field">
+        <label class="auth-field-label" for="auth-password">Password</label>
+        <input id="auth-password" class="auth-input" value="fixture-password">
+      </div>
+    `;
+
+    bindAuthFieldState();
+    const email = document.getElementById("auth-email");
+    const emailField = email.closest(".auth-field");
+    expect(emailField.classList.contains("is-filled")).toBe(true);
+
+    email.value = "";
+    email.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(emailField.classList.contains("is-filled")).toBe(false);
+
+    email.value = "next@example.invalid";
+    email.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(emailField.classList.contains("is-filled")).toBe(true);
+  });
+
   it("recovers the login UI when Firebase Auth never settles", async () => {
     vi.useFakeTimers();
     document.documentElement.lang = "vi";
@@ -121,7 +147,7 @@ describe("auth FX display integration", () => {
     expect(document.getElementById("loading-overlay").style.display).toBe("none");
     expect(document.getElementById("auth-overlay").style.display).toBe("flex");
     expect(document.getElementById("auth-error").classList.contains("hidden")).toBe(false);
-    expect(document.getElementById("auth-error").textContent).toContain("Đăng nhập mất quá nhiều thời gian");
+    expect(document.getElementById("auth-error").textContent).toContain("Hết thời gian chờ đăng nhập");
     vi.useRealTimers();
   });
 

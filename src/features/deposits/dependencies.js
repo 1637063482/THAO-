@@ -19,11 +19,15 @@ export function createDepositDependencies({
   const createRepository = (user) => new DepositRepository(db, projectId, user.uid);
   /** @param {import("../../types/app-state").DepositSnapshotCallbacks} callbacks */
   const subscribe = (callbacks) => subscribeToDeposits(db, projectId, callbacks);
+  const formHost = documentRoot.getElementById("deposit-form-root");
+  if (formHost && documentRoot.body && formHost.parentElement !== documentRoot.body) {
+    documentRoot.body.appendChild(formHost);
+  }
   return {
     state,
     hosts: {
       root: documentRoot.getElementById("deposit-root"),
-      form: documentRoot.getElementById("deposit-form-root"),
+      form: formHost,
       reminder: documentRoot.getElementById("deposit-reminder-root"),
     },
     createRepository,

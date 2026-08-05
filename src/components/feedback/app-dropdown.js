@@ -48,7 +48,7 @@ function escapeHtml(value) {
 
 /** @param {{ value: string, label: string, selected?: boolean }} option @param {boolean} selected */
 function optionMarkup(option, selected) {
-  return `<button type="button" role="option" class="app-dropdown-option" data-app-dropdown-option="${escapeHtml(String(option.value))}" aria-selected="${selected ? "true" : "false"}"><span class="app-dropdown-option-label">${escapeHtml(option.label)}</span><span class="app-dropdown-option-check" aria-hidden="true"></span></button>`;
+  return `<button type="button" role="option" class="app-dropdown-option" data-app-dropdown-option="${escapeHtml(String(option.value))}" aria-selected="${selected ? "true" : "false"}"><span class="app-dropdown-option-label">${escapeHtml(option.label)}</span></button>`;
 }
 
 /**
@@ -144,10 +144,10 @@ export function setAppDropdownValue(host, value) {
 /**
  * Wire up open/close, keyboard navigation, and option selection for one host.
  * @param {Element | null} host
- * @param {{ onChange?: (value: string) => void }} [bindings]
+ * @param {{ onChange?: (value: string) => void, portal?: boolean }} [bindings]
  * @returns {() => void} unbind
  */
-export function bindAppDropdown(host, { onChange } = {}) {
+export function bindAppDropdown(host, { onChange, portal = true } = {}) {
   if (!host || BOUND.has(host)) return () => {};
   const trigger = host.querySelector("[data-app-dropdown-trigger]");
   const menu = /** @type {HTMLElement | null} */ (host.querySelector("[data-app-dropdown-menu]"));
@@ -161,11 +161,15 @@ export function bindAppDropdown(host, { onChange } = {}) {
   const hiddenEl = hidden;
   if (!menuEl.id) menuEl.id = `app-dropdown-menu-${++dropdownSequence}`;
   triggerEl.setAttribute("aria-controls", menuEl.id);
-  // Reparent the menu to <body>: a menu left inside a scroll container is
-  // clipped (and unreachable) as soon as it overflows that container, even
-  // with fixed positioning.
-  if (menuEl.parentElement !== hostEl.ownerDocument.body) {
-    hostEl.ownerDocument.body.appendChild(menuEl);
+  // Global surfaces use a body portal to escape scroll-container clipping.
+  // Local forms can keep the menu in their dialog's positioning context.
+  if (portal) {
+    menuEl.classList.add("app-dropdown-menu-portal");
+    if (menuEl.parentElement !== hostEl.ownerDocument.body) {
+      hostEl.ownerDocument.body.appendChild(menuEl);
+    }
+  } else {
+    menuEl.classList.remove("app-dropdown-menu-portal");
   }
   PARTS.set(hostEl, { trigger: triggerEl, menu: menuEl, hidden: hiddenEl });
   BOUND.add(hostEl);
@@ -218,6 +222,7 @@ export function bindAppDropdown(host, { onChange } = {}) {
    * stays fully visible by flipping below/above the trigger as needed.
    */
   function positionMenu() {
+    if (!portal) return;
     const triggerRect = triggerEl.getBoundingClientRect();
     const doc = hostEl.ownerDocument;
     const win = doc.defaultView;
@@ -316,6 +321,7 @@ export function bindAppDropdown(host, { onChange } = {}) {
     menuEl.removeEventListener("click", onMenuClick);
     /** @type {Document} */ (hostEl.ownerDocument).removeEventListener("click", /** @type {EventListener} */ (onOutsideClick));
     // Return the menu to its host so re-rendered DOM does not orphan it.
+    menuEl.classList.remove("app-dropdown-menu-portal");
     if (menuEl.parentElement !== hostEl) hostEl.appendChild(menuEl);
   };
 }

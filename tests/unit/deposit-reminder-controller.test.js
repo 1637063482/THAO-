@@ -5,7 +5,7 @@ function documentWith(depositsById, acknowledgementsByKey = {}) {
   return { schemaVersion: 1, depositsById, acknowledgementsByKey, lastMutation: null };
 }
 function deposit(overrides = {}) {
-  return { institutionName: "Fixture Bank", productName: "Synthetic deposit", maturesOn: "2026-07-31", reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", archivedAt: null, ...overrides };
+  return { institutionName: "Fixture Bank", productName: "Synthetic deposit", principalVnd: 10_000_000, maturesOn: "2026-07-31", reminderDays: [30, 7, 1], remindersEnabled: true, status: "ACTIVE", archivedAt: null, ...overrides };
 }
 function harness(overrides = {}) {
   document.body.innerHTML = '<div id="reminder-root"></div>';
@@ -28,6 +28,28 @@ describe("deposit reminder controller", () => {
     expect(h.controller.check()).toEqual([]); expect(h.root.innerHTML).toBe("");
     h.state.ready = true; h.state.authenticated = false;
     expect(h.controller.check()).toEqual([]); expect(h.root.innerHTML).toBe("");
+  });
+
+  it.each([
+    ["vi", "Còn trong vòng 30 ngày"],
+    ["zh-CN", "30天内到期"],
+  ])("uses the nearest reminder stage in the dialog header for %s", (locale, expectedLabel) => {
+    const h = harness();
+    h.state.locale = locale;
+    h.state.data = documentWith({ fixture: deposit({ maturesOn: "2026-08-23" }) });
+
+    expect(h.controller.check()).toMatchObject([{ stage: "D30" }]);
+    expect(h.root.querySelector(".deposit-eyebrow").textContent).toBe(expectedLabel);
+  });
+
+  it.each([
+    ["vi", "Tiền gốc", "10.000.000 ₫"],
+    ["zh-CN", "本金金额", "10,000,000 ₫"],
+  ])("shows the principal amount in the %s reminder card", (locale, expectedLabel, expectedAmount) => {
+    const h = harness(); h.state.locale = locale;
+    h.controller.check();
+    expect(h.root.textContent).toContain(expectedLabel);
+    expect(h.root.textContent).toContain(expectedAmount);
   });
 
   it("merges multiple reminders into one accessible localized dialog and marks offline data", () => {

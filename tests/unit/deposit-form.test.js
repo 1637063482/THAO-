@@ -64,16 +64,57 @@ describe("deposit form", () => {
   it("labels the field as term and offers common Vietnamese deposit terms in a custom dropdown", () => {
     document.body.innerHTML = renderDepositForm({ locale: "vi", id: "fixture-id" });
     const hidden = document.querySelector('[name="productName"]');
+    const termHost = hidden.closest("[data-app-dropdown]");
     expect(hidden.closest("label").firstChild.textContent).toBe("Kỳ hạn");
     expect(depositTermOptions("vi").map(option => option.code)).toEqual([
       "1M", "3M", "6M", "9M", "1Y", "13M", "15M", "18M", "2Y", "3Y",
     ]);
-    expect([...document.querySelectorAll(".app-dropdown-option-label")].map(node => node.textContent)).toEqual([
+    expect([...termHost.querySelectorAll(".app-dropdown-option-label")].map(node => node.textContent)).toEqual([
       "1 tháng", "3 tháng", "6 tháng", "9 tháng",
       "12 tháng", "13 tháng", "15 tháng", "18 tháng", "24 tháng", "36 tháng",
     ]);
     expect(document.querySelector('[data-app-dropdown-option="1M"]')).not.toBeNull();
     expect(renderDepositForm({ locale: "zh-CN", id: "fixture-id" })).toContain('<label>期限<span class="app-dropdown"');
+  });
+
+  it("uses Vietnamese banking terms for projected and realized deposit interest", () => {
+    expect(renderDepositForm({ locale: "vi", id: "fixture-id" })).toContain("Lãi dự kiến (không bắt buộc)");
+    const settlement = renderDepositSettlementForm({
+      locale: "vi",
+      deposit: { id: "fixture-id", institutionName: "Fixture Bank", productName: "1Y", principalVnd: 10_000_000, maturesOn: "2026-07-01" },
+      mode: "rollover",
+      today: "2026-07-02",
+    });
+    expect(settlement).toContain("Lãi dự kiến kỳ mới");
+    expect(settlement).toContain("Tiền lãi thực nhận (VND)");
+    expect(settlement).toContain("Tái tục tiền gửi");
+  });
+
+  it("opens the term menu from a button without exposing a keyboard input", () => {
+    document.body.innerHTML = `<div class="app-global-modal open"><section class="app-global-modal-dialog">${renderDepositForm({ locale: "vi", id: "fixture-id" })}</section></div>`;
+    const host = document.querySelector(".app-global-modal");
+    bindDepositForm(host);
+    const termHost = document.getElementById("deposit-term-fixture-id");
+    const trigger = termHost.querySelector("[data-app-dropdown-trigger]");
+
+    expect(trigger.tagName).toBe("BUTTON");
+    expect(trigger.type).toBe("button");
+    expect(termHost.querySelector('input:not([type="hidden"])')).toBeNull();
+
+    trigger.click();
+
+    const menu = document.getElementById(trigger.getAttribute("aria-controls"));
+    expect(menu.hidden).toBe(false);
+    expect(menu.parentElement).toBe(termHost);
+    expect(menu.classList.contains("app-dropdown-menu-portal")).toBe(false);
+    menu.querySelector('[data-app-dropdown-option="3M"]').click();
+    expect(termHost.querySelector("[data-app-dropdown-hidden]").value).toBe("3M");
+
+    const openedHost = host.querySelector('[data-app-datepicker-hidden][name="openedOn"]').closest("[data-app-datepicker]");
+    openedHost.querySelector("[data-app-datepicker-trigger]").click();
+    const calendar = document.querySelector("[data-app-datepicker-calendar]:not([hidden])");
+    expect(calendar.parentElement).toBe(openedHost);
+    expect(calendar.classList.contains("app-dropdown-menu-portal")).toBe(false);
   });
 
   it("uses localized empty-date hints in the custom date picker", () => {
@@ -166,62 +207,63 @@ describe("deposit form", () => {
     expect(parseDepositForm(host.querySelector("form")).principalVnd).toBe(12_345_678);
   });
 
-  it("toggles the bank list on input click and keeps custom bank entry available", () => {
+  it("renders the bank as a button-only dropdown without an editable input", () => {
     document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("host");
     bindDepositForm(host);
 
     const dialog = host.querySelector(".deposit-form-sheet");
-    const bankInput = host.querySelector('[name="institutionName"]');
-    const options = host.querySelector("[data-bank-picker-options]");
-    expect(bankInput.hasAttribute("list")).toBe(false);
-    expect(host.querySelector("datalist")).toBeNull();
-    expect(host.querySelector("[data-bank-picker-toggle]")).toBeNull();
-    expect(bankInput.getAttribute("placeholder")).toBe("-- Chọn ngân hàng --");
+    const bankHost = host.querySelector('[data-app-dropdown-hidden][name="institutionName"]').closest("[data-app-dropdown]");
+    const bankTrigger = bankHost.querySelector("[data-app-dropdown-trigger]");
+    const bankValue = bankHost.querySelector('[data-app-dropdown-hidden][name="institutionName"]');
+    const options = bankHost.querySelector("[data-app-dropdown-menu]");
+    expect(host.querySelector('[name="institutionName"]:not([type="hidden"])')).toBeNull();
+    expect(bankValue.type).toBe("hidden");
+    expect(bankTrigger.tagName).toBe("BUTTON");
+    expect(bankTrigger.getAttribute("data-app-dropdown-placeholder")).toBe("-- Chọn ngân hàng --");
     expect(document.activeElement).toBe(dialog);
     expect(options.hidden).toBe(true);
 
-    bankInput.click();
+    bankTrigger.click();
     expect(options.hidden).toBe(false);
-    expect(bankInput.getAttribute("aria-expanded")).toBe("true");
-    bankInput.click();
+    expect(bankTrigger.getAttribute("aria-expanded")).toBe("true");
+    bankTrigger.click();
     expect(options.hidden).toBe(true);
-    expect(bankInput.getAttribute("aria-expanded")).toBe("false");
+    expect(bankTrigger.getAttribute("aria-expanded")).toBe("false");
 
-    bankInput.click();
-    host.querySelector('[data-bank-option="Vietcombank"]').click();
-    expect(bankInput.value).toBe("Vietcombank");
+    bankTrigger.click();
+    bankHost.querySelector('[data-app-dropdown-option="Vietcombank"]').click();
+    expect(bankValue.value).toBe("Vietcombank");
     expect(options.hidden).toBe(true);
-    expect(bankInput.getAttribute("aria-expanded")).toBe("false");
-
-    bankInput.value = "Fixture Bank";
-    expect(bankInput.value).toBe("Fixture Bank");
+    expect(bankTrigger.getAttribute("aria-expanded")).toBe("false");
   });
 
   it("navigates the bank list with arrows, selects with Enter, and closes with Escape", () => {
     document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("host");
     bindDepositForm(host);
-    const bankInput = host.querySelector('[name="institutionName"]');
-    const options = host.querySelector("[data-bank-picker-options]");
+    const bankHost = host.querySelector('[data-app-dropdown-hidden][name="institutionName"]').closest("[data-app-dropdown]");
+    const bankTrigger = bankHost.querySelector("[data-app-dropdown-trigger]");
+    const bankValue = bankHost.querySelector('[data-app-dropdown-hidden][name="institutionName"]');
+    const options = bankHost.querySelector("[data-app-dropdown-menu]");
 
-    bankInput.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
+    bankTrigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
     expect(options.hidden).toBe(false);
-    const first = options.querySelector('[data-bank-option="Vietcombank"]');
+    const first = options.querySelector('[data-app-dropdown-option="Vietcombank"]');
     expect(document.activeElement).toBe(first);
 
     first.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowDown", bubbles: true }));
-    const second = options.querySelector('[data-bank-option="VietinBank"]');
+    const second = options.querySelector('[data-app-dropdown-option="BIDV"]');
     expect(document.activeElement).toBe(second);
 
-    second.click();
-    expect(bankInput.value).toBe("VietinBank");
+    second.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(bankValue.value).toBe("BIDV");
     expect(options.hidden).toBe(true);
 
-    bankInput.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
-    options.querySelector('[data-bank-option="Vietcombank"]').dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    bankTrigger.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowUp", bubbles: true }));
+    options.querySelector('[data-app-dropdown-option="Vietcombank"]').dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(options.hidden).toBe(true);
-    expect(document.activeElement).toBe(bankInput);
+    expect(document.activeElement).toBe(bankTrigger);
   });
 
   it("traps keyboard focus and closes with Escape", () => {
@@ -251,6 +293,24 @@ describe("deposit form", () => {
 
 describe("deposit settlement form", () => {
   const deposit = { id: "fixture-id", institutionName: "Fixture Bank", productName: "12 months", principalVnd: 10_000_000, maturesOn: "2026-07-01" };
+
+  it("keeps rollover term and date popovers inside the settlement dialog", () => {
+    document.body.innerHTML = `<div class="app-global-modal open"><section class="app-global-modal-dialog">${renderDepositSettlementForm({ locale: "vi", deposit, mode: "rollover", today: "2026-07-02" })}</section></div>`;
+    const root = document.querySelector(".app-global-modal");
+    bindDepositSettlementForm(root, { locale: "vi" });
+
+    const productHost = root.querySelector('[data-app-dropdown-hidden][name="productName"]').closest("[data-app-dropdown]");
+    productHost.querySelector("[data-app-dropdown-trigger]").click();
+    const productMenu = productHost.querySelector("[data-app-dropdown-menu]");
+    expect(productMenu.parentElement).toBe(productHost);
+    expect(productMenu.classList.contains("app-dropdown-menu-portal")).toBe(false);
+
+    const openedHost = root.querySelector('[data-app-datepicker-hidden][name="openedOn"]').closest("[data-app-datepicker]");
+    openedHost.querySelector("[data-app-datepicker-trigger]").click();
+    const calendar = openedHost.querySelector("[data-app-datepicker-calendar]");
+    expect(calendar.parentElement).toBe(openedHost);
+    expect(calendar.classList.contains("app-dropdown-menu-portal")).toBe(false);
+  });
 
   it("parses redemption and requires positive interest when ledger writing is selected", () => {
     document.body.innerHTML = renderDepositSettlementForm({ locale: "vi", deposit, mode: "redeem", today: "2026-07-02" });
@@ -289,12 +349,13 @@ describe("deposit settlement form", () => {
     expect(parseDepositSettlementForm(form).rollover.principalVnd).toBe(12_345_678);
 
     const product = host.querySelector('[name="productName"]');
-    document.querySelector('[data-app-dropdown-option="3M"]').click();
+    product.closest("[data-app-dropdown]").querySelector('[data-app-dropdown-option="3M"]').click();
     expect(product.value).toBe("3M");
 
-    const bank = host.querySelector('[name="institutionName"]');
-    bank.click();
-    host.querySelector('[data-bank-option="Vietcombank"]').click();
+    const bank = host.querySelector('[data-app-dropdown-hidden][name="institutionName"]');
+    const bankHost = bank.closest("[data-app-dropdown]");
+    bankHost.querySelector("[data-app-dropdown-trigger]").click();
+    bankHost.querySelector('[data-app-dropdown-option="Vietcombank"]').click();
     expect(bank.value).toBe("Vietcombank");
   });
 });
