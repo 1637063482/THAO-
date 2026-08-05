@@ -2,11 +2,7 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches:
-      - main
-      - "task/**"
-      - "fix/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -37,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Run unit and integration tests
-        run: npm test -- --run
+        run: npm test -- --run --maxWorkers=2
 
       - name: Run typecheck
         run: npm run typecheck

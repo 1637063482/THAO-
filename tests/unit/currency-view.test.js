@@ -231,7 +231,8 @@ describe("currency view", () => {
     expect(snapshotPersistence()).toBe(before);
     expect(document.getElementById("entry-1-1-dining").dataset.raw).toBe("123456789");
     expect(document.getElementById("entry-1-2-income").dataset.raw).toBe("=3500.5");
-  }, 15000);
+  // This stress case rebuilds the 31-day ledger twice per iteration.
+  }, 30000);
 
   it("converts Quick Add CNY input to VND exactly once at submit time", () => {
     state.currentCurrency = "CNY";

@@ -156,12 +156,14 @@ export async function submitRenderedDepositForm(options: {
   });
 
   setField(form, "institutionName", options.values.institutionName, "input");
-  if (options.values.productName !== undefined) {
-    setField(form, "productName", options.values.productName, "change");
-  }
   setField(form, "principalVnd", options.values.principalVnd, "input");
   setField(form, "annualRatePercent", options.values.annualRatePercent, "input");
   setField(form, "openedOn", options.values.openedOn, "change");
+  // The custom term control recalculates maturity from the already populated
+  // opening date, so set the opening date before selecting the term.
+  if (options.values.productName !== undefined) {
+    setField(form, "productName", options.values.productName, "change");
+  }
   setField(form, "note", options.values.note, "input");
   form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
   await Promise.resolve();

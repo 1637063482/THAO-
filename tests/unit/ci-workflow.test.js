@@ -16,11 +16,13 @@ describe("CI gate workflow", () => {
     expect(workflow).toMatch(/node-version:\s*["']?22/);
     expect(workflow).toMatch(/distribution:\s*["']?temurin/);
     expect(workflow).toContain("npm ci");
-    expect(workflow).toContain("npm test -- --run");
+    expect(workflow).toContain("npm test -- --run --maxWorkers=2");
     expect(workflow).toContain("npm run typecheck");
     expect(workflow).toContain("npm run typecheck:js");
     expect(workflow).toContain("npm run test:rules");
     expect(workflow).toContain("npm run build");
+    expect(workflow).not.toContain("  push:");
+    expect(workflow).toContain("  workflow_dispatch:");
     expect(pkg.scripts["test:rules"]).toContain("--project demo-no-project");
     expect(workflow).not.toContain("continue-on-error");
     expect(workflow).not.toMatch(/\bfirebase\s+deploy\b/);
