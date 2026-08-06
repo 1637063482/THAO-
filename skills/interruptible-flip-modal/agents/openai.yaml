@@ -1,0 +1,4 @@
+interface:
+  display_name: "Interruptible FLIP Modal"
+  short_description: "Build interruption-safe trigger-origin modal animations"
+  default_prompt: "Apply the interruptible FLIP modal pattern to this UI, preserving the current frame when opening and closing are reversed."

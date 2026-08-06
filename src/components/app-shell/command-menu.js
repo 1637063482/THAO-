@@ -126,9 +126,8 @@ export function bindCommandMenu(root = document) {
    */
   function setOpen(open, restoreFocus = false) {
     if (open) {
-      panelElement.style.removeProperty("transition");
-      panelElement.classList.remove("closing");
       motion.prepareOpen();
+      panelElement.classList.remove("closing");
       panelElement.classList.add("open");
     } else if (panelElement.classList.contains("open")) {
       motion.startClose();

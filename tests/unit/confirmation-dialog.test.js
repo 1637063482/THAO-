@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { requestAppConfirmation } from "../../src/components/feedback/confirmation-dialog.js";
+import { createGlobalModalController } from "../../src/components/feedback/global-modal.js";
 import { setLocale } from "../../src/js/i18n.js";
 
 describe("application confirmation dialog", () => {
@@ -103,6 +104,73 @@ describe("application confirmation dialog", () => {
       else delete Element.prototype.animate;
       vi.runAllTimers();
       vi.useRealTimers();
+    }
+  });
+
+  it("reverses a closing modal from its current visual frame without resetting the backdrop", () => {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, "animate");
+    const animations = [];
+    Object.defineProperty(Element.prototype, "animate", {
+      configurable: true,
+      value: (keyframes, options) => {
+        const animation = {
+          cancel: vi.fn(),
+          finished: new Promise(() => {}),
+        };
+        animations.push({ animation, keyframes, options });
+        return animation;
+      },
+    });
+
+    const host = document.createElement("div");
+    const dialog = document.createElement("section");
+    const trigger = document.createElement("button");
+    host.append(dialog);
+    document.body.append(trigger, host);
+    let interrupted = false;
+    const originalGetComputedStyle = window.getComputedStyle.bind(window);
+    const getComputedStyleSpy = vi.spyOn(window, "getComputedStyle").mockImplementation(element => {
+      if (interrupted && element === dialog) {
+        return /** @type {CSSStyleDeclaration} */ ({
+          transform: "matrix(1, 0, 0, 1, -24, 18)",
+          opacity: "0.68",
+        });
+      }
+      if (interrupted && element === host) {
+        return /** @type {CSSStyleDeclaration} */ ({ transform: "none", opacity: "0.64" });
+      }
+      return originalGetComputedStyle(element);
+    });
+    const controller = createGlobalModalController({
+      root: host,
+      dialog,
+      trigger,
+      targetWidth: 560,
+      closeDuration: 800,
+    });
+
+    try {
+      controller.open();
+      interrupted = true;
+      controller.close();
+      controller.open();
+
+      const openingDialogAnimations = animations.filter(({ options }) => options.duration === 1080);
+      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 320);
+      expect(openingDialogAnimations).toHaveLength(2);
+      expect(openingBackdropAnimations).toHaveLength(2);
+      expect(openingDialogAnimations[1].keyframes[0]).toEqual({
+        transform: "matrix(1, 0, 0, 1, -24, 18)",
+        opacity: "0.68",
+      });
+      expect(openingBackdropAnimations[1].keyframes[0]).toEqual({ opacity: "0.64" });
+    } finally {
+      controller.destroy();
+      getComputedStyleSpy.mockRestore();
+      if (originalDescriptor) Object.defineProperty(Element.prototype, "animate", originalDescriptor);
+      else delete Element.prototype.animate;
+      host.remove();
+      trigger.remove();
     }
   });
 

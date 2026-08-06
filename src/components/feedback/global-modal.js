@@ -53,6 +53,8 @@ export function createGlobalModalMotion({
   let closingDialogAnimation = null;
   /** @type {Animation | null} */
   let closingBackdropAnimation = null;
+  /** @type {{ dialog: { transform: string, opacity: string }, rootOpacity: string } | null} */
+  let pendingOpenState = null;
   let sequence = 0;
 
   /** @param {(timestamp: number) => void} callback */
@@ -150,6 +152,19 @@ export function createGlobalModalMotion({
     return { transform, opacity };
   }
 
+  function getCurrentRootOpacity() {
+    return windowRef?.getComputedStyle?.(root)?.opacity || "1";
+  }
+
+  function hasActiveMotion() {
+    return flipFrame !== null
+      || fallbackCloseTimer !== null
+      || openingAnimation !== null
+      || openingBackdropAnimation !== null
+      || closingDialogAnimation !== null
+      || closingBackdropAnimation !== null;
+  }
+
   function clearDialogMotion() {
     dialog.classList.remove(flipStartClass, flipCloseClass);
     dialog.style.removeProperty("transition");
@@ -158,17 +173,29 @@ export function createGlobalModalMotion({
   }
 
   function prepareOpen() {
+    const currentState = hasActiveMotion()
+      ? { dialog: getCurrentDialogStyle(), rootOpacity: getCurrentRootOpacity() }
+      : null;
     cancel();
+    pendingOpenState = currentState;
     setFlipGeometry();
     clearDialogMotion();
-    root.style.removeProperty("opacity");
     root.style.setProperty("transition", supportsWebAnimations() ? "none" : `opacity ${openBackdropDuration}ms ease-out`);
     dialog.style.setProperty("transition", "none");
+    if (currentState) {
+      dialog.style.setProperty("transform", currentState.dialog.transform);
+      dialog.style.setProperty("opacity", currentState.dialog.opacity);
+      root.style.setProperty("opacity", currentState.rootOpacity);
+      return;
+    }
+    root.style.removeProperty("opacity");
     dialog.classList.add(flipStartClass);
   }
 
   function playOpen() {
     const currentSequence = sequence;
+    const currentState = pendingOpenState;
+    pendingOpenState = null;
     if (!supportsWebAnimations()) {
       flipFrame = requestFrame(() => {
         flipFrame = requestFrame(() => {
@@ -176,6 +203,11 @@ export function createGlobalModalMotion({
           if (currentSequence !== sequence) return;
           dialog.style.removeProperty("transition");
           void dialog.offsetWidth;
+          if (currentState) {
+            dialog.style.removeProperty("transform");
+            dialog.style.removeProperty("opacity");
+            root.style.removeProperty("opacity");
+          }
           dialog.classList.remove(flipStartClass);
         });
       });
@@ -183,7 +215,10 @@ export function createGlobalModalMotion({
     }
 
     const animation = dialog.animate([
-      { transform: getFlipTransform(), opacity: 0 },
+      {
+        transform: currentState?.dialog.transform || getFlipTransform(),
+        opacity: currentState?.dialog.opacity || 0,
+      },
       { transform: "translate(0, 0) scale(1)", opacity: 1 },
     ], {
       duration: getMotionDuration(openDuration),
@@ -191,7 +226,7 @@ export function createGlobalModalMotion({
       fill: "both",
     });
     const backdropAnimation = root.animate([
-      { opacity: 0 },
+      { opacity: currentState?.rootOpacity || 0 },
       { opacity: 1 },
     ], {
       duration: getMotionDuration(openBackdropDuration),
@@ -211,13 +246,16 @@ export function createGlobalModalMotion({
       if (currentSequence !== sequence || openingBackdropAnimation !== backdropAnimation) return;
       openingBackdropAnimation = null;
       cancelAnimation(backdropAnimation);
+      root.style.removeProperty("opacity");
       root.style.removeProperty("transition");
     });
   }
 
   function startClose() {
     const currentStyle = getCurrentDialogStyle();
+    const currentRootOpacity = getCurrentRootOpacity();
     cancel();
+    pendingOpenState = null;
     const currentSequence = sequence;
     dialog.classList.remove(flipStartClass);
     dialog.style.removeProperty("transition");
@@ -232,10 +270,12 @@ export function createGlobalModalMotion({
       dialog.style.removeProperty("opacity");
       dialog.style.setProperty("transition", `transform ${duration}ms ${closeEasing}`);
       dialog.classList.add(flipCloseClass);
+      root.style.setProperty("opacity", currentRootOpacity);
       root.style.setProperty("transition", `opacity ${backdropDuration}ms ease-in ${backdropDelay}ms`);
       fallbackCloseTimer = /** @type {number} */ ((windowRef?.setTimeout || window.setTimeout)(() => {
         fallbackCloseTimer = null;
         clearDialogMotion();
+        root.style.removeProperty("opacity");
         root.style.removeProperty("transition");
         onCloseComplete?.();
       }, duration));
@@ -252,8 +292,8 @@ export function createGlobalModalMotion({
       fill: "both",
     });
     const backdropAnimation = root.animate([
-      { opacity: 1, offset: 0 },
-      { opacity: 1, offset: backdropHoldOffset },
+      { opacity: currentRootOpacity, offset: 0 },
+      { opacity: currentRootOpacity, offset: backdropHoldOffset },
       { opacity: 0, offset: 1 },
     ], {
       duration,
@@ -269,6 +309,7 @@ export function createGlobalModalMotion({
       cancelAnimation(dialogAnimation);
       cancelAnimation(backdropAnimation);
       clearDialogMotion();
+      root.style.removeProperty("opacity");
       root.style.removeProperty("transition");
       onCloseComplete?.();
     });
@@ -276,7 +317,9 @@ export function createGlobalModalMotion({
 
   function destroy() {
     cancel();
+    pendingOpenState = null;
     clearDialogMotion();
+    root.style.removeProperty("opacity");
     root.style.removeProperty("transition");
   }
 
@@ -362,9 +405,8 @@ export function createGlobalModalController({
   }
 
   function open() {
-    root.classList.remove("closing");
-    root.style.removeProperty("transition");
     motion.prepareOpen();
+    root.classList.remove("closing");
     root.classList.add("open");
     root.setAttribute("aria-hidden", "false");
     body.classList.add("app-modal-open");
