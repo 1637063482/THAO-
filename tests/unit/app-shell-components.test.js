@@ -172,6 +172,7 @@ describe("app shell components", () => {
     const unbind = bindCommandMenu(document);
     const button = document.getElementById("nav-more-btn");
     const panel = document.getElementById("nav-secondary");
+    const dialog = panel.querySelector(".app-command-menu-dialog");
     button.click();
     expect(panel.classList.contains("open")).toBe(true);
     expect(document.body.classList.contains("app-modal-open")).toBe(true);
@@ -179,6 +180,8 @@ describe("app shell components", () => {
     document.getElementById("nav-secondary-close").click();
     expect(panel.classList.contains("open")).toBe(false);
     expect(panel.classList.contains("closing")).toBe(true);
+    expect(dialog.style.getPropertyValue("transition")).toBe("transform 800ms cubic-bezier(0.4, 0, 0.6, 1)");
+    expect(panel.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 640ms");
     expect(document.body.classList.contains("app-modal-open")).toBe(false);
     expect(document.activeElement).toBe(button);
 

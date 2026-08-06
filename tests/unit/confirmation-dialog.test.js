@@ -13,7 +13,7 @@ describe("application confirmation dialog", () => {
       expect(dialog?.querySelector("[data-confirm-accept]")?.className).toBe("btn-danger");
       /** @type {HTMLButtonElement} */ (dialog?.querySelector("[data-confirm-cancel]")).click();
       await expect(result).resolves.toBe(false);
-      vi.advanceTimersByTime(1200);
+      vi.advanceTimersByTime(800);
       expect(document.querySelector("[role=alertdialog]")).toBeNull();
     } finally {
       vi.runAllTimers();
@@ -43,14 +43,64 @@ describe("application confirmation dialog", () => {
 
       dialog.querySelector("[data-confirm-cancel]").click();
       expect(host.classList.contains("closing")).toBe(true);
+      expect(dialog.style.getPropertyValue("transition")).toBe("transform 800ms cubic-bezier(0.4, 0, 0.6, 1)");
+      expect(host.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 640ms");
       expect(document.body.contains(host)).toBe(true);
-      vi.advanceTimersByTime(1199);
+      vi.advanceTimersByTime(799);
       expect(document.body.contains(host)).toBe(true);
       vi.advanceTimersByTime(1);
       await expect(result).resolves.toBe(false);
       expect(document.body.contains(host)).toBe(false);
     } finally {
       document.querySelector("[data-confirm-cancel]")?.click();
+      vi.runAllTimers();
+      vi.useRealTimers();
+    }
+  });
+
+  it("cleans up only after the panel and backdrop animations finish", async () => {
+    vi.useFakeTimers();
+    const originalDescriptor = Object.getOwnPropertyDescriptor(Element.prototype, "animate");
+    const animations = [];
+    Object.defineProperty(Element.prototype, "animate", {
+      configurable: true,
+      value: (keyframes, options) => {
+        let resolveFinished;
+        const animation = {
+          cancel: vi.fn(),
+          finished: new Promise(resolve => { resolveFinished = resolve; }),
+          finish: () => resolveFinished(),
+        };
+        animations.push({ animation, keyframes, options });
+        return animation;
+      },
+    });
+
+    try {
+      const result = requestAppConfirmation({ message: "Continue?" });
+      vi.runAllTimers();
+      const dialog = /** @type {HTMLElement} */ (document.querySelector("[role=alertdialog]"));
+      const host = dialog.parentElement;
+      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 320);
+      expect(openingBackdropAnimations).toHaveLength(1);
+      expect(openingBackdropAnimations[0].keyframes).toEqual([{ opacity: 0 }, { opacity: 1 }]);
+      dialog.querySelector("[data-confirm-cancel]").click();
+
+      const closeAnimations = animations.filter(({ options }) => options.duration === 800);
+      expect(closeAnimations).toHaveLength(2);
+      expect(document.body.contains(host)).toBe(true);
+
+      closeAnimations[0].animation.finish();
+      await Promise.resolve();
+      expect(document.body.contains(host)).toBe(true);
+
+      closeAnimations[1].animation.finish();
+      await Promise.resolve();
+      await expect(result).resolves.toBe(false);
+      expect(document.body.contains(host)).toBe(false);
+    } finally {
+      if (originalDescriptor) Object.defineProperty(Element.prototype, "animate", originalDescriptor);
+      else delete Element.prototype.animate;
       vi.runAllTimers();
       vi.useRealTimers();
     }

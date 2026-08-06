@@ -13,6 +13,8 @@ const bottomRule = css.match(/#bottom-nav\s*\{(?=[^}]*left:\s*0\.75rem)([^}]*)\}
 const darkBottomRule = extractRule("\\.dark #bottom-nav");
 const topBackdropRule = extractRule("body::before");
 const bottomBackdropRule = extractRule("body::after");
+const globalModalRule = extractRule("\\.app-global-modal");
+const globalModalClosingRule = extractRule("\\.app-global-modal\\.closing");
 const commandBackdropRule = extractRule("#nav-secondary");
 const commandDialogRule = extractRule("\.app-command-menu-dialog");
 const commandFlipStartRule = extractRule("#nav-secondary \.app-command-menu-dialog--flip-start");
@@ -87,9 +89,15 @@ describe("Apple UI shell chrome", () => {
     expect(commandDialogRule).toMatch(/-webkit-backface-visibility:\s*hidden/);
     expect(css).toMatch(/#nav-secondary\.open \.app-command-menu-dialog\s*\{[^}]*opacity:\s*1/);
     expect(commandFlipStartRule).toMatch(/transform:\s*translate\(var\(--nav-secondary-flip-x\),\s*var\(--nav-secondary-flip-y\)\)\s*scale\(var\(--nav-secondary-flip-scale\)\)/);
-    expect(commandFlipCloseRule).toMatch(/transition:\s*transform 1200ms/);
+    expect(commandFlipCloseRule).toMatch(/transition:\s*none/);
     expect(commandFlipCloseRule).toMatch(/opacity:\s*1/);
-    expect(css).toMatch(/#nav-secondary\.closing\s*\{[^}]*opacity:\s*0[^}]*transition:\s*opacity 1200ms/);
+    expect(css).toMatch(/#nav-secondary\.closing\s*\{[^}]*opacity:\s*0[^}]*transition:\s*none/);
+  });
+
+  it("keeps the global backdrop solid before its coordinated close tail", () => {
+    expect(globalModalRule).toMatch(/transition:\s*none/);
+    expect(globalModalClosingRule).toMatch(/opacity:\s*0/);
+    expect(globalModalClosingRule).toMatch(/transition:\s*none/);
   });
 
   it("keeps command groups visually balanced inside the modal", () => {
