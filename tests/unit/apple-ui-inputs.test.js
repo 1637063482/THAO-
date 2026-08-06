@@ -38,6 +38,14 @@ describe("Apple UI input system", () => {
     expect(css).toContain(".budget-inline-input");
   });
 
+  it("lets the remark column use the same auto table sizing as the income column", () => {
+    const css = read("src/css/app.css");
+    const remarkColumnRule = css.match(/\.remark-col\s*\{([^}]*)\}/)?.[1] || "";
+
+    expect(remarkColumnRule).not.toMatch(/width:\s*8%/);
+    expect(remarkColumnRule).toMatch(/min-width:\s*64px/);
+  });
+
   it("associates static and dynamic ledger fields with meaningful accessible names", () => {
     const html = read("index.html");
     ["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"].forEach(id => {
