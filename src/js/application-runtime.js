@@ -28,6 +28,7 @@ import { createSavingsController } from "../features/savings/controller.js";
 import { createLedgerController } from "../features/ledger/controller.js";
 import { createLedgerInputController } from "../features/ledger/input-controller.js";
 import { createLedgerYearController } from "../features/ledger/year-controller.js";
+import { mountAnalyticsView, refreshAnalyticsView } from "../features/analytics/controller.js";
 
 export function startApplication() {
 
@@ -63,6 +64,7 @@ window.calculateAll = calculateAll;
 setCurrencyGetter(function() { return state.currentCurrency; });
 setRateGetter(function() { return state.fxMode === "auto" ? state.fxRateAuto : state.fxRateManual; });
 
+mountAnalyticsView();
 applyI18n();
 
 // Sync language toggle buttons with persisted locale.
@@ -203,6 +205,7 @@ function switchLanguage(locale) {
     if (emailInput) emailInput.placeholder = t("email");
     if (pwdInput) pwdInput.placeholder = t("password_placeholder");
     applyI18n();
+    refreshAnalyticsView();
     window.dispatchEvent(new CustomEvent("app-locale-rendered", { detail: { locale } }));
     updateLedgerToggleLabel();
     if (_chartsModule) _chartsModule.updateCharts();
@@ -245,6 +248,7 @@ function notifyRouteEntered(event) {
 
 function switchCurrency(curr) {
   state.currentCurrency = curr;
+  refreshAnalyticsView();
   var btnCny = document.getElementById("btn-curr-cny");
   var btnVnd = document.getElementById("btn-curr-vnd");
   if (btnVnd) btnVnd.className = curr === "VND" ? "month-tab active" : "month-tab";

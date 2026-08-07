@@ -1616,15 +1616,8 @@ tr:hover td:not(.sticky-col) {
 .balance-neutral { color: var(--color-neutral) !important; }
 
 /* Remark column */
-.remark-col { min-width: 64px; }
+.remark-col { min-width: 128px; }
 .remark-th { color: #94a3b8 !important; }
-
-/* ===== Chart Area ===== */
-#yearlyChart, #monthlyChart {
-  width: 100%;
-  min-height: 320px;
-  margin: 0 auto;
-}
 
 /* ===== Bottom Navigation (Mobile) ===== */
 #bottom-nav {

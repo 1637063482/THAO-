@@ -141,8 +141,6 @@ export function renderMonthTable(monthId) {
     updateDOMFromState("entry-" + monthId + "-" + inputDay + "-remark", state.appState.entries[monthId + "_" + inputDay + "_remark"], false);
   }
 
-  var monthlyChartTitle = document.getElementById("monthly-chart-title");
-  if (monthlyChartTitle) monthlyChartTitle.innerText = t("monthly", { month: monthId });
 
   // Auto-scroll to today's row (只对当前月份生效)
   if (isCurrentMonth) {

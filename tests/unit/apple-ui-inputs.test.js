@@ -38,12 +38,12 @@ describe("Apple UI input system", () => {
     expect(css).toContain(".budget-inline-input");
   });
 
-  it("lets the remark column use the same auto table sizing as the income column", () => {
+  it("gives the remark column room for at least eight Chinese characters", () => {
     const css = read("src/css/app.css");
     const remarkColumnRule = css.match(/\.remark-col\s*\{([^}]*)\}/)?.[1] || "";
 
     expect(remarkColumnRule).not.toMatch(/width:\s*8%/);
-    expect(remarkColumnRule).toMatch(/min-width:\s*64px/);
+    expect(remarkColumnRule).toMatch(/min-width:\s*128px/);
   });
 
   it("associates static and dynamic ledger fields with meaningful accessible names", () => {

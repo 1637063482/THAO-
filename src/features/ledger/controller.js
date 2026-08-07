@@ -46,8 +46,6 @@ export function createLedgerController({
       button.className = month === state.activeMonthId ? "month-tab active" : "month-tab";
       button.textContent = translate("month_tab", { month });
     });
-    const chartTitle = documentRoot.getElementById("monthly-chart-title");
-    if (chartTitle) chartTitle.textContent = translate("monthly", { month: state.activeMonthId });
     const budgetMonth = documentRoot.getElementById("budget-label-month");
     if (budgetMonth) budgetMonth.textContent = String(state.activeMonthId);
   }

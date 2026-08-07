@@ -5,6 +5,7 @@ import { safeEval, formatDisplay, formatSymbol, getActiveRate, showToast } from 
 import { isValidCurrencyRate } from "./currency-view.js";
 import { updateCharts } from "./charts.js";
 import { triggerCloudSave } from "./sync.js";
+import { refreshAnalyticsView } from "../features/analytics/controller.js";
 
 /** @param {HTMLInputElement} input */
 export function fitBudgetInputWidth(input) {
@@ -62,7 +63,8 @@ export function saveBudgetAndCalculate() {
   inputEl.dataset.month = state.activeMonthId;
   inputEl.value = formatDisplay(vndVal);
   fitBudgetInputWidth(inputEl);
-  try { localStorage.setItem("thao_monthly_budget", vndVal); } catch { /* noop */ }
+  // Do not update the legacy global fallback here: it would make months
+  // without an explicit budget inherit the value just entered for this month.
   if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
   state.pendingUpdates.settings["budget_" + state.activeMonthId] = vndVal;
   triggerCloudSave();
@@ -169,17 +171,12 @@ export function calculateAll() {
         elBal.classList.add(bal > 0 ? "balance-positive" : bal < 0 ? "balance-negative" : "balance-neutral");
       }
 
-      const sidebarInc = document.getElementById("sidebar-monthly-inc");
-      if (sidebarInc) sidebarInc.innerText = formatSymbol(mInc);
-      const sidebarExp = document.getElementById("sidebar-monthly-exp");
-      if (sidebarExp) sidebarExp.innerText = formatSymbol(mExp);
-      const sidebarBal = document.getElementById("sidebar-monthly-bal");
-      if (sidebarBal) sidebarBal.innerText = formatSymbol(mInc - mExp);
     }
   });
 
   updateBudgetProgress();
   updateGlobalStats(globalTotalIncome, globalTotalExpense);
+  refreshAnalyticsView();
   updateCharts();
   updateBudgetUI();
 }
@@ -192,12 +189,6 @@ function updateGlobalStats(inc, exp) {
   const globalBalance = inc - exp;
   const theoreticalAssets = initialAssets + globalBalance;
 
-  const elInc = document.getElementById("global-income");
-  if (elInc) elInc.innerText = formatSymbol(inc);
-  const elExp = document.getElementById("global-expense");
-  if (elExp) elExp.innerText = formatSymbol(exp);
-  const elBal = document.getElementById("global-balance");
-  if (elBal) elBal.innerText = formatSymbol(globalBalance);
   const elCurr = document.getElementById("global-current-assets");
   if (elCurr) elCurr.innerText = formatSymbol(theoreticalAssets);
 
