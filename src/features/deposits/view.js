@@ -64,11 +64,14 @@ function toDomain(id, record) {
 }
 
 /** @param {import("../../types/app-state").DepositViewModelInput} input @returns {import("../../types/app-state").DepositViewModel} */
-export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", errorMessage = "", filter = "all", ledgerEntries = {} }) {
+export function buildDepositViewModel({ document, today, locale = "vi", status = "synced", errorMessage = "", filter = "all", ledgerEntries = {}, ledgerOperationsById = {} }) {
   const ledgerRemarks = Object.entries(ledgerEntries).filter(([key]) => key.endsWith("_remark")).map(([, value]) => String(value || "")).join("\n");
   const records = Object.entries(document?.depositsById || {}).map(([id, record]) => {
     const domain = toDomain(id, record);
-    const interestRecorded = ledgerRemarks.includes(`[#op:deposit-interest-${id}-${record.maturesOn}]`);
+    const operationId = `deposit-interest-${id}-${record.maturesOn}`;
+    const operation = ledgerOperationsById[operationId];
+    const interestRecorded = operation?.kind === "DEPOSIT_INTEREST" && operation.status === "COMPLETED"
+      || (!operation && ledgerRemarks.includes(`[#op:${operationId}]`));
     return { id, ...record, domain, derivedStatus: deriveDepositStatus(domain, today), calculatedInterestVnd: expectedInterestVnd(domain), interestRecorded };
   });
   const current = records.filter(item => item.archivedAt === null);

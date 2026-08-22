@@ -7,7 +7,7 @@ describe("login interface focus contract", () => {
   it("uses one focus ring on the active auth field instead of the whole field group", () => {
     const css = read("src/css/app.css");
 
-    expect(css).toMatch(/\.auth-field:focus-within\s*\{[\s\S]*?box-shadow:\s*0\s+0\s+0\s+2px\s+rgba\(0,\s*122,\s*255,\s*0\.24\)/);
+    expect(css).toMatch(/\.auth-field:focus-within\s*\{[\s\S]*?box-shadow:\s*0\s+0\s+0\s+3px\s+rgba\(0,\s*122,\s*255,\s*0\.2\)/);
     expect(css).toMatch(/\.auth-field-group\s*\{[\s\S]*?display:\s*flex[\s\S]*?gap:\s*0\.75rem/);
     expect(css).toMatch(/\.auth-field\s*\{[\s\S]*?border:\s*1px solid var\(--color-separator\)[\s\S]*?border-radius:\s*14px/);
     expect(css).toMatch(/\.auth-field-group:focus-within\s*\{[\s\S]*?box-shadow:\s*none/);

@@ -128,4 +128,50 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("deposit fixed-document ru
       lastMutation: { kind: "DELETE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
     }));
   });
+
+  it("denies impossible calendar dates and duplicate reminder offsets", async () => {
+    const owner = db(ownerUid);
+    await assertFails(setDoc(doc(owner, path), createPayload(ownerUid, { openedOn: "2026-02-29", maturesOn: "2026-03-01" })));
+    await assertFails(setDoc(doc(owner, path), createPayload(ownerUid, { reminderDays: [30, 30] })));
+  });
+
+  it("preserves terminal status history and blocks updates after archive", async () => {
+    const owner = db(ownerUid);
+    const reference = doc(owner, path);
+    await assertSucceeds(setDoc(reference, createPayload(ownerUid)));
+    const created = (await getDoc(reference)).data().depositsById["deposit-1"];
+    const redeemed = {
+      ...created,
+      status: "REDEEMED",
+      redeemedOn: "2027-01-02",
+      actualInterestVnd: 550_000,
+      version: 2,
+      updatedAt: serverTimestamp(),
+      updatedBy: ownerUid,
+    };
+    await assertSucceeds(updateDoc(reference, {
+      depositsById: { "deposit-1": redeemed },
+      lastMutation: { kind: "UPDATE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
+    }));
+
+    const terminal = (await getDoc(reference)).data().depositsById["deposit-1"];
+    await assertFails(updateDoc(reference, {
+      depositsById: { "deposit-1": { ...terminal, status: "ACTIVE", redeemedOn: null, actualInterestVnd: null, version: 3, updatedAt: serverTimestamp() } },
+      lastMutation: { kind: "UPDATE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
+    }));
+    await assertFails(updateDoc(reference, {
+      depositsById: { "deposit-1": { ...terminal, note: "forged terminal edit", version: 3, updatedAt: serverTimestamp() } },
+      lastMutation: { kind: "UPDATE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
+    }));
+
+    await assertSucceeds(updateDoc(reference, {
+      depositsById: { "deposit-1": { ...terminal, version: 3, updatedAt: serverTimestamp(), updatedBy: ownerUid, archivedAt: serverTimestamp() } },
+      lastMutation: { kind: "ARCHIVE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
+    }));
+    const archived = (await getDoc(reference)).data().depositsById["deposit-1"];
+    await assertFails(updateDoc(reference, {
+      depositsById: { "deposit-1": { ...archived, note: "forged archived edit", version: archived.version + 1, updatedAt: serverTimestamp() } },
+      lastMutation: { kind: "UPDATE_DEPOSIT", targetId: "deposit-1", actorUid: ownerUid, at: serverTimestamp() },
+    }));
+  });
 });

@@ -1,8 +1,8 @@
-import { resetLedgerYearState, state } from "./state.js";
+import { hasPending, resetLedgerYearState, stagePendingSetting, state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday, getNextLedgerMidnightDelay } from "./clock.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, setCurrencyGetter, setRateGetter, showToast } from "./utils.js";
-import { formatVndForCurrencyInput, isValidCurrencyRate, parseCurrencyInputToVnd } from "./currency-view.js";
+import { formatVndForCurrencyInput, isValidCurrencyRate } from "./currency-view.js";
 import { initAuth, handleLogin, logoutApp, refreshAutoRate, updateActivityTime } from "./auth.js";
 import { setupRealtimeListener, teardownListener, triggerCloudSave, importData } from "./sync.js";
 import { fullRebuildDOM, softUpdateDOM, renderDailyLedger, renderStreakPanel, updateStreakAfterRecord } from "./render.js";
@@ -99,6 +99,7 @@ const savingsController = createSavingsController({
   getDashboardViewModel: (month) => buildDashboardViewModel({ year: state.activeYear, month, state: { appState: state.appState } }),
   formatMoney: formatDisplay,
   triggerCloudSave,
+  stagePendingSetting,
 });
 
 const ledgerInputController = createLedgerInputController({
@@ -107,7 +108,6 @@ const ledgerInputController = createLedgerInputController({
   windowRoot: window,
   getActiveRate,
   isValidCurrencyRate,
-  parseCurrencyInputToVnd,
   formatVndForCurrencyInput,
   formatDisplay,
   evaluate: safeEval,
@@ -117,6 +117,8 @@ const ledgerInputController = createLedgerInputController({
   refreshDashboard: refreshDashboardAfterLocalUpdate,
   updateStreak: updateStreakAfterRecord,
   showFxUnavailable: () => showToast(t("fx_unavailable"), true),
+  showInvalidAmount: () => showToast(t("enter_valid_amount"), true),
+  hasPendingChanges: hasPending,
   getUnsavedWarning: () => t("unsaved_warning"),
 });
 
@@ -131,6 +133,7 @@ const ledgerYearController = createLedgerYearController({
   resetYearState: resetLedgerYearState,
   resubscribe: () => ledgerController.restartSync(),
   switchMonth: month => ledgerController.switchMonth(month),
+  hasPendingChanges: hasPending,
 });
 
 ledgerController = createLedgerController({

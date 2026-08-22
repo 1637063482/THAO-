@@ -25,6 +25,9 @@ function createHarness() {
     refreshDashboard: vi.fn(),
     updateStreak: vi.fn(),
     showFxUnavailable: vi.fn(),
+    isOnline: () => false,
+    hasPendingChanges: () => Object.keys(state.pendingUpdates.entries).length > 0,
+    getUnsavedWarning: vi.fn(() => "unsaved"),
     setTimer: vi.fn(callback => {
       callback();
       return 17;
@@ -78,6 +81,33 @@ describe("ledger input controller", () => {
     expect(dependencies.triggerSave).not.toHaveBeenCalled();
   });
 
+  it.each(["-1", "1.5", "1e6", "100+"]) ("does not persist an invalid direct ledger amount %s", (value) => {
+    const { controller, dependencies, input, state } = createHarness();
+    controller.start();
+
+    input.value = value;
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(state.appState.entries).toEqual({});
+    expect(state.pendingUpdates.entries).toEqual({});
+    expect(dependencies.triggerSave).not.toHaveBeenCalled();
+  });
+
+  it("does not persist an invalid direct balance amount", () => {
+    const { controller, dependencies, input, state } = createHarness();
+    input.id = "balance-bank";
+    input.dataset.type = "balance";
+    input.dataset.key = "bank";
+    controller.start();
+
+    input.value = "-1";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(state.appState.balances).toEqual({});
+    expect(state.pendingUpdates.balances).toEqual({});
+    expect(dependencies.triggerSave).not.toHaveBeenCalled();
+  });
+
   it("removes delegated input resources on stop", () => {
     const { controller, dependencies, input, state } = createHarness();
     controller.start();
@@ -90,5 +120,18 @@ describe("ledger input controller", () => {
     expect(state.appState.entries).toEqual({});
     expect(dependencies.triggerSave).not.toHaveBeenCalled();
     expect(dependencies.updateStreak).not.toHaveBeenCalled();
+  });
+
+  it("protects offline pending changes from beforeunload", () => {
+    const { controller, dependencies, state } = createHarness();
+    state.pendingUpdates.entries.pending = "100";
+    state.isSaving = false;
+    controller.start();
+
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(dependencies.getUnsavedWarning).toHaveBeenCalledOnce();
   });
 });

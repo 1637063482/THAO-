@@ -28,20 +28,33 @@ export interface AppRouter {
 
 export type AppLocale = "vi" | "zh-CN";
 export type LedgerSettingValue = string | number | boolean | null | undefined;
+export interface PendingSettingBase {
+  present: boolean;
+  value?: LedgerSettingValue;
+}
 export type LedgerSettings = Record<string, LedgerSettingValue>;
 export type LedgerValue = string | number;
 export type LedgerEntries = Record<string, LedgerValue | Record<string, LedgerValue>>;
+
+export interface LedgerOperation {
+  kind: "DEPOSIT_INTEREST";
+  dateKey: string;
+  amountVnd: number;
+  status: "COMPLETED";
+}
 
 export interface LedgerDocumentState {
   balances: Record<string, LedgerValue>;
   entries: LedgerEntries;
   settings: LedgerSettings;
+  operationsById: Record<string, LedgerOperation>;
 }
 
 export interface PendingLedgerUpdates {
   balances: Record<string, LedgerValue>;
   entries: LedgerEntries;
   settings: LedgerSettings;
+  operationsById: Record<string, LedgerOperation>;
 }
 
 export interface LedgerDate {
@@ -69,6 +82,8 @@ export interface ApplicationState {
   depositDocument: import("../infrastructure/firebase/deposit-repository").DepositStorageDocument;
   previousYearEntries: LedgerEntries;
   pendingUpdates: PendingLedgerUpdates;
+  pendingSettingsBases: Record<string, PendingSettingBase>;
+  syncConflicts: { settings: Array<{ key: string; baseValue: unknown; localValue: unknown; remoteValue: unknown }> };
   yearlyCatSums: Record<string, number>;
   monthlyCatSums: Record<string, number>;
   totalRecords: number;
@@ -97,7 +112,8 @@ export interface SavingsControllerDependencies {
   getRate?: () => number | null;
   getDashboardViewModel?: (month: number) => DashboardViewModel;
   formatMoney?: (value: number) => string;
-  triggerCloudSave?: () => void;
+  triggerCloudSave?: () => void | Promise<unknown>;
+  stagePendingSetting?: (key: string, value: SavingsGoalValue) => void;
 }
 
 export interface SavingsViewModelInput {
@@ -138,6 +154,7 @@ export interface SavingsGoalFormOptions {
   fxRate?: number | null;
   onSave?: () => void;
   onStatus?: (status: string, error?: unknown) => void;
+  stagePendingSetting?: (key: string, value: SavingsGoalValue) => void;
 }
 
 export type Translate = (
@@ -204,7 +221,6 @@ export interface LedgerInputControllerDependencies {
   windowRoot: Window;
   getActiveRate: () => number | null;
   isValidCurrencyRate: (rate: number | null) => rate is number;
-  parseCurrencyInputToVnd: (value: string, options: CurrencyParseOptions) => string;
   formatVndForCurrencyInput: (
     value: string | undefined,
     currency: "VND" | "CNY",
@@ -213,12 +229,14 @@ export interface LedgerInputControllerDependencies {
   formatDisplay: (value: string | number) => string;
   evaluate: (value: string) => string | number;
   updateActivity: () => void;
-  triggerSave: () => void;
+  triggerSave: () => void | Promise<unknown>;
   refreshCalculatedViews: () => void;
   refreshDashboard: () => void;
   updateStreak: () => void;
   showFxUnavailable: () => void;
+  showInvalidAmount?: () => void;
   isOnline?: () => boolean;
+  hasPendingChanges?: () => boolean;
   getUnsavedWarning?: () => string;
   setTimer?: (callback: () => void, delay: number) => number;
   clearTimer?: (timer: number) => void;
@@ -229,6 +247,7 @@ export interface LedgerYearControllerDependencies {
   documentRoot: Document;
   getToday: () => LedgerDate;
   isOnline: () => boolean;
+  hasPendingChanges?: () => boolean;
   translate: Translate;
   showBlocked: (message: string) => void;
   resetYearState: () => void;
@@ -269,6 +288,7 @@ export interface DepositViewModelInput {
   errorMessage?: string;
   filter?: DepositFilter;
   ledgerEntries?: LedgerEntries;
+  ledgerOperationsById?: Record<string, LedgerOperation>;
 }
 
 export interface DepositViewModel {

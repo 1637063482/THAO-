@@ -10,10 +10,10 @@ function assertValue(value) { if (!validValue(value)) throw new Error("Savings g
 function assertMonth(month) { if (!Number.isInteger(month) || month < 1 || month > 12) throw new Error("Month must be between 1 and 12"); }
 /** @param {LedgerSettings} [settings] */
 export function readSavingsGoals(settings = {}) { const monthly = Array.from({ length: 12 }, (_, index) => { const value = settings["savings_goal_month_" + (index + 1)]; return validValue(value) ? value : null; }); return { monthly, annual: validValue(settings[ANNUAL_KEY]) ? settings[ANNUAL_KEY] : null }; }
-/** @param {LedgerSettings} settings @param {LedgerSettings} pendingUpdates @param {number} month @param {SavingsGoalValue} value */
-export function writeMonthlySavingsGoal(settings, pendingUpdates, month, value) { assertMonth(month); assertValue(value); const key = "savings_goal_month_" + month; settings[key] = value; pendingUpdates[key] = value; return value; }
-/** @param {LedgerSettings} settings @param {LedgerSettings} pendingUpdates @param {SavingsGoalValue} value */
-export function writeAnnualSavingsGoal(settings, pendingUpdates, value) { assertValue(value); settings[ANNUAL_KEY] = value; pendingUpdates[ANNUAL_KEY] = value; return value; }
+/** @param {LedgerSettings} settings @param {LedgerSettings} pendingUpdates @param {number} month @param {SavingsGoalValue} value @param {(key: string, value: SavingsGoalValue) => void} [stagePendingSetting] */
+export function writeMonthlySavingsGoal(settings, pendingUpdates, month, value, stagePendingSetting) { assertMonth(month); assertValue(value); const key = "savings_goal_month_" + month; settings[key] = value; if (stagePendingSetting) stagePendingSetting(key, value); else pendingUpdates[key] = value; return value; }
+/** @param {LedgerSettings} settings @param {LedgerSettings} pendingUpdates @param {SavingsGoalValue} value @param {(key: string, value: SavingsGoalValue) => void} [stagePendingSetting] */
+export function writeAnnualSavingsGoal(settings, pendingUpdates, value, stagePendingSetting) { assertValue(value); settings[ANNUAL_KEY] = value; if (stagePendingSetting) stagePendingSetting(ANNUAL_KEY, value); else pendingUpdates[ANNUAL_KEY] = value; return value; }
 /** @param {number} month */
 export function getSavingsGoalKey(month) { assertMonth(month); return "savings_goal_month_" + month; }
 export const SAVINGS_GOAL_ANNUAL_KEY = ANNUAL_KEY;

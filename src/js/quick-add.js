@@ -2,7 +2,8 @@ import { state } from "./state.js";
 import { expenseCategories, getDaysInMonth } from "./config.js";
 import { getLedgerToday } from "./clock.js";
 import { safeEval, formatDisplay, getActiveRate, showToast } from "./utils.js";
-import { convertCnyAmountToVnd, formatCurrencyInput, isValidCurrencyRate, normalizeCurrencyInput } from "./currency-view.js";
+import { formatCurrencyInput, normalizeCurrencyInput } from "./currency-view.js";
+import { parseCurrencyAmountToVnd } from "./ledger-validation.js";
 import { calculateAll } from "./budget.js";
 import { triggerCloudSave } from "./sync.js";
 import { updateStreakAfterRecord } from "./render.js";
@@ -43,13 +44,38 @@ export async function queueLegacyIncomeOnce(
   const marker = `[#op:${operationId}]`;
   const entries = stateRef.appState.entries;
   const pending = stateRef.pendingUpdates.entries || (stateRef.pendingUpdates.entries = {});
-  if (String(entries[remarkKey] || "").includes(marker)) return { applied: false, operationId };
+  const operations = stateRef.appState.operationsById || (stateRef.appState.operationsById = {});
+  const pendingOperations = stateRef.pendingUpdates.operationsById || (stateRef.pendingUpdates.operationsById = {});
+  const operation = { kind: "DEPOSIT_INTEREST", dateKey, amountVnd, status: "COMPLETED" };
+  const existingOperation = operations[operationId];
+  if (existingOperation) {
+    if (JSON.stringify(existingOperation) !== JSON.stringify(operation)) throw new Error("Interest operation conflicts with its existing record");
+    return { applied: false, operationId };
+  }
 
   const snapshots = [incomeKey, remarkKey].map(key => ({
     key,
     entryPresent: Object.prototype.hasOwnProperty.call(entries, key), entryValue: entries[key],
     pendingPresent: Object.prototype.hasOwnProperty.call(pending, key), pendingValue: pending[key],
   }));
+  const operationSnapshot = {
+    appPresent: Object.prototype.hasOwnProperty.call(operations, operationId), appValue: operations[operationId],
+    pendingPresent: Object.prototype.hasOwnProperty.call(pendingOperations, operationId), pendingValue: pendingOperations[operationId],
+  };
+  const legacyMarkerPresent = String(entries[remarkKey] || "").includes(marker);
+  if (legacyMarkerPresent) {
+    operations[operationId] = operation;
+    pendingOperations[operationId] = operation;
+    try {
+      const queueResult = await onQueue();
+      if (queueResult?.ok === false) throw new Error("Interest operation was not confirmed by the server");
+      return { applied: false, operationId, migrated: true };
+    } catch (error) {
+      if (operationSnapshot.appPresent) operations[operationId] = operationSnapshot.appValue; else delete operations[operationId];
+      if (operationSnapshot.pendingPresent) pendingOperations[operationId] = operationSnapshot.pendingValue; else delete pendingOperations[operationId];
+      throw error;
+    }
+  }
   let existing = String(entries[incomeKey] || "0");
   if (existing.startsWith("=")) existing = existing.slice(1);
   const formula = `=${existing === "0" || existing === "" ? "" : `${existing}+`}${amountVnd}`;
@@ -57,13 +83,20 @@ export async function queueLegacyIncomeOnce(
   const newRemark = `${oldRemark ? `${oldRemark},` : ""}${String(note).trim() || "Lãi tiền gửi"} ${marker}`;
   entries[incomeKey] = formula; pending[incomeKey] = formula;
   entries[remarkKey] = newRemark; pending[remarkKey] = newRemark;
+  operations[operationId] = operation;
+  pendingOperations[operationId] = operation;
 
-  try { await onQueue(); }
+  try {
+    const queueResult = await onQueue();
+    if (queueResult?.ok === false) throw new Error("Interest operation was not confirmed by the server");
+  }
   catch (error) {
     snapshots.forEach(snapshot => {
       if (snapshot.entryPresent) entries[snapshot.key] = snapshot.entryValue; else delete entries[snapshot.key];
       if (snapshot.pendingPresent) pending[snapshot.key] = snapshot.pendingValue; else delete pending[snapshot.key];
     });
+    if (operationSnapshot.appPresent) operations[operationId] = operationSnapshot.appValue; else delete operations[operationId];
+    if (operationSnapshot.pendingPresent) pendingOperations[operationId] = operationSnapshot.pendingValue; else delete pendingOperations[operationId];
     throw error;
   }
   await onStreak();
@@ -223,8 +256,8 @@ if (typeof document !== "undefined") {
   document.addEventListener("keydown", window.__quickAddEscapeHandler);
 }
 
-export function submitQuickAdd() {
-  if (submitInFlight) return;
+export async function submitQuickAdd() {
+  if (submitInFlight) return { ok: false, reason: "in-flight" };
   submitInFlight = true;
   const submitButton = document.querySelector("#quick-add-panel [data-quick-add-submit]");
   if (submitButton) { submitButton.disabled = true; submitButton.setAttribute("aria-busy", "true"); }
@@ -249,32 +282,34 @@ export function submitQuickAdd() {
     return;
   }
 
-  if (!rawAmt || isNaN(rawAmt)) { showToast(t("enter_valid_amount"), true); resetSubmitControl(); return; }
-
-  let amtVND = rawAmt;
-  if (state.currentCurrency === "CNY") {
-    const activeRate = getActiveRate();
-    if (!isValidCurrencyRate(activeRate)) {
-      showToast(t("fx_unavailable"), true);
-      resetSubmitControl(); return;
-    }
-    amtVND = convertCnyAmountToVnd(rawAmt, activeRate);
-  }
-  if (!Number.isSafeInteger(Number(amtVND)) || Number(amtVND) <= 0) {
-    showToast(t("enter_valid_amount"), true);
+  const parsed = parseCurrencyAmountToVnd(rawAmt, {
+    currency: state.currentCurrency,
+    rate: getActiveRate(),
+    requirePositive: true,
+  });
+  if (!parsed.ok) {
+    showToast(parsed.code === "INVALID_RATE" ? t("fx_unavailable") : t("enter_valid_amount"), true);
     resetSubmitControl();
     return;
   }
+  const amtVND = parsed.value;
 
   const key = month + "_" + day + "_" + cat;
   const remarkKey = month + "_" + day + "_remark";
-
+  const entrySnapshots = [key, remarkKey].map(snapshotKey => ({
+    key: snapshotKey,
+    appPresent: Object.prototype.hasOwnProperty.call(state.appState.entries, snapshotKey),
+    appValue: state.appState.entries[snapshotKey],
+    pendingPresent: Object.prototype.hasOwnProperty.call(state.pendingUpdates.entries || {}, snapshotKey),
+    pendingValue: state.pendingUpdates.entries?.[snapshotKey],
+  }));
   let existingFormula = state.appState.entries[key] || "0";
   if (String(existingFormula).startsWith("=")) existingFormula = existingFormula.substring(1);
   if (existingFormula === "0" || existingFormula === "") existingFormula = "";
   else existingFormula += "+";
 
   const finalMath = "=" + existingFormula + amtVND;
+  const mutatedValues = { [key]: finalMath };
   state.appState.entries[key] = finalMath;
   if (!state.pendingUpdates.entries) state.pendingUpdates.entries = {};
   state.pendingUpdates.entries[key] = finalMath;
@@ -282,6 +317,7 @@ export function submitQuickAdd() {
   if (remark) {
     let oldRemark = state.appState.entries[remarkKey] || "";
     let newRemark = oldRemark ? oldRemark + "," + remark : remark;
+    mutatedValues[remarkKey] = newRemark;
     state.appState.entries[remarkKey] = newRemark;
     state.pendingUpdates.entries[remarkKey] = newRemark;
     const rEl = document.getElementById("entry-" + month + "-" + day + "-remark");
@@ -293,10 +329,32 @@ export function submitQuickAdd() {
 
   calculateAll();
   try {
-    triggerCloudSave();
+    const saveResult = triggerCloudSave();
+    if (saveResult && typeof saveResult.then === "function") await saveResult;
   } catch (error) {
+    entrySnapshots.forEach(snapshot => {
+      const expectedValue = mutatedValues[snapshot.key];
+      if (expectedValue !== undefined && state.appState.entries[snapshot.key] === expectedValue) {
+        if (snapshot.appPresent) state.appState.entries[snapshot.key] = snapshot.appValue;
+        else delete state.appState.entries[snapshot.key];
+      }
+      const pendingEntries = state.pendingUpdates.entries || (state.pendingUpdates.entries = {});
+      const currentPending = pendingEntries[snapshot.key];
+      if (expectedValue !== undefined && currentPending === expectedValue) {
+        if (snapshot.pendingPresent) pendingEntries[snapshot.key] = snapshot.pendingValue;
+        else delete pendingEntries[snapshot.key];
+      }
+    });
+    const failedEntry = document.getElementById("entry-" + month + "-" + day + "-" + cat);
+    if (failedEntry) {
+      const restoredValue = state.appState.entries[key];
+      failedEntry.dataset.raw = restoredValue || "";
+      failedEntry.value = restoredValue ? formatDisplay(safeEval(restoredValue)) : "";
+    }
+    calculateAll();
+    showToast(t("offline"), true);
     resetSubmitControl();
-    throw error;
+    return { ok: false, error };
   }
   showToast(t("record_saved"));
   closeQuickAdd();
@@ -313,4 +371,5 @@ export function submitQuickAdd() {
     const scrollContainer = document.getElementById("table-scroll-container-" + month);
     if (el && scrollContainer) scrollContainer.scrollTo({ top: el.offsetTop - 40, behavior: "smooth" });
   }, 200);
+  return { ok: true };
 }

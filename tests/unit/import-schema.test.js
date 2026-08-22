@@ -12,6 +12,18 @@ describe("legacy import schema", () => {
     expect(validateLegacyImport(valid())).toEqual({ ok: true, data: valid() });
   });
 
+  it("accepts persistent deposit-interest operation records", () => {
+    const input = {
+      ...valid(),
+      operationsById: {
+        "deposit-interest-fixture-2026": {
+          kind: "DEPOSIT_INTEREST", dateKey: "2026-08-01", amountVnd: 550000, status: "COMPLETED",
+        },
+      },
+    };
+    expect(validateLegacyImport(input, { year: 2026 })).toEqual({ ok: true, data: input });
+  });
+
   it.each([
     [{ balances: {} }, "MISSING_ENTRIES"],
     [{ ...valid(), unknown: {} }, "UNKNOWN_TOP_LEVEL_FIELD"],
@@ -24,8 +36,14 @@ describe("legacy import schema", () => {
     [{ ...valid(), settings: { admin: true } }, "INVALID_SETTING_KEY"],
     [{ ...valid(), settings: { savings_goal_month_1: 1.5 } }, "INVALID_SETTING"],
     [{ ...valid(), settings: { savings_goal_month_13: 1 } }, "INVALID_SETTING_KEY"],
+    [{ ...valid(), entries: { "2_31_dining": 1 } }, "INVALID_ENTRY_DATE"],
+    [{ ...valid(), entries: { "2_29_dining": 1 } }, "INVALID_ENTRY_DATE"],
+    [{ ...valid(), balances: { "bal-bank": -1 } }, "INVALID_AMOUNT"],
+    [{ ...valid(), balances: { "bal-bank": 1.5 } }, "INVALID_AMOUNT"],
+    [{ ...valid(), balances: { "bal-bank": "1e6" } }, "INVALID_AMOUNT"],
+    [{ ...valid(), settings: { budget_1: 1.5 } }, "INVALID_SETTING"],
   ])("rejects invalid input with %s", (input, code) => {
-    expect(validateLegacyImport(input)).toMatchObject({ ok: false, code });
+    expect(validateLegacyImport(input, { year: 2026 })).toMatchObject({ ok: false, code });
   });
 
   it("rejects a serialized payload above the configured size", () => {

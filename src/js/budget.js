@@ -1,8 +1,10 @@
-import { state } from "./state.js";
+import { stagePendingSetting, state } from "./state.js";
 import { t } from "./i18n.js";
-import { expenseCategories, DEFAULT_BUDGET_VND } from "./config.js";
+import { expenseCategories } from "./config.js";
 import { safeEval, formatDisplay, formatSymbol, getActiveRate, showToast } from "./utils.js";
 import { isValidCurrencyRate } from "./currency-view.js";
+import { parseCurrencyAmountToVnd } from "./ledger-validation.js";
+import { interpretLedger, resolveLedgerBudgetVnd } from "../domain/ledger-interpreter.js";
 import { updateCharts } from "./charts.js";
 import { triggerCloudSave } from "./sync.js";
 import { refreshAnalyticsView } from "../features/analytics/controller.js";
@@ -18,16 +20,7 @@ export function fitBudgetInputWidth(input) {
 }
 
 export function getRawBudgetVND() {
-  const settings = state.appState.settings;
-  if (settings && settings["budget_" + state.activeMonthId] !== undefined) {
-    return parseFloat(settings["budget_" + state.activeMonthId]);
-  }
-  if (settings && settings.monthlyBudget !== undefined) {
-    return parseFloat(settings.monthlyBudget);
-  }
-  try { const localSaved = localStorage.getItem("thao_monthly_budget"); if (localSaved) return parseFloat(localSaved); }
-  catch { /* noop */ }
-  return DEFAULT_BUDGET_VND;
+  return resolveLedgerBudgetVnd(state.appState.settings || {}, state.activeMonthId);
 }
 
 export function updateBudgetUI() {
@@ -46,16 +39,13 @@ export function saveBudgetAndCalculate() {
   if (!inputEl) return;
   let rawInput = inputEl.value.replace(/,/g, "");
   if (!rawInput) return;
-  let val = safeEval(rawInput);
-  let vndVal = val;
-  if (state.currentCurrency === "CNY") {
-    const activeRate = getActiveRate();
-    if (!isValidCurrencyRate(activeRate)) {
-      showToast(t("fx_unavailable"), true);
-      return;
-    }
-    vndVal = val * activeRate;
+  const activeRate = getActiveRate();
+  const parsed = parseCurrencyAmountToVnd(rawInput, { currency: state.currentCurrency, rate: activeRate, allowZero: true });
+  if (!parsed.ok) {
+    showToast(parsed.code === "INVALID_RATE" ? t("fx_unavailable") : t("enter_valid_amount"), true);
+    return;
   }
+  const vndVal = parsed.value;
   if (!state.appState.settings) state.appState.settings = {};
   // Use per-month key for budget so switching months doesn't reuse the same value.
   state.appState.settings["budget_" + state.activeMonthId] = vndVal;
@@ -65,8 +55,7 @@ export function saveBudgetAndCalculate() {
   fitBudgetInputWidth(inputEl);
   // Do not update the legacy global fallback here: it would make months
   // without an explicit budget inherit the value just entered for this month.
-  if (!state.pendingUpdates.settings) state.pendingUpdates.settings = {};
-  state.pendingUpdates.settings["budget_" + state.activeMonthId] = vndVal;
+  stagePendingSetting("budget_" + state.activeMonthId, vndVal);
   triggerCloudSave();
   calculateAll();
 }
@@ -123,47 +112,44 @@ export function updateBudgetProgress() {
 }
 
 export function calculateAll() {
-  const monthsData = Array.from({ length: 12 }, (_, i) => ({ id: i + 1, days: new Date(state.activeYear, i + 1, 0).getDate() }));
+  const ledger = interpretLedger({
+    year: state.activeYear,
+    entries: state.appState.entries || {},
+    settings: state.appState.settings || {},
+  });
   let globalTotalIncome = 0, globalTotalExpense = 0;
   state.yearlyCatSums = {};
   expenseCategories.forEach((c) => (state.yearlyCatSums[c.id] = 0));
 
-  monthsData.forEach((month) => {
-    let mExp = 0, mInc = 0;
-    let mCatSums = {};
-    expenseCategories.forEach((c) => (mCatSums[c.id] = 0));
+  ledger.months.forEach((month) => {
+    const mExp = month.expense;
+    const mInc = month.income;
+    const mCatSums = { ...month.categories };
 
-    for (let d = 1; d <= month.days; d++) {
-      let dExp = 0;
-      expenseCategories.forEach((cat) => {
-        const val = safeEval(state.appState.entries[month.id + "_" + d + "_" + cat.id]);
-        dExp += val;
-        mCatSums[cat.id] += val;
-      });
-      mExp += dExp;
-      mInc += safeEval(state.appState.entries[month.id + "_" + d + "_income"]);
-
-      if (month.id === state.activeMonthId) {
-        const dayExpEl = document.getElementById("total-exp-" + month.id + "-" + d);
+    for (let d = 1; d <= month.daysInMonth; d++) {
+      const dayData = month.days.find((day) => day.day === d);
+      const dExp = dayData?.expense || 0;
+      if (month.month === state.activeMonthId) {
+        const dayExpEl = document.getElementById("total-exp-" + month.month + "-" + d);
         if (dayExpEl) dayExpEl.value = formatDisplay(dExp);
       }
     }
 
-    state.monthlyCatSums[month.id] = mCatSums;
+    state.monthlyCatSums[month.month] = mCatSums;
     globalTotalExpense += mExp;
     globalTotalIncome += mInc;
     expenseCategories.forEach((c) => (state.yearlyCatSums[c.id] += mCatSums[c.id]));
 
-    if (month.id === state.activeMonthId) {
+    if (month.month === state.activeMonthId) {
       expenseCategories.forEach((cat) => {
-        const sumEl = document.getElementById("sum-" + month.id + "-" + cat.id);
+        const sumEl = document.getElementById("sum-" + month.month + "-" + cat.id);
         if (sumEl) sumEl.innerText = formatDisplay(mCatSums[cat.id]);
       });
-      const elExp = document.getElementById("sum-" + month.id + "-exp");
+      const elExp = document.getElementById("sum-" + month.month + "-exp");
       if (elExp) elExp.innerText = formatDisplay(mExp);
-      const elInc = document.getElementById("sum-" + month.id + "-inc");
+      const elInc = document.getElementById("sum-" + month.month + "-inc");
       if (elInc) elInc.innerText = formatDisplay(mInc);
-      const elBal = document.getElementById("summary-balance-" + month.id);
+      const elBal = document.getElementById("summary-balance-" + month.month);
       if (elBal) {
         var bal = mInc - mExp;
         elBal.innerText = formatSymbol(bal);

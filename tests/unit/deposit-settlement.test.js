@@ -6,7 +6,11 @@ vi.mock("../../src/js/render.js", () => ({ updateStreakAfterRecord: vi.fn() }));
 import { queueLegacyIncomeOnce } from "../../src/js/quick-add.js";
 
 function fixture() {
-  return { activeYear: 2026, appState: { entries: {} }, pendingUpdates: { entries: {} } };
+  return {
+    activeYear: 2026,
+    appState: { entries: {}, operationsById: {} },
+    pendingUpdates: { entries: {}, operationsById: {} },
+  };
 }
 
 describe("idempotent deposit-interest ledger bridge", () => {
@@ -27,6 +31,28 @@ describe("idempotent deposit-interest ledger bridge", () => {
     const result = await queueLegacyIncomeOnce(input, { stateRef, onQueue, onStreak });
     expect(result.applied).toBe(false); expect(stateRef.appState.entries["8_1_income"]).toBe("=550000");
     expect(onQueue).toHaveBeenCalledOnce(); expect(onStreak).toHaveBeenCalledOnce();
+  });
+
+  it("keeps idempotence after the editable remark is changed and state is refreshed", async () => {
+    const input = { amountVnd: 550_000, dateKey: "2026-08-01", operationId: "deposit-interest-fixture" };
+    await queueLegacyIncomeOnce(input, { stateRef, onQueue, onStreak });
+    stateRef.appState.entries["8_1_remark"] = "manually edited";
+    stateRef.pendingUpdates.entries["8_1_remark"] = "manually edited";
+
+    const refreshed = {
+      activeYear: 2026,
+      appState: {
+        entries: { ...stateRef.appState.entries },
+        operationsById: { ...stateRef.appState.operationsById },
+      },
+      pendingUpdates: { entries: {}, operationsById: {} },
+    };
+    const result = await queueLegacyIncomeOnce(input, { stateRef: refreshed, onQueue, onStreak });
+
+    expect(result.applied).toBe(false);
+    expect(refreshed.appState.entries["8_1_income"]).toBe("=550000");
+    expect(onQueue).toHaveBeenCalledOnce();
+    expect(onStreak).toHaveBeenCalledOnce();
   });
 
   it("appends a different interest operation on the same day", async () => {

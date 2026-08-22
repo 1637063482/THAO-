@@ -1,10 +1,11 @@
 import { expenseCategories } from "./config.js";
+import { isValidCalendarDate, parseVndAmount } from "./ledger-validation.js";
 
 const MAX_FILE_BYTES = 900000;
 const BALANCE_KEYS = new Set(["bal-bank", "bal-alipay", "bal-wechat", "bal-other", "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"]);
 const CATEGORY_IDS = new Set(expenseCategories.map((category) => category.id));
-const AMOUNT_RE = /^=?[\d\s+\-*/().eE]+$/;
 const DANGEROUS_TEXT_RE = /<\s*script|<\s*img|on\w+\s*=|javascript\s*:/i;
+const OPERATION_ID_RE = /^[A-Za-z0-9_-]{1,120}$/;
 
 function failure(code, path = "") {
   return { ok: false, code, path };
@@ -15,19 +16,18 @@ function isRecord(value) {
 }
 
 function validAmount(value) {
-  return (typeof value === "number" && Number.isFinite(value)) ||
-    (typeof value === "string" && value.length <= 200 && AMOUNT_RE.test(value));
+  return parseVndAmount(value).ok;
 }
 
-export function validateLegacyImport(input, { serializedBytes } = {}) {
+export function validateLegacyImport(input, { serializedBytes, year } = {}) {
   const bytes = serializedBytes ?? new TextEncoder().encode(JSON.stringify(input)).length;
   if (bytes > MAX_FILE_BYTES) return failure("FILE_TOO_LARGE");
   if (!isRecord(input)) return failure("INVALID_ROOT");
   for (const key of Object.keys(input)) {
-    if (!["balances", "entries", "settings"].includes(key)) return failure("UNKNOWN_TOP_LEVEL_FIELD", key);
+    if (!["balances", "entries", "settings", "operationsById"].includes(key)) return failure("UNKNOWN_TOP_LEVEL_FIELD", key);
   }
   if (!Object.prototype.hasOwnProperty.call(input, "entries")) return failure("MISSING_ENTRIES");
-  for (const section of ["balances", "entries", "settings"]) {
+  for (const section of ["balances", "entries", "settings", "operationsById"]) {
     if (input[section] !== undefined && !isRecord(input[section])) return failure("INVALID_SECTION", section);
   }
 
@@ -39,6 +39,9 @@ export function validateLegacyImport(input, { serializedBytes } = {}) {
   for (const [key, value] of Object.entries(input.entries)) {
     const match = /^(\d{1,2})_(\d{1,2})_([a-z]+)$/.exec(key);
     if (!match || +match[1] < 1 || +match[1] > 12 || +match[2] < 1 || +match[2] > 31) return failure("INVALID_ENTRY_KEY", `entries.${key}`);
+    const dateYear = Number.isSafeInteger(year) ? year : 2000;
+    const dateKey = `${dateYear}-${String(+match[1]).padStart(2, "0")}-${String(+match[2]).padStart(2, "0")}`;
+    if (!isValidCalendarDate(dateKey)) return failure("INVALID_ENTRY_DATE", `entries.${key}`);
     const field = match[3];
     if (field === "remark") {
       if (typeof value !== "string") return failure("INVALID_TEXT", `entries.${key}`);
@@ -53,10 +56,24 @@ export function validateLegacyImport(input, { serializedBytes } = {}) {
     const validKey = key === "monthlyBudget" || /^budget_(?:[1-9]|1[0-2])$/.test(key) || key === "expense_streak" || key === "expense_last_date" || /^savings_goal_month_(?:[1-9]|1[0-2])$/.test(key) || key === "savings_goal_annual";
     if (!validKey) return failure("INVALID_SETTING_KEY", `settings.${key}`);
     if (key === "expense_last_date") {
-      if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return failure("INVALID_SETTING", `settings.${key}`);
+      if (!isValidCalendarDate(value)) return failure("INVALID_SETTING", `settings.${key}`);
     } else if (/^savings_goal_month_(?:[1-9]|1[0-2])$/.test(key) || key === "savings_goal_annual") {
       if (value !== null && (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0)) return failure("INVALID_SETTING", `settings.${key}`);
-    } else if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return failure("INVALID_SETTING", `settings.${key}`);
+    } else if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) return failure("INVALID_SETTING", `settings.${key}`);
+  }
+
+  for (const [operationId, operation] of Object.entries(input.operationsById || {})) {
+    if (!OPERATION_ID_RE.test(operationId) || !isRecord(operation)) return failure("INVALID_OPERATION", `operationsById.${operationId}`);
+    if (operation.kind !== "DEPOSIT_INTEREST" || operation.status !== "COMPLETED") return failure("INVALID_OPERATION", `operationsById.${operationId}`);
+    if (!isValidCalendarDate(operation.dateKey) || (Number.isSafeInteger(year) && Number(operation.dateKey.slice(0, 4)) !== year)) {
+      return failure("INVALID_OPERATION", `operationsById.${operationId}.dateKey`);
+    }
+    if (typeof operation.amountVnd !== "number" || !Number.isSafeInteger(operation.amountVnd) || operation.amountVnd <= 0) {
+      return failure("INVALID_OPERATION", `operationsById.${operationId}.amountVnd`);
+    }
+    if (Object.keys(operation).some(key => !["kind", "dateKey", "amountVnd", "status"].includes(key))) {
+      return failure("INVALID_OPERATION", `operationsById.${operationId}`);
+    }
   }
   return { ok: true, data: input };
 }

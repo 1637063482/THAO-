@@ -1,39 +1,13 @@
 /**
- * Dashboard ViewModel — pure computation layer for the spending-awareness dashboard.
+ * Dashboard ViewModel - pure computation layer for the spending-awareness dashboard.
  *
- * Reads existing balances/entries/settings and validated derivative functions.
- * Does NOT duplicate amount/date/streak business rules.
+ * All ledger amounts, dates, fields, and budgets are interpreted by the
+ * canonical read-only ledger interpreter.
  */
 
-import { expenseCategories, DEFAULT_BUDGET_VND } from "./config.js";
-import { safeEval } from "./utils.js";
+import { expenseCategories } from "./config.js";
 import { buildLegacyStreak } from "./streak.js";
-
-/**
- * Get the raw budget VND for a given month from settings.
- * Mirrors the validated logic in budget.js/getRawBudgetVND but
- * reads from the passed-in state to stay pure.
- * @param {object} settings - state.appState.settings
- * @param {number} month
- * @returns {number}
- */
-function getBudgetVnd(settings, month) {
-  if (!settings) return DEFAULT_BUDGET_VND;
-  var key = "budget_" + month;
-  if (settings[key] !== undefined) return parseFloat(settings[key]);
-  if (settings.monthlyBudget !== undefined) return parseFloat(settings.monthlyBudget);
-  return DEFAULT_BUDGET_VND;
-}
-
-/**
- * Evaluate an entry formula string to a numeric value.
- * @param {string} formula
- * @returns {number}
- */
-function evalEntry(formula) {
-  if (!formula || typeof formula !== "string") return 0;
-  return safeEval(formula) || 0;
-}
+import { interpretLedger } from "../domain/ledger-interpreter.js";
 
 /**
  * Build the dashboard ViewModel for a given month.
@@ -54,93 +28,41 @@ export function buildDashboardViewModel(options) {
   var entries = appState.entries || {};
   var settings = appState.settings || {};
   var previousYearEntries = options.previousYearEntries;
+  var ledger = interpretLedger({ year: year, entries: entries, settings: settings });
+  var monthData = ledger.months[month - 1] || ledger.months[0];
+  var byCategory = { ...monthData.categories };
+  var totalSpending = monthData.expense;
+  var totalIncome = monthData.income;
+  var budgetVnd = monthData.budget;
+  var days = monthData.days.map(function (dayData) {
+    return {
+      day: dayData.day,
+      dateKey: dayData.dateKey,
+      categories: { ...dayData.categories },
+      totalSpending: dayData.expense,
+      totalIncome: dayData.income,
+    };
+  }).sort(function (a, b) { return b.day - a.day; }).slice(0, 5);
+  var todaySpending = monthData.days
+    .filter(function (dayData) { return dayData.day === today; })
+    .reduce(function (sum, dayData) { return sum + dayData.expense; }, 0);
+  var hasData = monthData.recordedDays > 0;
 
-  // Filter entries for the given month
-  var prefix = month + "_";
-  var monthEntries = {};
-  var hasData = false;
-  Object.keys(entries).forEach(function (key) {
-    if (key.startsWith(prefix)) {
-      monthEntries[key] = entries[key];
-      if (entries[key]) hasData = true;
-    }
-  });
-
-  // Compute category totals
-  var byCategory = {};
-  var totalSpending = 0;
-  var totalIncome = 0;
-  var todaySpending = 0;
-
-  expenseCategories.forEach(function (cat) {
-    byCategory[cat.id] = 0;
-  });
-
-  Object.keys(monthEntries).forEach(function (key) {
-    var parts = key.split("_");
-    var day = parseInt(parts[1], 10);
-    var fieldId = parts.slice(2).join("_");
-    var val = evalEntry(monthEntries[key]);
-
-    if (fieldId === "income") {
-      totalIncome += val;
-    } else if (fieldId === "remark") {
-      // Skip remarks
-    } else {
-      // It's a category
-      totalSpending += val;
-      if (day === today) todaySpending += val;
-      if (byCategory[fieldId] !== undefined) {
-        byCategory[fieldId] += val;
-      }
-    }
-  });
-
-  // Budget remaining — mirrors validated logic from budget.js
-  var budgetVnd = getBudgetVnd(settings, month);
   var budgetRemaining = budgetVnd - totalSpending;
   var isOverBudget = totalSpending > budgetVnd;
 
-  // Top categories by spending
   var categoryList = expenseCategories.map(function (cat) {
     return { id: cat.id, label: cat.nameKey, emoji: cat.emoji, spending: byCategory[cat.id] || 0 };
   });
   categoryList.sort(function (a, b) { return b.spending - a.spending; });
   var topCategories = categoryList.filter(function (c) { return c.spending > 0; }).slice(0, 3);
 
-  // Daily breakdown: aggregate entries by day
-  var dayMap = {};
-  Object.keys(monthEntries).forEach(function (key) {
-    var parts = key.split("_");
-    var day = parseInt(parts[1], 10);
-    var fieldId = parts.slice(2).join("_");
-    var val = evalEntry(monthEntries[key]);
-
-    if (fieldId === "remark") return;
-    if (!dayMap[day]) {
-      dayMap[day] = { day: day, dateKey: year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0"), categories: {}, totalSpending: 0, totalIncome: 0 };
-    }
-    if (fieldId === "income") {
-      dayMap[day].totalIncome += val;
-    } else {
-      dayMap[day].totalSpending += val;
-      dayMap[day].categories[fieldId] = (dayMap[day].categories[fieldId] || 0) + val;
-    }
-  });
-
-  // Sort days descending and take the most recent 5
-  var days = Object.keys(dayMap).map(function (d) { return dayMap[d]; });
-  days.sort(function (a, b) { return b.day - a.day; });
-  days = days.slice(0, 5);
-
-  // Streak data uses the canonical ledger date supplied by the caller.
-  var streakDate = options.streakDate || new Date();
   var streak = { streak: 0, hasRecordedToday: false };
   if (options.state && options.state.appState.entries) {
     try {
-      streak = buildLegacyStreak(options.state.appState.entries, year, streakDate, "Asia/Ho_Chi_Minh", { previousYearEntries: previousYearEntries });
+      streak = buildLegacyStreak(options.state.appState.entries, year, options.streakDate || new Date(), "Asia/Ho_Chi_Minh", { previousYearEntries: previousYearEntries });
     } catch (_e) {
-      // Fallback: streak computation may fail in test env
+      // Keep the dashboard renderable if a host clock is unavailable.
     }
   }
 

@@ -15,12 +15,14 @@ function createHarness() {
     activeMonthId: 7,
     isSaving: false,
     isFirstLoad: false,
+    pendingChanges: false,
   };
   const dependencies = {
     state,
     documentRoot: document,
     getToday: () => ({ year: 2027, month: 1, day: 1, dateKey: "2027-01-01" }),
     isOnline: () => true,
+    hasPendingChanges: () => state.pendingChanges,
     translate: (key, values = {}) => `${key}:${values.year ?? ""}`,
     showBlocked: vi.fn(),
     resetYearState: vi.fn(),
@@ -50,6 +52,19 @@ describe("ledger year controller", () => {
     expect(getAppDropdownValue(document.getElementById("year-selector"))).toBe("2026");
     expect(dependencies.resetYearState).not.toHaveBeenCalled();
     expect(dependencies.resubscribe).not.toHaveBeenCalled();
+  });
+
+  it("blocks year switching while offline pending changes are unsaved", () => {
+    const { controller, dependencies, state } = createHarness();
+    controller.start();
+    dependencies.isOnline = () => false;
+    state.pendingChanges = true;
+
+    expect(controller.changeYear(2027)).toBe(false);
+
+    expect(state.activeYear).toBe(2026);
+    expect(dependencies.showBlocked).toHaveBeenCalledOnce();
+    expect(dependencies.resetYearState).not.toHaveBeenCalled();
   });
 
   it("clears the prior year before resubscribing and opens the correct month", () => {

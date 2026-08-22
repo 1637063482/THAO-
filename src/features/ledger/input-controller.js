@@ -1,3 +1,5 @@
+import { parseCurrencyAmountToVnd, parseVndAmount } from "../../js/ledger-validation.js";
+
 /** @param {import("../../types/app-state").LedgerInputControllerDependencies} dependencies */
 export function createLedgerInputController({
   state,
@@ -5,7 +7,6 @@ export function createLedgerInputController({
   windowRoot,
   getActiveRate,
   isValidCurrencyRate,
-  parseCurrencyInputToVnd,
   formatVndForCurrencyInput,
   formatDisplay,
   evaluate,
@@ -15,7 +16,9 @@ export function createLedgerInputController({
   refreshDashboard,
   updateStreak,
   showFxUnavailable,
+  showInvalidAmount = () => {},
   isOnline = () => windowRoot.navigator.onLine,
+  hasPendingChanges = () => false,
   getUnsavedWarning = () => "",
   setTimer = (callback, delay) => windowRoot.setTimeout(callback, delay),
   clearTimer = timer => windowRoot.clearTimeout(timer),
@@ -80,7 +83,16 @@ export function createLedgerInputController({
         target.dataset.currencyInputDirty = "1";
         return;
       }
-      target.dataset.raw = value;
+      const parsed = parseVndAmount(value, { allowEmpty: true });
+      if (!parsed.ok) {
+        target.dataset.invalidAmount = "1";
+        return;
+      }
+      delete target.dataset.invalidAmount;
+      target.dataset.raw = parsed.serialized;
+      persistInputValue(target, parsed.serialized);
+      scheduleSave();
+      return;
     }
     persistInputValue(target, value);
     scheduleSave();
@@ -114,8 +126,16 @@ export function createLedgerInputController({
     if (isMathOrCell(target) && !target.readOnly) {
       const rawInput = target.value;
       if (state.currentCurrency === "VND") {
-        target.dataset.raw = rawInput;
-        target.value = rawInput ? formatDisplay(evaluate(rawInput)) : "";
+        const parsed = parseVndAmount(rawInput, { allowEmpty: true });
+        if (!parsed.ok) {
+          target.dataset.raw = target.dataset.currencyRawBefore || "";
+          target.value = target.dataset.currencyViewBefore || "";
+          showInvalidAmount();
+          clearCurrencyDraft(target);
+          return;
+        }
+        target.dataset.raw = parsed.serialized;
+        target.value = rawInput ? formatDisplay(parsed.value ?? 0) : "";
       } else {
         const activeRate = getActiveRate();
         if (!isValidCurrencyRate(activeRate)) {
@@ -125,17 +145,21 @@ export function createLedgerInputController({
           clearCurrencyDraft(target);
           return;
         }
-        const vndValue = parseCurrencyInputToVnd(rawInput, {
-          currency: state.currentCurrency,
-          rate: activeRate,
-          previousRawVnd: target.dataset.currencyRawBefore,
-          previousViewValue: target.dataset.currencyViewBefore,
-          evaluate,
-        });
-        target.dataset.raw = vndValue;
-        target.value = rawInput ? formatDisplay(vndValue) : "";
+        const unchanged = rawInput.trim() === String(target.dataset.currencyViewBefore || "").trim();
+        const parsed = unchanged
+          ? parseVndAmount(target.dataset.currencyRawBefore || "", { allowEmpty: true })
+          : parseCurrencyAmountToVnd(rawInput, { currency: "CNY", rate: activeRate, allowEmpty: true });
+        if (!parsed.ok) {
+          target.dataset.raw = target.dataset.currencyRawBefore || "";
+          target.value = target.dataset.currencyViewBefore || "";
+          showInvalidAmount();
+          clearCurrencyDraft(target);
+          return;
+        }
+        target.dataset.raw = parsed.serialized;
+        target.value = rawInput ? formatDisplay(parsed.value ?? 0) : "";
         if (target.dataset.currencyInputDirty === "1") {
-          persistInputValue(target, vndValue);
+          persistInputValue(target, parsed.serialized);
           scheduleSave();
         }
       }
@@ -147,7 +171,7 @@ export function createLedgerInputController({
 
   /** @param {BeforeUnloadEvent} event */
   function onBeforeUnload(event) {
-    if (!state.isSaving || !isOnline()) return;
+    if (!state.isSaving && !hasPendingChanges()) return;
     event.preventDefault();
     event.returnValue = getUnsavedWarning();
   }

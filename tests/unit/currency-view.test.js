@@ -101,6 +101,7 @@ describe("currency view", () => {
     expect(formatVndForCurrencyDisplay(0, "CNY", 3500)).toBe("0.00");
     expect(formatVndForCurrencyDisplay(4375, "CNY", 3500)).toBe("1.25");
     expect(convertCnyAmountToVnd("1.25", 4000)).toBe("5000");
+    expect(convertCnyAmountToVnd("1e6", 4000)).toBeNull();
   });
 
   it("marks every category total in the ledger footer as privacy-sensitive", () => {
@@ -188,6 +189,24 @@ describe("currency view", () => {
     expect(input.dataset.raw).toBe("");
     expect(snapshotPersistence()).toBe(before);
     expect(triggerCloudSave).not.toHaveBeenCalled();
+  });
+
+  it("does not persist an exponent in a direct CNY edit", () => {
+    state.currentCurrency = "CNY";
+    state.fxRateAuto = 3500;
+    state.appState.entries = { "1_1_dining": "1234" };
+    state.pendingUpdates.entries = { "1_1_dining": "1234" };
+    document.body.innerHTML += '<input id="entry-1-1-dining" class="cell-input" data-type="entry" data-key="1_1_dining" data-raw="1234" value="0.35">';
+
+    const input = document.getElementById("entry-1-1-dining");
+    input.dispatchEvent(new FocusEvent("focusin", { bubbles: true }));
+    input.value = "1e6";
+    input.dispatchEvent(new Event("input", { bubbles: true }));
+    input.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+
+    expect(state.appState.entries["1_1_dining"]).toBe("1234");
+    expect(state.pendingUpdates.entries["1_1_dining"]).toBe("1234");
+    expect(input.dataset.raw).toBe("1234");
   });
 
   it("does not persist or render a budget through an unavailable automatic FX rate", async () => {

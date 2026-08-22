@@ -1,17 +1,15 @@
-import { DEFAULT_BUDGET_VND, expenseCategories, getDaysInMonth } from "../../js/config.js";
-import { safeEval } from "../../js/utils.js";
+import { expenseCategories } from "../../js/config.js";
+import { interpretLedger, resolveLedgerBudgetVnd } from "../../domain/ledger-interpreter.js";
 
 const GROUPED_OTHER_COLOR = "#64748B";
 
 /**
- * @param {Record<string, string | number | undefined>} settings
+ * @param {Record<string, unknown>} settings
  * @param {number} month
  * @returns {number}
  */
 export function getAnalyticsBudgetVnd(settings = {}, month) {
-  const value = settings["budget_" + month] ?? settings.monthlyBudget;
-  const parsed = Number.parseFloat(String(value ?? ""));
-  return Number.isFinite(parsed) && parsed >= 0 ? parsed : DEFAULT_BUDGET_VND;
+  return resolveLedgerBudgetVnd(settings, month);
 }
 
 /**
@@ -41,14 +39,13 @@ export function toChartCategories(categories, limit = 5) {
   const visible = categories.filter((category) => category.value > 0).slice(0, limit);
   const remainder = categories.slice(limit).reduce((sum, category) => sum + Math.max(0, category.value), 0);
   if (remainder > 0) {
+    const total = categories.reduce((sum, category) => sum + Math.max(0, category.value), 0);
     visible.push({
       id: "other-grouped",
       labelKey: "category_other_grouped",
       shortLabelKey: "category_other_grouped",
       value: remainder,
-      share: categories.reduce((sum, category) => sum + Math.max(0, category.value), 0) > 0
-        ? remainder / categories.reduce((sum, category) => sum + Math.max(0, category.value), 0)
-        : 0,
+      share: total > 0 ? remainder / total : 0,
       color: GROUPED_OTHER_COLOR,
     });
   }
@@ -56,119 +53,50 @@ export function toChartCategories(categories, limit = 5) {
 }
 
 /**
- * @typedef {Object} AnalyticsDay
- * @property {number} month
- * @property {number} day
- * @property {string} dateKey
- * @property {number} income
- * @property {number} expense
- * @property {boolean} recorded
- */
-
-/**
- * Build read-only analytics from the existing legacy yearly matrix.
- * No values returned by this function are intended for persistence.
+ * Build read-only analytics from the existing legacy yearly matrix. Amounts,
+ * dates, fields, and budgets come from the canonical ledger interpreter.
  *
  * @param {Object} options
  * @param {number} options.year
  * @param {number} options.activeMonth
  * @param {Record<string, unknown>} [options.entries]
- * @param {Record<string, string | number | undefined>} [options.settings]
+ * @param {Record<string, unknown>} [options.settings]
  */
 export function buildAnalyticsViewModel({ year, activeMonth, entries = {}, settings = {} }) {
-  const months = Array.from({ length: 12 }, (_, index) => ({
-    month: index + 1,
-    income: 0,
-    expense: 0,
-    net: 0,
-    budget: getAnalyticsBudgetVnd(settings, index + 1),
-    budgetUsedPercent: 0,
-    recordedDays: 0,
-    expenseDays: 0,
-    categories: Object.fromEntries(expenseCategories.map((category) => [category.id, 0])),
+  const interpreted = interpretLedger({ year, entries, settings });
+  const months = interpreted.months.map((monthData) => ({
+    month: monthData.month,
+    income: monthData.income,
+    expense: monthData.expense,
+    net: monthData.net,
+    budget: monthData.budget,
+    budgetUsedPercent: monthData.budget > 0 ? (monthData.expense / monthData.budget) * 100 : null,
+    recordedDays: monthData.recordedDays,
+    expenseDays: monthData.expenseDays,
+    categories: buildCategoryEntries(monthData.categories, monthData.expense),
   }));
-  /** @type {Map<string, AnalyticsDay>} */
-  const days = new Map();
 
-  Object.entries(entries).forEach(([key, rawValue]) => {
-    const match = /^(\d{1,2})_(\d{1,2})_(.+)$/.exec(key);
-    if (!match) return;
-    const month = Number(match[1]);
-    const day = Number(match[2]);
-    const field = match[3];
-    if (month < 1 || month > 12 || day < 1 || day > getDaysInMonth(year, month)) return;
-    const monthData = months[month - 1];
-    const dateKey = year + "-" + String(month).padStart(2, "0") + "-" + String(day).padStart(2, "0");
-    const dayKey = month + "_" + day;
-    const dayData = days.get(dayKey) || { month, day, dateKey, income: 0, expense: 0, recorded: false };
-
-    if (field === "remark") {
-      if (String(rawValue ?? "").trim()) dayData.recorded = true;
-      if (dayData.recorded) days.set(dayKey, dayData);
-      return;
-    }
-
-    const value = safeEval(rawValue);
-
-    if (field === "income") {
-      monthData.income += value;
-      dayData.income += value;
-      dayData.recorded = true;
-    } else if (Object.prototype.hasOwnProperty.call(monthData.categories, field)) {
-      monthData.categories[field] += value;
-      monthData.expense += value;
-      dayData.expense += value;
-      dayData.recorded = true;
-    } else {
-      return;
-    }
-    days.set(dayKey, dayData);
-  });
-
-  months.forEach((monthData) => {
-    monthData.net = monthData.income - monthData.expense;
-    monthData.budgetUsedPercent = monthData.budget > 0
-      ? (monthData.expense / monthData.budget) * 100
-      : null;
-    const monthDays = Array.from(days.values()).filter((day) => day.month === monthData.month);
-    monthData.recordedDays = monthDays.filter((day) => day.recorded).length;
-    monthData.expenseDays = monthDays.filter((day) => day.expense > 0).length;
-    monthData.categories = buildCategoryEntries(monthData.categories, monthData.expense);
-  });
-
-  const annualIncome = months.reduce((sum, month) => sum + month.income, 0);
-  const annualExpense = months.reduce((sum, month) => sum + month.expense, 0);
-  const annualCategories = expenseCategories.reduce((totals, category) => {
-    totals[category.id] = months.reduce((sum, month) => {
-      const item = month.categories.find((entry) => entry.id === category.id);
-      return sum + (item?.value || 0);
-    }, 0);
-    return totals;
-  }, {});
-  const dayList = Array.from(days.values());
+  const dayList = interpreted.months.flatMap((monthData) => monthData.days);
   const expenseDays = dayList.filter((day) => day.expense > 0);
   const peakExpenseDay = expenseDays.reduce((peak, day) => day.expense > (peak?.expense || 0) ? day : peak, null);
+  const annualIncome = interpreted.annual.income;
+  const annualExpense = interpreted.annual.expense;
   const annualBudget = months.reduce((sum, month) => sum + month.budget, 0);
   const monthsWithData = months.filter((month) => month.recordedDays > 0);
-  const categories = buildCategoryEntries(annualCategories, annualExpense);
-
-  const normalizedMonths = months.map((month) => ({
-    ...month,
-    categories: month.categories,
-  }));
+  const categories = buildCategoryEntries(interpreted.annual.categories, annualExpense);
+  const normalizedMonths = months.map((month) => ({ ...month, categories: month.categories }));
   const selectedMonth = normalizedMonths[Math.min(12, Math.max(1, Number(activeMonth) || 1)) - 1];
 
   return {
     year,
-    activeMonth: selectedMonth.month,
     months: normalizedMonths,
     annual: {
       income: annualIncome,
       expense: annualExpense,
       net: annualIncome - annualExpense,
       savingsRate: annualIncome > 0 ? (annualIncome - annualExpense) / annualIncome : null,
-      recordedDays: dayList.filter((day) => day.recorded).length,
-      expenseDays: expenseDays.length,
+      recordedDays: interpreted.annual.recordedDays,
+      expenseDays: interpreted.annual.expenseDays,
       averageExpensePerExpenseDay: expenseDays.length > 0 ? annualExpense / expenseDays.length : 0,
       peakExpenseDay: peakExpenseDay ? {
         month: peakExpenseDay.month,

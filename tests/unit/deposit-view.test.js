@@ -152,6 +152,18 @@ describe("deposit management view", () => {
     expect(recorded).not.toContain('data-record-interest="done"');
   });
 
+  it("uses the persistent ledger operation instead of the editable remark", () => {
+    const operationId = "deposit-interest-done-2026-05-01";
+    const recorded = renderDepositManagement(buildDepositViewModel({
+      document: storageDocument({ done: deposit({ status: "REDEEMED", redeemedOn: "2026-06-01", maturesOn: "2026-05-01", actualInterestVnd: 500 }) }),
+      today: "2026-06-01",
+      ledgerEntries: { "6_1_remark": "manually edited" },
+      ledgerOperationsById: { [operationId]: { kind: "DEPOSIT_INTEREST", dateKey: "2026-06-01", amountVnd: 500, status: "COMPLETED" } },
+    }));
+
+    expect(recorded).not.toContain('data-record-interest="done"');
+  });
+
   it("binds redeem, rollover and interest-retry actions", () => {
     document.body.innerHTML = renderDepositManagement(buildDepositViewModel({ document: storageDocument({ old: deposit({ maturesOn: "2026-05-01" }) }), today: "2026-06-01" }));
     const onRedeem = vi.fn(); const onRollover = vi.fn();

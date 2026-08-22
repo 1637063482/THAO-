@@ -142,6 +142,9 @@ export default {
   // Sync status
   synced: "Đã đồng bộ",
   offline: "Mất kết nối",
+  sync_conflict_title: "Phát hiện thay đổi đồng thời",
+  sync_conflict_message: "Cài đặt {keys} đã được thay đổi ở nơi khác. Giá trị trên thiết bị này vẫn được giữ lại để bạn xác nhận.",
+  sync_conflict_keep_local: "Giữ bản cục bộ",
   saving: "Đang lưu...",
   deposit_error_permission: "Bạn không có quyền thực hiện thao tác này.",
   deposit_error_conflict: "Khoản tiền gửi đã được người khác cập nhật. Vui lòng làm mới rồi thử lại.",

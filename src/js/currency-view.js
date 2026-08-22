@@ -1,4 +1,5 @@
 import { formatVndInputValue } from "./vnd-input.js";
+import { parseCurrencyAmountToVnd } from "./ledger-validation.js";
 
 /** @param {unknown} rate @returns {rate is number} */
 export function isValidCurrencyRate(rate) {
@@ -55,11 +56,13 @@ export function parseCurrencyInputToVnd(rawInput, options) {
   if (options.previousRawVnd !== undefined && input === String(options.previousViewValue || "").trim()) {
     return options.previousRawVnd;
   }
-  return (options.evaluate(input) * /** @type {number} */ (options.rate)).toString();
+  const parsed = parseCurrencyAmountToVnd(input, { currency: "CNY", rate: options.rate });
+  return parsed.ok ? parsed.serialized : options.previousRawVnd || "";
 }
 
 /** @param {unknown} rawAmount @param {unknown} rate */
 export function convertCnyAmountToVnd(rawAmount, rate) {
   if (!isValidCurrencyRate(rate)) return null;
-  return (parseFloat(String(rawAmount)) * /** @type {number} */ (rate)).toString();
+  const parsed = parseCurrencyAmountToVnd(rawAmount, { currency: "CNY", rate });
+  return parsed.ok ? parsed.serialized : null;
 }

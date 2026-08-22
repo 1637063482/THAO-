@@ -68,7 +68,8 @@ function parseSavingsGoalValue(value, currency, fxRate) {
 /** @param {HTMLElement} root @param {import("../../types/app-state").SavingsGoalFormOptions} options */
 export function bindSavingsGoalForm(root, {
   settings,
-  pendingUpdates,
+    pendingUpdates,
+    stagePendingSetting,
   month,
   locale = normalizeLocale(root.dataset.locale),
   currency = "VND",
@@ -90,8 +91,8 @@ export function bindSavingsGoalForm(root, {
     event.preventDefault();
     try {
       onStatus?.("queued");
-      writeMonthlySavingsGoal(settings, pendingUpdates, month, parse(monthlyInput.value));
-      writeAnnualSavingsGoal(settings, pendingUpdates, parse(annualInput.value));
+      writeMonthlySavingsGoal(settings, pendingUpdates, month, parse(monthlyInput.value), stagePendingSetting);
+      writeAnnualSavingsGoal(settings, pendingUpdates, parse(annualInput.value), stagePendingSetting);
       onSave?.();
     } catch (error) {
       onStatus?.("error", error);
@@ -99,8 +100,8 @@ export function bindSavingsGoalForm(root, {
   };
   const clear = async () => {
     if (await requestAppConfirmation({ message: text(locale, "confirmClear"), title: text(locale, "title"), destructive: true })) {
-      writeMonthlySavingsGoal(settings, pendingUpdates, month, null);
-      writeAnnualSavingsGoal(settings, pendingUpdates, null);
+      writeMonthlySavingsGoal(settings, pendingUpdates, month, null, stagePendingSetting);
+      writeAnnualSavingsGoal(settings, pendingUpdates, null, stagePendingSetting);
       onSave?.();
     }
   };

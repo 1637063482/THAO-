@@ -10,6 +10,7 @@ export function createSavingsController({
   getDashboardViewModel,
   formatMoney,
   triggerCloudSave = () => {},
+  stagePendingSetting,
 } = {}) {
   let stopBridge = () => {};
   let stopForm = () => {};
@@ -60,6 +61,7 @@ export function createSavingsController({
     stopForm = bindSavingsGoalForm(root, {
       settings: snapshot.settings,
       pendingUpdates: snapshot.pendingUpdates,
+      stagePendingSetting,
       month: snapshot.month,
       locale,
       currency: vm.currency,

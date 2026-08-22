@@ -79,6 +79,18 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("DepositRepository", () =>
     expect(await repository.get("deposit-1")).toMatchObject({ version: 2, note: "committed update" });
   });
 
+  it("does not report a committed archive as failed because of a follow-up read", async () => {
+    await repository.create(input());
+    const read = vi.spyOn(repository, "get").mockRejectedValueOnce(Object.assign(new Error("synthetic follow-up read failure"), { code: "unavailable" }));
+
+    const archived = await repository.archive("deposit-1", 1);
+
+    expect(read).not.toHaveBeenCalled();
+    read.mockRestore();
+    expect(archived).toMatchObject({ id: "deposit-1", version: 2 });
+    expect(archived.archivedAt).not.toBeNull();
+  });
+
   it("persists acknowledgement and rejects stale concurrent versions", async () => {
     await repository.create(input());
     await repository.acknowledge("deposit-1|2027-01-01|OVERDUE");

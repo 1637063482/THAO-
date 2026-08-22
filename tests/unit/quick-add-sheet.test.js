@@ -15,6 +15,13 @@ const setupSheet = () => {
   ].join("");
 };
 
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((res, rej) => { resolve = res; reject = rej; });
+  return { promise, resolve, reject };
+}
+
 describe("quick-add bottom sheet", () => {
   beforeEach(() => {
     vi.resetModules();
@@ -61,15 +68,39 @@ describe("quick-add bottom sheet", () => {
     expect(document.getElementById("fab-btn")).toBe(document.activeElement);
   });
 
-  it("keeps entered amount and remark when saving fails", async () => {
+  it("keeps entered amount and remark until the server confirms the save", async () => {
     const quickAdd = await import("../../src/js/quick-add.js");
     const sync = await import("../../src/js/sync.js");
     document.getElementById("qa-amount").value = "50000";
     document.getElementById("qa-remark").value = "test note";
-    sync.triggerCloudSave.mockImplementation(() => { throw new Error("offline"); });
-    expect(() => quickAdd.submitQuickAdd()).toThrow("offline");
+    const save = deferred();
+    sync.triggerCloudSave.mockReturnValue(save.promise);
+    const submission = quickAdd.submitQuickAdd();
+    await Promise.resolve();
+    expect(document.getElementById("toast-msg").textContent).not.toContain("Đã ghi nhận");
     expect(document.getElementById("qa-amount").value).toBe("50000");
     expect(document.getElementById("qa-remark").value).toBe("test note");
+
+    save.resolve({ ok: true });
+    await submission;
+    expect(document.getElementById("qa-amount").value).toBe("");
+  });
+
+  it("rolls back an unconfirmed quick-add mutation while preserving the form", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const sync = await import("../../src/js/sync.js");
+    const stateModule = await import("../../src/js/state.js");
+    const key = stateModule.state.activeMonthId + "_1_dining";
+    stateModule.state.appState.entries = { [key]: "=100" };
+    stateModule.state.pendingUpdates = { balances: {}, entries: {}, settings: {} };
+    document.getElementById("qa-amount").value = "50";
+    sync.triggerCloudSave.mockReturnValue(Promise.reject(new Error("offline")));
+
+    await quickAdd.submitQuickAdd();
+
+    expect(stateModule.state.appState.entries[key]).toBe("=100");
+    expect(stateModule.state.pendingUpdates.entries).toEqual({});
+    expect(document.getElementById("qa-amount").value).toBe("50");
   });
 
   it("formats the quick-add amount with thousands separators while typing", async () => {
@@ -164,6 +195,18 @@ describe("quick-add bottom sheet", () => {
     expect(() => quickAdd.submitQuickAdd()).not.toThrow();
     expect(stateModule.state.appState.entries[stateModule.state.activeMonthId + "_1_dining"]).toBeUndefined();
     expect(document.getElementById("qa-amount").value).toBe(amount);
+  });
+
+  it.each(["1e6", "9007199254740992"])("rejects unsafe VND amount %s", async (amount) => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    stateModule.state.currentCurrency = "VND";
+    document.getElementById("qa-amount").value = amount;
+
+    quickAdd.submitQuickAdd();
+
+    expect(stateModule.state.appState.entries[stateModule.state.activeMonthId + "_1_dining"]).toBeUndefined();
+    expect(stateModule.state.pendingUpdates.entries).toEqual({});
   });
 
   it("clears aria-busy after invalid VND validation", async () => {

@@ -41,7 +41,7 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
 
       await assertSucceeds(getDoc(doc(db, ledgerPath)));
       await assertSucceeds(setDoc(doc(db, nextLedgerPath), { balances: {}, entries: {}, settings: {} }));
-      await assertSucceeds(updateDoc(doc(db, ledgerPath), { entries: { [`1_1_${uid}`]: "10" } }));
+      await assertSucceeds(updateDoc(doc(db, ledgerPath), { entries: { "1_1_dining": "10" } }));
     }
   });
 
@@ -63,6 +63,36 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
     for (const uid of authorizedUids) {
       await assertFails(deleteDoc(doc(dbFor(uid), ledgerPath)));
     }
+  });
+
+  it("allows canonical operation records and denies malformed ledger facts", async () => {
+    const owner = dbFor("owner-fixture-uid");
+    const valid = {
+      balances: { "bal-bank": 1000 },
+      entries: { "2_28_dining": "=10+20", "2_28_remark": "fixture" },
+      settings: { budget_2: 1000 },
+      operationsById: {
+        "deposit-interest-synthetic-deposit-2027-12-31": {
+          kind: "DEPOSIT_INTEREST", dateKey: "2027-12-31", amountVnd: 500, status: "COMPLETED",
+        },
+      },
+    };
+
+    await assertSucceeds(setDoc(doc(owner, nextLedgerPath), valid));
+    await assertFails(setDoc(doc(owner, `artifacts/${appId}/public/data/ledgers/shared_ledger_2027`), {
+      ...valid,
+      entries: { "2_29_dining": "10" },
+    }));
+    await assertFails(updateDoc(doc(owner, nextLedgerPath), { balances: { "bal-bank": -1 } }));
+    await assertFails(updateDoc(doc(owner, nextLedgerPath), { settings: { budget_2: 1.5 } }));
+    await assertFails(updateDoc(doc(owner, nextLedgerPath), {
+      operationsById: {
+        "deposit-interest-synthetic-deposit-2027-12-31": {
+          kind: "DEPOSIT_INTEREST", dateKey: "2027-12-31", amountVnd: -1, status: "COMPLETED",
+        },
+      },
+    }));
+    await assertFails(updateDoc(doc(owner, nextLedgerPath), { surprise: true }));
   });
 
   it("denies access to non-ledger paths for provisioned members", async () => {

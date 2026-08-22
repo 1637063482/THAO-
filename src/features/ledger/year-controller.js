@@ -22,6 +22,7 @@ export function createLedgerYearController({
   resetYearState,
   resubscribe,
   switchMonth,
+  hasPendingChanges = () => false,
 }) {
   let started = false;
   let unbindDropdown = () => {};
@@ -64,7 +65,7 @@ export function createLedgerYearController({
   function changeYear(value) {
     const nextYear = Number.parseInt(String(value), 10);
     if (!Number.isInteger(nextYear) || nextYear === state.activeYear) return false;
-    if (state.isSaving && isOnline()) {
+    if (state.isSaving || hasPendingChanges()) {
       showBlocked(translate("syncing_year_switch"));
       setAppDropdownValue(selector(), String(state.activeYear));
       return false;

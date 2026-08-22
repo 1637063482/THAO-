@@ -104,18 +104,19 @@ export class DepositRepository {
   }
   async archive(id: string, expectedVersion: number): Promise<StoredDeposit> {
     safeId(id);
-    await runTransaction(this.db, async transaction => {
+    return runTransaction(this.db, async transaction => {
       const reference = this.ref(); const snapshot = await transaction.get(reference);
       if (!snapshot.exists()) fail("DEPOSIT_NOT_FOUND", "Deposit not found");
       const current = decodeDocument(snapshot.data()); const existing = current.depositsById[id];
       if (!existing) fail("DEPOSIT_NOT_FOUND", "Deposit not found");
       if (existing.version !== expectedVersion) fail("DEPOSIT_VERSION_CONFLICT", "Deposit version conflict");
       const stamp = serverTimestamp();
-      current.depositsById[id] = { ...existing, version: existing.version + 1, updatedAt: stamp, updatedBy: this.actorUid, archivedAt: stamp };
+      const archived = { ...existing, version: existing.version + 1, updatedAt: stamp, updatedBy: this.actorUid, archivedAt: stamp };
+      current.depositsById[id] = archived;
       current.lastMutation = { kind: "ARCHIVE_DEPOSIT", targetId: id, actorUid: this.actorUid, at: stamp };
       transaction.set(reference, current);
+      return { id, ...archived };
     });
-    const archived = await this.get(id); if (!archived) fail("DEPOSIT_WRITE_FAILED", "Deposit was not persisted"); return archived;
   }
   async delete(id: string, expectedVersion: number): Promise<void> {
     safeId(id);

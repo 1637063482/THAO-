@@ -142,6 +142,9 @@ export default {
   // Sync status
   synced: "已同步",
   offline: "网络断开",
+  sync_conflict_title: "检测到并发修改",
+  sync_conflict_message: "设置 {keys} 已在其他位置修改。本设备的值已保留，请确认后再保存。",
+  sync_conflict_keep_local: "保留本地值",
   saving: "保存中...",
   deposit_error_permission: "您没有权限执行此操作。",
   deposit_error_conflict: "存款已被其他人更新，请刷新后重试。",

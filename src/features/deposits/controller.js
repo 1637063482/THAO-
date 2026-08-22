@@ -267,6 +267,8 @@ export function createDepositController(dependencies) {
               writeInterestToLedger: input.writeInterestToLedger,
             }, rolloverDependencies());
           }
+          uiStatus = "synced";
+          uiError = "";
           closeForm();
           refresh();
         } catch (error) {
@@ -328,6 +330,7 @@ export function createDepositController(dependencies) {
       errorMessage: uiError,
       filter,
       ledgerEntries: state.appState.entries,
+      ledgerOperationsById: state.appState.operationsById,
     });
     hosts.root.innerHTML = renderDepositManagement(viewModel, { formatMoney });
     bindDepositManagement(hosts.root, {
@@ -344,6 +347,9 @@ export function createDepositController(dependencies) {
         refresh();
         try {
           await requireRepository().archive(id, record.version);
+          uiStatus = "synced";
+          uiError = "";
+          refresh();
         } catch (error) {
           uiStatus = "error";
           uiError = depositErrorMessage(error, getLocale(), "list");
@@ -358,6 +364,9 @@ export function createDepositController(dependencies) {
         refresh();
         try {
           await requireRepository().delete(id, record.version);
+          uiStatus = "synced";
+          uiError = "";
+          refresh();
         } catch (error) {
           uiStatus = "error";
           uiError = depositErrorMessage(error, getLocale(), "list");
