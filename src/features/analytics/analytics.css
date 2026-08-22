@@ -245,9 +245,9 @@
   text-align: center;
 }
 
-.analytics-page .balance-positive { color: var(--color-success) !important; }
-.analytics-page .balance-negative { color: var(--color-danger) !important; }
-.analytics-page .balance-neutral { color: var(--color-label-secondary) !important; }
+.analytics-page .balance-positive { color: var(--color-income) !important; }
+.analytics-page .balance-negative { color: var(--color-expense) !important; }
+.analytics-page .balance-neutral { color: var(--color-neutral) !important; }
 
 .privacy-mode .privacy-sensitive-chart {
   filter: blur(7px);

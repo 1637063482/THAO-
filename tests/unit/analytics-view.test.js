@@ -1,4 +1,5 @@
-import { describe, expect, it } from "vitest";
+﻿import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 
 import { renderAnalyticsView, updateAnalyticsView } from "../../src/features/analytics/view.js";
 
@@ -92,5 +93,27 @@ describe("analytics view", () => {
 
     updateAnalyticsView(root, model, { translate, formatMoney: (value) => String(value), currency: "VND" });
     expect(root.querySelector("#analytics-currency-note").textContent).toBe("unit VND");
+  });
+
+  it("applies signed classes to net cash flow metrics and follows global income/expense color contract", () => {
+    document.body.innerHTML = '<div id="analysis-root"></div>';
+    const root = document.getElementById("analysis-root");
+    renderAnalyticsView(root, { translate: (key) => key, formatMoney: (value) => String(value) });
+
+    updateAnalyticsView(root, {
+      year: 2026,
+      annual: { income: 1000, expense: 400, net: 600, savingsRate: 0.6, recordedDays: 1, expenseDays: 1, averageExpensePerExpenseDay: 400, peakExpenseDay: null, categories: [], topCategories: [], budget: { total: 1000, usedPercent: 40, monthsWithData: 1, monthsWithinBudget: 1 } },
+      months: [],
+      activeMonth: { month: 3, income: 1000, expense: 400, net: 600, budget: 1000, budgetUsedPercent: 40, categories: [], topCategories: [] },
+    }, { translate: (key) => key, formatMoney: (value) => String(value) });
+
+    const yearlyNet = root.querySelector("#analytics-yearly-net");
+    const monthlyNet = root.querySelector("#analytics-monthly-net");
+    expect(yearlyNet.classList.contains("balance-positive")).toBe(true);
+    expect(monthlyNet.classList.contains("balance-positive")).toBe(true);
+
+    const css = readFileSync("src/features/analytics/analytics.css", "utf8");
+    expect(css).toMatch(/\.analytics-page\s+\.balance-positive\s*\{\s*color:\s*var\(--color-income\)\s*!important;\s*\}/);
+    expect(css).toMatch(/\.analytics-page\s+\.balance-negative\s*\{\s*color:\s*var\(--color-expense\)\s*!important;\s*\}/);
   });
 });
