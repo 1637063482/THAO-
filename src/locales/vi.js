@@ -140,6 +140,12 @@ export default {
   remark: "Ghi chú",
 
   // Sync status
+  setting_monthly_budget: "Ngân sách cơ bản hàng tháng",
+  setting_month_budget: "Ngân sách tháng {month}",
+  setting_savings_goal_annual: "Mục tiêu tiết kiệm năm",
+  setting_savings_goal_month: "Mục tiêu tiết kiệm tháng {month}",
+  setting_expense_streak: "Chuỗi ngày ghi chép",
+  setting_expense_last_date: "Ngày ghi chép gần nhất",
   synced: "Đã đồng bộ",
   offline: "Mất kết nối",
   sync_conflict_title: "Phát hiện thay đổi đồng thời",

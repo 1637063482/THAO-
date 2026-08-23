@@ -140,6 +140,12 @@ export default {
   remark: "备注",
 
   // Sync status
+  setting_monthly_budget: "每月基础预算",
+  setting_month_budget: "{month}月预算",
+  setting_savings_goal_annual: "年度储蓄目标",
+  setting_savings_goal_month: "{month}月储蓄目标",
+  setting_expense_streak: "连续记账天数",
+  setting_expense_last_date: "最后记账日期",
   synced: "已同步",
   offline: "网络断开",
   sync_conflict_title: "检测到并发修改",

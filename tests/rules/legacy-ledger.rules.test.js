@@ -7,6 +7,7 @@ const projectId = "demo-no-project";
 const appId = "my-expense-app-test";
 const ledgerPath = `artifacts/${appId}/public/data/ledgers/shared_ledger_2026`;
 const nextLedgerPath = `artifacts/${appId}/public/data/ledgers/shared_ledger_2027`;
+const year2028Path = `artifacts/${appId}/public/data/ledgers/shared_ledger_2028`;
 const memberPath = `artifacts/${appId}/public/data/members`;
 const authorizedUids = ["girlfriend-fixture-uid", "owner-fixture-uid"];
 let env;
@@ -43,6 +44,31 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
       await assertSucceeds(setDoc(doc(db, nextLedgerPath), { balances: {}, entries: {}, settings: {} }));
       await assertSucceeds(updateDoc(doc(db, ledgerPath), { entries: { "1_1_dining": "10" } }));
     }
+  });
+
+  it("allows first write of a new year document with only entries, only settings, or only balances", async () => {
+    const owner = dbFor("owner-fixture-uid");
+    await assertSucceeds(setDoc(doc(owner, nextLedgerPath), { entries: { "1_1_dining": "100" } }, { merge: true }));
+    await assertSucceeds(setDoc(doc(owner, year2028Path), { settings: { monthlyBudget: 5000000 } }, { merge: true }));
+    await assertSucceeds(setDoc(doc(owner, `artifacts/${appId}/public/data/ledgers/shared_ledger_2029`), { balances: { "bal-bank": "1000" } }, { merge: true }));
+  });
+
+  it("allows clearing an entry or balance with empty string", async () => {
+    const owner = dbFor("owner-fixture-uid");
+    await assertSucceeds(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "" } }));
+    await assertSucceeds(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "" } }));
+  });
+
+  it("denies illegal amounts such as negative numbers, fractions, loose operators, or invalid formulas", async () => {
+    const owner = dbFor("owner-fixture-uid");
+    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "-1" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "1.5" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "+" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "=10++20" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "abc" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "-1" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "1.5" } }));
+    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "+" } }));
   });
 
   it("denies anonymous and unprovisioned ledger reads, creates, and updates", async () => {

@@ -272,4 +272,39 @@ describe("quick-add bottom sheet", () => {
     expect(labelsAfterVi().some(label => label.includes("Ăn uống"))).toBe(true);
     expect(labelsAfterVi().some(label => label.includes("Tháng"))).toBe(true);
   });
+  it("restores the remark DOM element when triggerCloudSave fails", async () => {
+    const quickAdd = await import("../../src/js/quick-add.js");
+    const stateModule = await import("../../src/js/state.js");
+    const syncModule = await import("../../src/js/sync.js");
+
+    stateModule.state.activeMonthId = 3;
+    stateModule.state.activeYear = 2026;
+    stateModule.state.appState.entries = { "3_15_remark": "original-note" };
+    stateModule.state.pendingUpdates = { balances: {}, entries: {}, settings: {}, operationsById: {} };
+
+    const remarkInput = document.createElement("input");
+    remarkInput.id = "entry-3-15-remark";
+    remarkInput.value = "original-note";
+    remarkInput.dataset.raw = "original-note";
+    document.body.appendChild(remarkInput);
+
+    const amountInput = document.createElement("input");
+    amountInput.id = "entry-3-15-dining";
+    amountInput.value = "";
+    document.body.appendChild(amountInput);
+
+    setAppDropdownValue(document.getElementById("qa-month"), "3");
+    setAppDropdownValue(document.getElementById("qa-day"), "15");
+    setAppDropdownValue(document.getElementById("qa-cat"), "dining");
+    document.getElementById("qa-amount").value = "50000";
+    document.getElementById("qa-remark").value = "failed-note";
+
+    vi.spyOn(syncModule, "triggerCloudSave").mockRejectedValueOnce(new Error("network failure"));
+
+    const result = await quickAdd.submitQuickAdd();
+    expect(result?.ok).toBe(false);
+    expect(stateModule.state.appState.entries["3_15_remark"]).toBe("original-note");
+    expect(remarkInput.value).toBe("original-note");
+    expect(remarkInput.dataset.raw).toBe("original-note");
+  });
 });

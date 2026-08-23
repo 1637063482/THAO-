@@ -17,11 +17,6 @@ function parseEntryAmount(rawValue) {
   return parsed.ok && parsed.value !== null ? parsed.value : null;
 }
 
-function resolveBudgetValue(rawValue) {
-  const parsed = parseVndAmount(rawValue);
-  return parsed.ok && parsed.value !== null ? parsed.value : null;
-}
-
 /**
  * Resolve the effective VND budget using one rule for every read-only view.
  * A valid month override wins; an invalid override falls back to the valid
@@ -32,9 +27,9 @@ function resolveBudgetValue(rawValue) {
  * @returns {number}
  */
 export function resolveLedgerBudgetVnd(settings = {}, month) {
-  const monthValue = resolveBudgetValue(settings[`budget_${month}`]);
+  const monthValue = parseEntryAmount(settings[`budget_${month}`]);
   if (settings[`budget_${month}`] !== undefined && monthValue !== null) return monthValue;
-  const baseline = resolveBudgetValue(settings.monthlyBudget);
+  const baseline = parseEntryAmount(settings.monthlyBudget);
   return baseline ?? DEFAULT_BUDGET_VND;
 }
 

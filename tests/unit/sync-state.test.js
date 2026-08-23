@@ -41,7 +41,7 @@ vi.mock("../../src/js/icons.js", () => ({
   initIcons: vi.fn(),
 }));
 
-import { createSyncQueue, setupRealtimeListener, teardownListener, triggerCloudSave, updateSyncStatus } from "../../src/js/sync.js";
+import { createSyncQueue, formatSettingKeyLabel, importLegacyLedgerWithRecovery, setupRealtimeListener, teardownListener, triggerCloudSave, updateSyncStatus } from "../../src/js/sync.js";
 import { copyPending, mergeBackPending, stagePendingSetting, state } from "../../src/js/state.js";
 import { Fireworks } from "../../src/js/fireworks.js";
 import { updateStreakAfterRecord } from "../../src/js/render.js";
@@ -430,5 +430,65 @@ describe("sync queue", () => {
     expect(milestoneCalls).toHaveLength(1);
     expect(Fireworks.launch.mock.calls.filter(([opts]) => opts?.duration === 7500)).toHaveLength(0);
     vi.useRealTimers();
+  });
+  it("translates internal setting keys to user-friendly localized labels", () => {
+    const mockT = (key, params) => {
+      if (key === "setting_month_budget" && params?.month) return `${params.month}月预算`;
+      if (key === "setting_savings_goal_month" && params?.month) return `${params.month}月储蓄目标`;
+      const map = {
+        setting_monthly_budget: "每月基础预算",
+        setting_savings_goal_annual: "年度储蓄目标",
+        setting_expense_streak: "连续记账天数",
+        setting_expense_last_date: "最后记账日期",
+      };
+      return map[key] || key;
+    };
+
+    expect(formatSettingKeyLabel("budget_8", mockT)).toBe("8月预算");
+    expect(formatSettingKeyLabel("savings_goal_month_12", mockT)).toBe("12月储蓄目标");
+    expect(formatSettingKeyLabel("monthlyBudget", mockT)).toBe("每月基础预算");
+    expect(formatSettingKeyLabel("savings_goal_annual", mockT)).toBe("年度储蓄目标");
+    expect(formatSettingKeyLabel("expense_streak", mockT)).toBe("连续记账天数");
+    expect(formatSettingKeyLabel("expense_last_date", mockT)).toBe("最后记账日期");
+    expect(formatSettingKeyLabel("unknown_key", mockT)).toBe("unknown_key");
+  });
+
+  it("preserves cloud operationsById when importing a legacy file that lacks operationsById", async () => {
+    const writeLedger = vi.fn();
+    const downloadRecovery = vi.fn();
+    const importedText = JSON.stringify({
+      entries: { "1_1_dining": "50000" },
+    });
+
+    const existingLedger = {
+      balances: {},
+      entries: { "1_1_dining": "20000" },
+      settings: {},
+      operationsById: {
+        "deposit-interest-op-1": {
+          kind: "DEPOSIT_INTEREST",
+          dateKey: "2026-01-01",
+          amountVnd: 100000,
+          status: "COMPLETED",
+        },
+      },
+    };
+
+    const result = await importLegacyLedgerWithRecovery({
+      year: 2026,
+      importedText,
+      confirmOverwrite: async () => true,
+      readCurrentLedger: async () => existingLedger,
+      downloadRecovery,
+      writeLedger,
+    });
+
+    expect(result.ok).toBe(true);
+    expect(writeLedger).toHaveBeenCalledWith({
+      balances: {},
+      entries: { "1_1_dining": "50000" },
+      settings: {},
+      operationsById: existingLedger.operationsById,
+    });
   });
 });

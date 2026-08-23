@@ -351,6 +351,12 @@ export async function submitQuickAdd() {
       failedEntry.dataset.raw = restoredValue || "";
       failedEntry.value = restoredValue ? formatDisplay(safeEval(restoredValue)) : "";
     }
+    const failedRemark = document.getElementById("entry-" + month + "-" + day + "-remark");
+    if (failedRemark) {
+      const restoredRemark = state.appState.entries[remarkKey] || "";
+      failedRemark.dataset.raw = restoredRemark;
+      failedRemark.value = restoredRemark;
+    }
     calculateAll();
     showToast(t("offline"), true);
     resetSubmitControl();

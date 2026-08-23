@@ -173,9 +173,21 @@ function hasOutstandingLedgerWork() {
   return hasPending() || inFlightLedgerBatches.some(batch => batch.year === state.activeYear);
 }
 
+export function formatSettingKeyLabel(key, translate = t) {
+  if (key === "monthlyBudget") return translate("setting_monthly_budget");
+  if (key === "savings_goal_annual") return translate("setting_savings_goal_annual");
+  if (key === "expense_streak") return translate("setting_expense_streak");
+  if (key === "expense_last_date") return translate("setting_expense_last_date");
+  const budgetMatch = /^budget_(\d{1,2})$/.exec(key);
+  if (budgetMatch) return translate("setting_month_budget", { month: budgetMatch[1] });
+  const savingsMatch = /^savings_goal_month_(\d{1,2})$/.exec(key);
+  if (savingsMatch) return translate("setting_savings_goal_month", { month: savingsMatch[1] });
+  return key;
+}
+
 /** @param {Array<{ key: string }>} conflicts */
 function showSettingsConflictPrompt(conflicts) {
-  const keys = conflicts.map(conflict => conflict.key).join(", ");
+  const keys = conflicts.map(conflict => formatSettingKeyLabel(conflict.key, t)).join(", ");
   void requestAppConfirmation({
     title: t("sync_conflict_title"),
     message: t("sync_conflict_message", { keys }),
@@ -393,7 +405,8 @@ export async function importLegacyLedgerWithRecovery({
   }
   if (!(await confirmOverwrite())) return { ok: false, reason: "cancelled" };
 
-  const currentLedger = normalizeLegacyLedger(await readCurrentLedger(), { omitEmptyOperations: true });
+  const currentRaw = await readCurrentLedger();
+  const currentLedger = normalizeLegacyLedger(currentRaw, { omitEmptyOperations: true });
   const serialized = serializeLegacyImport(currentLedger);
   const recoveryValidation = validateLegacyImport(currentLedger, { year, serializedBytes: new TextEncoder().encode(serialized).length });
   if (!recoveryValidation.ok) {
@@ -418,7 +431,20 @@ export async function importLegacyLedgerWithRecovery({
     throw backupFailure("Import recovery point failed", error);
   }
 
-  await writeLedger(validation.data);
+  const normalizedImport = {
+    balances: validation.data.balances || {},
+    entries: validation.data.entries || {},
+    settings: validation.data.settings || {},
+  };
+  const importedOperations = validation.data.operationsById;
+  const currentOperations = currentRaw?.operationsById;
+  if (importedOperations && Object.keys(importedOperations).length > 0) {
+    normalizedImport.operationsById = importedOperations;
+  } else if (currentOperations && Object.keys(currentOperations).length > 0) {
+    normalizedImport.operationsById = currentOperations;
+  }
+
+  await writeLedger(normalizedImport);
   return { ok: true, recovery };
 }
 

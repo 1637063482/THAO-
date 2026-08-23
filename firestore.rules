@@ -8,10 +8,18 @@ service cloud.firestore {
     }
 
     function validLegacyAmount(value) {
-      return safeInt(value)
+      return value == ""
+        || safeInt(value)
         || (value is string
-          && value.size() > 0 && value.size() <= 200
-          && value.matches("^[^A-Za-z_]+$"));
+          && value.size() <= 200
+          && (
+            value.matches("^[0-9]{1,16}$")
+            || value.matches("^=[0-9]{1,16}([+*/-][0-9]{1,16})*$")
+          ));
+    }
+
+    function validSettingValue(val) {
+      return val == null || safeInt(val) || (val is string && val.matches("^[0-9]{1,16}$"));
     }
 
     function validLegacySettingAmount(value) {
@@ -44,14 +52,6 @@ service cloud.firestore {
         && validOptionalAmount(balances, "end-bal-other");
     }
 
-    function validOptionalSettingAmount(settings, key) {
-      return !(key in settings) || settings[key] == null || validLegacySettingAmount(settings[key]);
-    }
-
-    function validOptionalDateSetting(settings, key) {
-      return !(key in settings) || validDate(settings[key]);
-    }
-
     function validLegacySettings(settings) {
       return settings is map
         && settings.size() <= 32
@@ -66,34 +66,34 @@ service cloud.firestore {
           "savings_goal_month_10", "savings_goal_month_11", "savings_goal_month_12",
           "savings_goal_annual"
         ])
-        && validOptionalSettingAmount(settings, "monthlyBudget")
-        && validOptionalSettingAmount(settings, "budget_1")
-        && validOptionalSettingAmount(settings, "budget_2")
-        && validOptionalSettingAmount(settings, "budget_3")
-        && validOptionalSettingAmount(settings, "budget_4")
-        && validOptionalSettingAmount(settings, "budget_5")
-        && validOptionalSettingAmount(settings, "budget_6")
-        && validOptionalSettingAmount(settings, "budget_7")
-        && validOptionalSettingAmount(settings, "budget_8")
-        && validOptionalSettingAmount(settings, "budget_9")
-        && validOptionalSettingAmount(settings, "budget_10")
-        && validOptionalSettingAmount(settings, "budget_11")
-        && validOptionalSettingAmount(settings, "budget_12")
-        && validOptionalSettingAmount(settings, "expense_streak")
-        && validOptionalDateSetting(settings, "expense_last_date")
-        && validOptionalSettingAmount(settings, "savings_goal_month_1")
-        && validOptionalSettingAmount(settings, "savings_goal_month_2")
-        && validOptionalSettingAmount(settings, "savings_goal_month_3")
-        && validOptionalSettingAmount(settings, "savings_goal_month_4")
-        && validOptionalSettingAmount(settings, "savings_goal_month_5")
-        && validOptionalSettingAmount(settings, "savings_goal_month_6")
-        && validOptionalSettingAmount(settings, "savings_goal_month_7")
-        && validOptionalSettingAmount(settings, "savings_goal_month_8")
-        && validOptionalSettingAmount(settings, "savings_goal_month_9")
-        && validOptionalSettingAmount(settings, "savings_goal_month_10")
-        && validOptionalSettingAmount(settings, "savings_goal_month_11")
-        && validOptionalSettingAmount(settings, "savings_goal_month_12")
-        && validOptionalSettingAmount(settings, "savings_goal_annual");
+        && (!("monthlyBudget" in settings) || validSettingValue(settings.monthlyBudget))
+        && (!("budget_1" in settings) || validSettingValue(settings.budget_1))
+        && (!("budget_2" in settings) || validSettingValue(settings.budget_2))
+        && (!("budget_3" in settings) || validSettingValue(settings.budget_3))
+        && (!("budget_4" in settings) || validSettingValue(settings.budget_4))
+        && (!("budget_5" in settings) || validSettingValue(settings.budget_5))
+        && (!("budget_6" in settings) || validSettingValue(settings.budget_6))
+        && (!("budget_7" in settings) || validSettingValue(settings.budget_7))
+        && (!("budget_8" in settings) || validSettingValue(settings.budget_8))
+        && (!("budget_9" in settings) || validSettingValue(settings.budget_9))
+        && (!("budget_10" in settings) || validSettingValue(settings.budget_10))
+        && (!("budget_11" in settings) || validSettingValue(settings.budget_11))
+        && (!("budget_12" in settings) || validSettingValue(settings.budget_12))
+        && (!("expense_streak" in settings) || validSettingValue(settings.expense_streak))
+        && (!("expense_last_date" in settings) || validDate(settings.expense_last_date))
+        && (!("savings_goal_month_1" in settings) || validSettingValue(settings.savings_goal_month_1))
+        && (!("savings_goal_month_2" in settings) || validSettingValue(settings.savings_goal_month_2))
+        && (!("savings_goal_month_3" in settings) || validSettingValue(settings.savings_goal_month_3))
+        && (!("savings_goal_month_4" in settings) || validSettingValue(settings.savings_goal_month_4))
+        && (!("savings_goal_month_5" in settings) || validSettingValue(settings.savings_goal_month_5))
+        && (!("savings_goal_month_6" in settings) || validSettingValue(settings.savings_goal_month_6))
+        && (!("savings_goal_month_7" in settings) || validSettingValue(settings.savings_goal_month_7))
+        && (!("savings_goal_month_8" in settings) || validSettingValue(settings.savings_goal_month_8))
+        && (!("savings_goal_month_9" in settings) || validSettingValue(settings.savings_goal_month_9))
+        && (!("savings_goal_month_10" in settings) || validSettingValue(settings.savings_goal_month_10))
+        && (!("savings_goal_month_11" in settings) || validSettingValue(settings.savings_goal_month_11))
+        && (!("savings_goal_month_12" in settings) || validSettingValue(settings.savings_goal_month_12))
+        && (!("savings_goal_annual" in settings) || validSettingValue(settings.savings_goal_annual));
     }
 
     function validLegacyEntry(key, value, ledgerYear) {
@@ -157,10 +157,9 @@ service cloud.firestore {
     function validLegacyDocumentForYear(data, ledgerYear) {
       return data is map
         && data.keys().hasOnly(["balances", "entries", "settings", "operationsById"])
-        && data.keys().hasAll(["balances", "entries", "settings"])
-        && validLegacyBalances(data.balances)
-        && validLegacyEntries(data.entries, ledgerYear)
-        && validLegacySettings(data.settings)
+        && (!("balances" in data) || validLegacyBalances(data.balances))
+        && (!("entries" in data) || validLegacyEntries(data.entries, ledgerYear))
+        && (!("settings" in data) || validLegacySettings(data.settings))
         && (!("operationsById" in data) || validLegacyOperations(data.operationsById, ledgerYear));
     }
 
@@ -195,10 +194,6 @@ service cloud.firestore {
       return days.size() <= index || (days[index] is int && days[index] >= 0 && days[index] <= 365);
     }
 
-    function validReminderPair(days, first, second) {
-      return days.size() <= first || days.size() <= second || days[first] != days[second];
-    }
-
     function validReminderDistinct(days) {
       return days.size() <= 1 || (days[0] != days[1]
           && (days.size() <= 2 || days[0] != days[2])
@@ -228,14 +223,8 @@ service cloud.firestore {
     }
 
     function validCalendarParts(year, month, day) {
-      return year >= 1 && year <= 9999
-        && month >= 1 && month <= 12
-        && day >= 1
-        && (
-          (month in [1, 3, 5, 7, 8, 10, 12] && day <= 31)
-          || (month in [4, 6, 9, 11] && day <= 30)
-          || (month == 2 && day <= (isLeapYear(year) ? 29 : 28))
-        );
+      return (month != 2 && (day <= 30 || (day == 31 && (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12))))
+        || (month == 2 && (day <= 28 || (day == 29 && isLeapYear(year))));
     }
 
     function validDate(value) {
