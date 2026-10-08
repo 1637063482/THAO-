@@ -232,6 +232,7 @@ body::before {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
 }
 .app-header-content { min-height: 52px; }
+.app-header-month-control,
 .app-header-year-control {
   min-height: 0;
   padding: 0;
@@ -240,10 +241,13 @@ body::before {
   background: transparent;
   color: var(--color-label);
 }
+.app-header-month-control:focus-within,
 .app-header-year-control:focus-within {
   box-shadow: none;
 }
+.app-header-month-control .app-dropdown,
 .app-header-year-control .app-dropdown { display: inline-flex; }
+.app-header-month-control .app-dropdown-trigger,
 .app-header-year-control .app-dropdown-trigger {
   border: none;
   background: transparent;
@@ -257,15 +261,20 @@ body::before {
   font-variant-numeric: tabular-nums;
   color: var(--color-label);
 }
+.app-header-month-control .app-dropdown-trigger[aria-expanded="true"],
 .app-header-year-control .app-dropdown-trigger[aria-expanded="true"] { box-shadow: none; }
+.app-header-month-control .app-dropdown-trigger:focus-visible,
 .app-header-year-control .app-dropdown-trigger:focus-visible {
   border-radius: 4px;
   box-shadow: var(--focus-ring);
 }
+.app-header-month-control .app-dropdown-value,
 .app-header-year-control .app-dropdown-value { color: inherit; }
+.app-header-month-control .app-dropdown-chevron,
 .app-header-year-control .app-dropdown-chevron { color: var(--color-label-secondary); }
-/* The year menu is compact and marks the selection by colour only. */
-.app-dropdown-menu.app-dropdown-menu-year {
+/* Header menus are compact and mark the selection by colour only. */
+.app-dropdown-menu.app-dropdown-menu-year,
+.app-dropdown-menu.app-dropdown-menu-month {
   min-width: 5.5rem;
 }
 .app-sync-status {

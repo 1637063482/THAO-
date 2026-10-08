@@ -170,6 +170,7 @@ export interface LifecycleController {
 export interface LedgerYearController extends LifecycleController {
   changeYear(value: string | number): boolean;
   refreshLabels(): void;
+  refreshMonthLabel(): void;
 }
 
 export interface LedgerSyncController {

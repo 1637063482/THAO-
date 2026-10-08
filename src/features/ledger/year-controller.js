@@ -32,6 +32,15 @@ export function createLedgerYearController({
     return documentRoot.getElementById("year-selector");
   }
 
+  /** @returns {HTMLElement | null} */
+  function monthSelector() {
+    return documentRoot.getElementById("month-selector");
+  }
+
+  function refreshMonthLabel() {
+    setAppDropdownValue(monthSelector(), String(state.activeMonthId));
+  }
+
   function refreshLabels() {
     documentRoot.title = `${state.activeYear} ${translate("app_name")}`;
     const startLabel = documentRoot.getElementById("ui-year-start-label");
@@ -39,6 +48,8 @@ export function createLedgerYearController({
     if (startLabel) startLabel.textContent = translate("year_start_assets", { year: state.activeYear });
     if (endLabel) endLabel.textContent = translate("year_end_assets", { year: state.activeYear });
     setAppDropdownValue(selector(), String(state.activeYear));
+    populateMonthOptions();
+    refreshMonthLabel();
   }
 
   function populateOptions() {
@@ -47,6 +58,17 @@ export function createLedgerYearController({
       const year = ledgerYear - 2 + offset;
       return { value: String(year), label: String(year), selected: year === state.activeYear };
     }));
+  }
+
+  function populateMonthOptions() {
+    setAppDropdownOptions(monthSelector(), Array.from({ length: 12 }, (_, index) => {
+      const month = index + 1;
+      return {
+        value: String(month),
+        label: translate("month_tab", { month }),
+        selected: month === state.activeMonthId,
+      };
+    }), { preserveValue: false });
   }
 
   function clearRenderedYear() {
@@ -85,7 +107,9 @@ export function createLedgerYearController({
     if (started) stop();
     populateOptions();
     refreshLabels();
-    unbindDropdown = bindAppDropdown(selector(), { onChange: value => changeYear(value) });
+    const unbindYear = bindAppDropdown(selector(), { onChange: value => changeYear(value) });
+    const unbindMonth = bindAppDropdown(monthSelector(), { onChange: value => switchMonth(Number(value)) });
+    unbindDropdown = () => { unbindYear(); unbindMonth(); };
     started = true;
   }
 
@@ -95,5 +119,5 @@ export function createLedgerYearController({
     started = false;
   }
 
-  return { changeYear, refreshLabels, start, stop };
+  return { changeYear, refreshLabels, refreshMonthLabel, start, stop };
 }

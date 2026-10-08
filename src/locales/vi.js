@@ -20,6 +20,7 @@ export default {
   // Nav
   yearly_expense_record: "Ghi chép chi tiêu năm",
   switch_year: "Đổi năm",
+  switch_month: "Đổi tháng",
   fx_label: "1 CNY =",
   fx_loading: "(đang tải...)",
   auto: "Tự động",

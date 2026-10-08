@@ -20,6 +20,15 @@ export function renderHeader(host) {
                 <input type="hidden" data-app-dropdown-hidden>
               </span>
             </span>
+            <span class="app-header-month-control inline-flex items-center cursor-pointer">
+              <span class="app-dropdown" id="month-selector" data-app-dropdown>
+                <button type="button" class="app-dropdown-trigger" data-app-dropdown-trigger role="combobox" aria-haspopup="listbox" aria-expanded="false" data-i18n-aria-label="switch_month">
+                  <span class="app-dropdown-value" data-app-dropdown-value></span>
+                </button>
+                <div class="app-dropdown-menu app-dropdown-menu-month" data-app-dropdown-menu role="listbox" hidden></div>
+                <input type="hidden" data-app-dropdown-hidden>
+              </span>
+            </span>
             <span class="hidden sm:inline text-slate-700" data-i18n="yearly_expense_record"></span>
           </h1>
         </div>

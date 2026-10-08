@@ -15,6 +15,7 @@ function createHarness() {
     stop: vi.fn(),
     changeYear: vi.fn(),
     refreshLabels: vi.fn(),
+    refreshMonthLabel: vi.fn(),
   };
   const today = { current: { year: 2026, month: 2, day: 28, dateKey: "2026-02-28" } };
   const dependencies = {
@@ -64,6 +65,7 @@ describe("legacy ledger controller", () => {
     expect(dependencies.renderLedger).toHaveBeenCalledOnce();
     expect(dependencies.refreshDashboardForMonth).toHaveBeenCalledOnce();
     expect(dependencies.refreshSavings).toHaveBeenCalledOnce();
+    expect(dependencies.yearController.refreshMonthLabel).toHaveBeenCalledOnce();
     expect(document.getElementById("btn-tab-3").className).toContain("active");
   });
 

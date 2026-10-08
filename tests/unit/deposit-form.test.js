@@ -1,9 +1,10 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { addMonths, bindDepositForm, bindDepositSettlementForm, parseAnnualRateToPpm, parseDepositForm, parseDepositSettlementForm, renderDepositForm, renderDepositSettlementForm } from "../../src/features/deposits/form.js";
 import { depositTermOptions } from "../../src/features/deposits/terms.js";
 
 describe("deposit form", () => {
+  afterEach(() => vi.useRealTimers());
   it.each([
     ["2026-01-29", 1, "2026-02-28"],
     ["2026-01-30", 1, "2026-02-28"],
@@ -132,6 +133,8 @@ describe("deposit form", () => {
   });
 
   it("links the term to the maturity date and keeps the picker label in sync", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00Z"));
     document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("host");
     bindDepositForm(host);
@@ -151,6 +154,8 @@ describe("deposit form", () => {
   });
 
   it("rejects a maturity date earlier than the opening date", () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-08-01T00:00:00Z"));
     document.body.innerHTML = '<div id="host">' + renderDepositForm({ locale: "vi", id: "fixture-id" }) + "</div>";
     const host = document.getElementById("host");
     bindDepositForm(host);

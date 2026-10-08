@@ -23,6 +23,7 @@ describe("app shell components", () => {
 
     [
       "year-selector",
+      "month-selector",
       "btn-lang-vi",
       "btn-lang-zh",
       "btn-curr-vnd",
@@ -128,6 +129,7 @@ describe("app shell components", () => {
 
     expect(header.classList.contains("app-header")).toBe(true);
     expect(header.querySelector(".app-header-year-control")).not.toBeNull();
+    expect(header.querySelector(".app-header-month-control")).not.toBeNull();
     expect(header.querySelector("#sync-status").getAttribute("role")).toBe("status");
     expect(header.querySelector("#sync-status").getAttribute("aria-live")).toBe("polite");
     expect(sidebar.classList.contains("app-sidebar")).toBe(true);

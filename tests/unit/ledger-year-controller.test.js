@@ -5,6 +5,7 @@ import { getAppDropdownValue, renderAppDropdown } from "../../src/components/fee
 function createHarness() {
   document.body.innerHTML = [
     renderAppDropdown({ id: "year-selector" }),
+    renderAppDropdown({ id: "month-selector" }),
     '<span id="ui-year-start-label"></span>',
     '<span id="ui-year-end-label"></span>',
     '<div id="months-container">old ledger</div>',
@@ -52,6 +53,21 @@ describe("ledger year controller", () => {
     expect(getAppDropdownValue(document.getElementById("year-selector"))).toBe("2026");
     expect(dependencies.resetYearState).not.toHaveBeenCalled();
     expect(dependencies.resubscribe).not.toHaveBeenCalled();
+  });
+
+  it("switches month from the global selector and reflects changes from the overview tabs", () => {
+    const { controller, dependencies, state } = createHarness();
+    controller.start();
+    const selector = document.getElementById("month-selector");
+
+    expect(getAppDropdownValue(selector)).toBe("7");
+    selector.querySelector("[data-app-dropdown-trigger]").click();
+    document.querySelector('[data-app-dropdown-option="3"]').click();
+    expect(dependencies.switchMonth).toHaveBeenCalledWith(3);
+
+    state.activeMonthId = 5;
+    controller.refreshMonthLabel();
+    expect(getAppDropdownValue(selector)).toBe("5");
   });
 
   it("blocks year switching while offline pending changes are unsaved", () => {

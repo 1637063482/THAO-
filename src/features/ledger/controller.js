@@ -48,6 +48,7 @@ export function createLedgerController({
     });
     const budgetMonth = documentRoot.getElementById("budget-label-month");
     if (budgetMonth) budgetMonth.textContent = String(state.activeMonthId);
+    yearController.refreshMonthLabel();
   }
 
   /** @param {string | number | undefined} value */

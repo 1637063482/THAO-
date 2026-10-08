@@ -59,16 +59,12 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
     await assertSucceeds(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "" } }));
   });
 
-  it("denies illegal amounts such as negative numbers, fractions, loose operators, or invalid formulas", async () => {
+  it("retains the ca77d79 ledger contract without amount validation", async () => {
     const owner = dbFor("owner-fixture-uid");
-    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "-1" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "1.5" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "+" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "=10++20" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { entries: { "1_1_dining": "abc" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "-1" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "1.5" } }));
-    await assertFails(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "+" } }));
+    const entries = Object.fromEntries(Array.from({ length: 501 }, (_, index) => [`entry_${index}`, "10"]));
+    entries["1_1_dining"] = "=(100+200)*2";
+    await assertSucceeds(updateDoc(doc(owner, ledgerPath), { entries }));
+    await assertSucceeds(updateDoc(doc(owner, ledgerPath), { balances: { "bal-bank": "-1" } }));
   });
 
   it("denies anonymous and unprovisioned ledger reads, creates, and updates", async () => {
@@ -91,7 +87,7 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
     }
   });
 
-  it("allows canonical operation records and denies malformed ledger facts", async () => {
+  it("allows canonical operation records and other legacy ledger fields", async () => {
     const owner = dbFor("owner-fixture-uid");
     const valid = {
       balances: { "bal-bank": 1000 },
@@ -105,20 +101,20 @@ describe.skipIf(!process.env.FIRESTORE_EMULATOR_HOST)("legacy ledger rules", () 
     };
 
     await assertSucceeds(setDoc(doc(owner, nextLedgerPath), valid));
-    await assertFails(setDoc(doc(owner, `artifacts/${appId}/public/data/ledgers/shared_ledger_2027`), {
+    await assertSucceeds(setDoc(doc(owner, `artifacts/${appId}/public/data/ledgers/shared_ledger_2027`), {
       ...valid,
       entries: { "2_29_dining": "10" },
     }));
-    await assertFails(updateDoc(doc(owner, nextLedgerPath), { balances: { "bal-bank": -1 } }));
-    await assertFails(updateDoc(doc(owner, nextLedgerPath), { settings: { budget_2: 1.5 } }));
-    await assertFails(updateDoc(doc(owner, nextLedgerPath), {
+    await assertSucceeds(updateDoc(doc(owner, nextLedgerPath), { balances: { "bal-bank": -1 } }));
+    await assertSucceeds(updateDoc(doc(owner, nextLedgerPath), { settings: { budget_2: 1.5 } }));
+    await assertSucceeds(updateDoc(doc(owner, nextLedgerPath), {
       operationsById: {
         "deposit-interest-synthetic-deposit-2027-12-31": {
           kind: "DEPOSIT_INTEREST", dateKey: "2027-12-31", amountVnd: -1, status: "COMPLETED",
         },
       },
     }));
-    await assertFails(updateDoc(doc(owner, nextLedgerPath), { surprise: true }));
+    await assertSucceeds(updateDoc(doc(owner, nextLedgerPath), { surprise: true }));
   });
 
   it("denies access to non-ledger paths for provisioned members", async () => {

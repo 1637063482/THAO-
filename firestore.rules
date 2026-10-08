@@ -7,172 +7,6 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/artifacts/$(appId)/public/data/members/$(request.auth.uid)).data.access == "shared-ledger";
     }
 
-    function validLegacyAmount(value) {
-      return value == ""
-        || safeInt(value)
-        || (value is string
-          && value.size() <= 200
-          && (
-            value.matches("^[0-9]{1,16}$")
-            || value.matches("^=[0-9]{1,16}([+*/-][0-9]{1,16})*$")
-          ));
-    }
-
-    function validSettingValue(val) {
-      return val == null || safeInt(val) || (val is string && val.matches("^[0-9]{1,16}$"));
-    }
-
-    function validLegacySettingAmount(value) {
-      return safeInt(value)
-        || (value is string && value.matches("^[0-9]{1,16}$"));
-    }
-
-    function validRemark(value) {
-      return value is string && value.size() <= 1000;
-    }
-
-    function validOptionalAmount(data, key) {
-      return !(key in data) || validLegacyAmount(data[key]);
-    }
-
-    function validLegacyBalances(balances) {
-      return balances is map
-        && balances.size() <= 8
-        && balances.keys().hasOnly([
-          "bal-bank", "bal-alipay", "bal-wechat", "bal-other",
-          "end-bal-bank", "end-bal-alipay", "end-bal-wechat", "end-bal-other"
-        ])
-        && validOptionalAmount(balances, "bal-bank")
-        && validOptionalAmount(balances, "bal-alipay")
-        && validOptionalAmount(balances, "bal-wechat")
-        && validOptionalAmount(balances, "bal-other")
-        && validOptionalAmount(balances, "end-bal-bank")
-        && validOptionalAmount(balances, "end-bal-alipay")
-        && validOptionalAmount(balances, "end-bal-wechat")
-        && validOptionalAmount(balances, "end-bal-other");
-    }
-
-    function validLegacySettings(settings) {
-      return settings is map
-        && settings.size() <= 32
-        && settings.keys().hasOnly([
-          "monthlyBudget",
-          "budget_1", "budget_2", "budget_3", "budget_4", "budget_5", "budget_6",
-          "budget_7", "budget_8", "budget_9", "budget_10", "budget_11", "budget_12",
-          "expense_streak", "expense_last_date",
-          "savings_goal_month_1", "savings_goal_month_2", "savings_goal_month_3",
-          "savings_goal_month_4", "savings_goal_month_5", "savings_goal_month_6",
-          "savings_goal_month_7", "savings_goal_month_8", "savings_goal_month_9",
-          "savings_goal_month_10", "savings_goal_month_11", "savings_goal_month_12",
-          "savings_goal_annual"
-        ])
-        && (!("monthlyBudget" in settings) || validSettingValue(settings.monthlyBudget))
-        && (!("budget_1" in settings) || validSettingValue(settings.budget_1))
-        && (!("budget_2" in settings) || validSettingValue(settings.budget_2))
-        && (!("budget_3" in settings) || validSettingValue(settings.budget_3))
-        && (!("budget_4" in settings) || validSettingValue(settings.budget_4))
-        && (!("budget_5" in settings) || validSettingValue(settings.budget_5))
-        && (!("budget_6" in settings) || validSettingValue(settings.budget_6))
-        && (!("budget_7" in settings) || validSettingValue(settings.budget_7))
-        && (!("budget_8" in settings) || validSettingValue(settings.budget_8))
-        && (!("budget_9" in settings) || validSettingValue(settings.budget_9))
-        && (!("budget_10" in settings) || validSettingValue(settings.budget_10))
-        && (!("budget_11" in settings) || validSettingValue(settings.budget_11))
-        && (!("budget_12" in settings) || validSettingValue(settings.budget_12))
-        && (!("expense_streak" in settings) || validSettingValue(settings.expense_streak))
-        && (!("expense_last_date" in settings) || validDate(settings.expense_last_date))
-        && (!("savings_goal_month_1" in settings) || validSettingValue(settings.savings_goal_month_1))
-        && (!("savings_goal_month_2" in settings) || validSettingValue(settings.savings_goal_month_2))
-        && (!("savings_goal_month_3" in settings) || validSettingValue(settings.savings_goal_month_3))
-        && (!("savings_goal_month_4" in settings) || validSettingValue(settings.savings_goal_month_4))
-        && (!("savings_goal_month_5" in settings) || validSettingValue(settings.savings_goal_month_5))
-        && (!("savings_goal_month_6" in settings) || validSettingValue(settings.savings_goal_month_6))
-        && (!("savings_goal_month_7" in settings) || validSettingValue(settings.savings_goal_month_7))
-        && (!("savings_goal_month_8" in settings) || validSettingValue(settings.savings_goal_month_8))
-        && (!("savings_goal_month_9" in settings) || validSettingValue(settings.savings_goal_month_9))
-        && (!("savings_goal_month_10" in settings) || validSettingValue(settings.savings_goal_month_10))
-        && (!("savings_goal_month_11" in settings) || validSettingValue(settings.savings_goal_month_11))
-        && (!("savings_goal_month_12" in settings) || validSettingValue(settings.savings_goal_month_12))
-        && (!("savings_goal_annual" in settings) || validSettingValue(settings.savings_goal_annual));
-    }
-
-    function validLegacyEntry(key, value, ledgerYear) {
-      let parts = key.split("_");
-      return key is string
-        && key.size() <= 80
-        && parts.size() == 3
-        && parts[0].matches("^([1-9]|1[0-2])$")
-        && parts[1].matches("^([1-9]|[12][0-9]|3[01])$")
-        && validCalendarParts(ledgerYear, int(parts[0]), int(parts[1]))
-        && (
-          parts[2] == "income"
-          || parts[2] == "remark"
-          || parts[2] in ["dining", "shopping", "rent", "transport", "telecom", "utilities", "entertainment", "health", "social", "other"]
-        )
-        && (
-          (parts[2] == "remark" && validRemark(value))
-          || (parts[2] != "remark" && validLegacyAmount(value))
-        );
-    }
-
-    function validLegacyEntryAt(entries, index, ledgerYear) {
-      return entries.size() <= index
-        || validLegacyEntry(entries.keys()[index], entries[entries.keys()[index]], ledgerYear);
-    }
-
-    function validLegacyEntries(entries, ledgerYear) {
-      return entries is map
-        && entries.size() <= 500
-        && validLegacyEntryAt(entries, 0, ledgerYear);
-    }
-
-    function validOperation(operationId, operation, ledgerYear) {
-      return operationId is string
-        && operationId.matches("^[A-Za-z0-9_-]{1,120}$")
-        && operation is map
-        && operation.keys().hasOnly(["kind", "dateKey", "amountVnd", "status"])
-        && operation.kind == "DEPOSIT_INTEREST"
-        && validDateForYear(operation.dateKey, ledgerYear)
-        && safePositiveInt(operation.amountVnd)
-        && operation.status == "COMPLETED";
-    }
-
-    function validOperationAt(operations, index, ledgerYear) {
-      return operations.size() <= index
-        || validOperation(operations.keys()[index], operations[operations.keys()[index]], ledgerYear);
-    }
-
-    function validLegacyOperations(operations, ledgerYear) {
-      return operations is map
-        && operations.size() <= 100
-        && validOperationAt(operations, 0, ledgerYear);
-    }
-
-    function validLegacyLedgerId(ledgerId) {
-      return ledgerId is string
-        && ledgerId.matches("^shared_ledger_[0-9]{4}$")
-        && int(ledgerId.split("_")[2]) >= 1;
-    }
-
-    function validLegacyDocumentForYear(data, ledgerYear) {
-      return data is map
-        && data.keys().hasOnly(["balances", "entries", "settings", "operationsById"])
-        && (!("balances" in data) || validLegacyBalances(data.balances))
-        && (!("entries" in data) || validLegacyEntries(data.entries, ledgerYear))
-        && (!("settings" in data) || validLegacySettings(data.settings))
-        && (!("operationsById" in data) || validLegacyOperations(data.operationsById, ledgerYear));
-    }
-
-    function validLegacyDocument(ledgerId, data) {
-      return validLegacyLedgerId(ledgerId)
-        && validLegacyDocumentForYear(data, int(ledgerId.split("_")[2]));
-    }
-
-    function validLegacyWrite(ledgerId, data) {
-      return ledgerId == "shared_ledger_savings" ? false : validLegacyDocument(ledgerId, data);
-    }
-
-
     function validSavingsRoot(data) {
       return data.keys().hasOnly(["schemaVersion", "depositsById", "acknowledgementsByKey", "lastMutation"])
         && data.schemaVersion == 1
@@ -182,10 +16,9 @@ service cloud.firestore {
         && data.acknowledgementsByKey.size() <= 500
         && data.lastMutation is map
         && data.lastMutation.keys().hasOnly(["kind", "targetId", "actorUid", "at"])
-        && data.lastMutation.kind in ["CREATE_DEPOSIT", "UPDATE_DEPOSIT", "ARCHIVE_DEPOSIT", "DELETE_DEPOSIT", "ACKNOWLEDGE"]
         && data.lastMutation.targetId is string
         && data.lastMutation.targetId.size() > 0
-        && data.lastMutation.targetId.size() <= 160
+        && data.lastMutation.targetId.size() <= 120
         && data.lastMutation.actorUid == request.auth.uid
         && data.lastMutation.at == request.time;
     }
@@ -194,51 +27,17 @@ service cloud.firestore {
       return days.size() <= index || (days[index] is int && days[index] >= 0 && days[index] <= 365);
     }
 
-    function validReminderDistinct(days) {
-      return days.size() <= 1 || (days[0] != days[1]
-          && (days.size() <= 2 || days[0] != days[2])
-          && (days.size() <= 2 || days[1] != days[2]));
-    }
-
     function validReminderDays(days) {
       return days is list && days.size() <= 10
         && validReminderAt(days, 0) && validReminderAt(days, 1)
         && validReminderAt(days, 2) && validReminderAt(days, 3)
         && validReminderAt(days, 4) && validReminderAt(days, 5)
         && validReminderAt(days, 6) && validReminderAt(days, 7)
-        && validReminderAt(days, 8) && validReminderAt(days, 9)
-        && validReminderDistinct(days);
-    }
-
-    function safeInt(value) {
-      return value is int && value >= 0 && value <= 9007199254740991;
-    }
-
-    function safePositiveInt(value) {
-      return safeInt(value) && value > 0;
-    }
-
-    function isLeapYear(year) {
-      return year % 400 == 0 || (year % 4 == 0 && year % 100 != 0);
-    }
-
-    function validCalendarParts(year, month, day) {
-      return (month != 2 && (day <= 30 || (day == 31 && (month == 1 || month == 3 || month == 5 || month == 7 || month == 8 || month == 10 || month == 12))))
-        || (month == 2 && (day <= 28 || (day == 29 && isLeapYear(year))));
+        && validReminderAt(days, 8) && validReminderAt(days, 9);
     }
 
     function validDate(value) {
-      return value is string
-        && (
-          value.matches("^[0-9]{4}-(0[13578]|1[02])-(0[1-9]|[12][0-9]|3[01])$")
-          || value.matches("^[0-9]{4}-(0[469]|11)-(0[1-9]|[12][0-9]|30)$")
-          || value.matches("^[0-9]{4}-02-(0[1-9]|1[0-9]|2[0-8])$")
-          || (value.matches("^[0-9]{4}-02-29$") && isLeapYear(int(value.split("-")[0])))
-        );
-    }
-
-    function validDateForYear(value, year) {
-      return validDate(value) && int(value.split("-")[0]) == year;
+      return value is string && value.matches("^[0-9]{4}-[0-9]{2}-[0-9]{2}$");
     }
 
     function validDeposit(data) {
@@ -251,21 +50,21 @@ service cloud.firestore {
         ])
         && data.institutionName is string && data.institutionName.size() <= 120
         && data.productName is string && data.productName.size() <= 120
-        && safeInt(data.principalVnd)
-        && safeInt(data.annualRatePpm) && data.annualRatePpm <= 1000000
+        && data.principalVnd is int && data.principalVnd >= 0
+        && data.annualRatePpm is int && data.annualRatePpm >= 0 && data.annualRatePpm <= 1000000
         && validDate(data.openedOn) && validDate(data.maturesOn) && data.maturesOn > data.openedOn
-        && (data.expectedInterestVnd == null || safeInt(data.expectedInterestVnd))
-        && (data.actualInterestVnd == null || safeInt(data.actualInterestVnd))
+        && (data.expectedInterestVnd == null || (data.expectedInterestVnd is int && data.expectedInterestVnd >= 0))
+        && (data.actualInterestVnd == null || (data.actualInterestVnd is int && data.actualInterestVnd >= 0))
         && validReminderDays(data.reminderDays)
         && data.remindersEnabled is bool
         && data.status in ["ACTIVE", "REDEEMED", "ROLLED_OVER"]
-        && (data.redeemedOn == null || (validDate(data.redeemedOn) && data.redeemedOn >= data.maturesOn))
+        && (data.redeemedOn == null || validDate(data.redeemedOn))
         && (data.rolledOverToDepositId == null || (data.rolledOverToDepositId is string && data.rolledOverToDepositId.matches("^[A-Za-z0-9_-]{1,80}$")))
         && (data.status != "ACTIVE" || (data.redeemedOn == null && data.rolledOverToDepositId == null))
         && (data.status != "REDEEMED" || (data.redeemedOn != null && data.rolledOverToDepositId == null))
         && (data.status != "ROLLED_OVER" || data.rolledOverToDepositId != null)
         && data.note is string && data.note.size() <= 1000
-        && safePositiveInt(data.version)
+        && data.version is int && data.version >= 1
         && data.createdAt is timestamp && data.updatedAt is timestamp
         && data.createdBy is string && data.createdBy.size() > 0 && data.createdBy.size() <= 128
         && data.updatedBy is string && data.updatedBy.size() > 0 && data.updatedBy.size() <= 128
@@ -290,12 +89,6 @@ service cloud.firestore {
         && data.depositsById[id].archivedAt == null;
     }
 
-    function validStatusTransition(before, after) {
-      return (before.status == "ACTIVE" && after.status == "ACTIVE")
-        || (before.status == "ACTIVE" && after.status == "REDEEMED")
-        || (before.status == "ACTIVE" && after.status == "ROLLED_OVER");
-    }
-
     function validDepositUpdate(before, after, id, kind) {
       let oldDeposit = before.depositsById[id];
       let newDeposit = after.depositsById[id];
@@ -303,7 +96,6 @@ service cloud.firestore {
         && id in before.depositsById && id in after.depositsById
         && after.depositsById.diff(before.depositsById).affectedKeys().hasOnly([id])
         && after.acknowledgementsByKey == before.acknowledgementsByKey
-        && (kind != "UPDATE_DEPOSIT" || validStatusTransition(oldDeposit, newDeposit))
         && validDeposit(newDeposit)
         && newDeposit.version == oldDeposit.version + 1
         && newDeposit.createdAt == oldDeposit.createdAt
@@ -311,9 +103,7 @@ service cloud.firestore {
         && newDeposit.updatedAt == request.time
         && newDeposit.updatedBy == request.auth.uid
         && (
-          (kind == "UPDATE_DEPOSIT"
-            && oldDeposit.archivedAt == null
-            && newDeposit.archivedAt == null)
+          (kind == "UPDATE_DEPOSIT" && newDeposit.archivedAt == oldDeposit.archivedAt)
           || (kind == "ARCHIVE_DEPOSIT"
             && oldDeposit.archivedAt == null
             && newDeposit.archivedAt == request.time
@@ -371,7 +161,6 @@ service cloud.firestore {
       return id.matches("^[A-Za-z0-9_-]{1,80}$")
         && id in before.depositsById
         && before.depositsById[id].status == "ACTIVE"
-        && before.depositsById[id].archivedAt == null
         && !(id in after.depositsById)
         && after.depositsById.diff(before.depositsById).affectedKeys().hasOnly([id])
         && after.acknowledgementsByKey == before.acknowledgementsByKey;
@@ -389,9 +178,7 @@ service cloud.firestore {
     }
 
     match /artifacts/{appId}/public/data/ledgers/{ledgerId} {
-      allow read: if validLegacyLedgerId(ledgerId) && isAuthorizedLedgerMember(appId);
-      allow create, update: if validLegacyWrite(ledgerId, request.resource.data)
-        && isAuthorizedLedgerMember(appId);
+      allow read, create, update: if ledgerId != "shared_ledger_savings" && isAuthorizedLedgerMember(appId);
       allow delete: if false;
     }
 

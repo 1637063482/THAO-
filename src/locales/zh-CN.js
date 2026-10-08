@@ -20,6 +20,7 @@ export default {
   // Nav
   yearly_expense_record: "年开支记录",
   switch_year: "切换年份",
+  switch_month: "切换月份",
   fx_label: "1 CNY =",
   fx_loading: "(加载中...)",
   auto: "自动",
