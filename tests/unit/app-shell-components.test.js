@@ -136,6 +136,20 @@ describe("app shell components", () => {
     expect(bottomNav.classList.contains("app-bottom-nav")).toBe(true);
   });
 
+  it("renders the glass dock lens and a current-mode label in the theme control", async () => {
+    const { renderHeader } = await import("../../src/components/app-shell/header.js");
+    const { renderCommandMenu } = await import("../../src/components/app-shell/command-menu.js");
+    const { renderBottomNav } = await import("../../src/components/app-shell/bottom-nav.js");
+    const header = document.querySelector("[data-app-header-host]");
+
+    renderHeader(header);
+    renderCommandMenu(header.querySelector("[data-app-command-menu-host]"));
+    renderBottomNav(document.getElementById("bottom-nav"));
+
+    expect(document.querySelector("#bottom-nav [data-bottom-nav-lens]")).not.toBeNull();
+    expect(document.querySelector("#btn-theme [data-theme-mode-label]")).not.toBeNull();
+  });
+
   it("generates desktop and mobile destinations from the same destination data", async () => {
     const { NAV_ITEMS } = await import("../../src/js/navigation.js");
     const { renderSidebar } = await import("../../src/components/app-shell/sidebar.js");
@@ -182,8 +196,8 @@ describe("app shell components", () => {
     document.getElementById("nav-secondary-close").click();
     expect(panel.classList.contains("open")).toBe(false);
     expect(panel.classList.contains("closing")).toBe(true);
-    expect(dialog.style.getPropertyValue("transition")).toBe("transform 800ms cubic-bezier(0.4, 0, 0.6, 1)");
-    expect(panel.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 640ms");
+    expect(dialog.style.getPropertyValue("transition")).toBe("transform 280ms cubic-bezier(0.4, 0, 0.6, 1)");
+    expect(panel.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 120ms");
     expect(document.body.classList.contains("app-modal-open")).toBe(false);
     expect(document.activeElement).toBe(button);
 

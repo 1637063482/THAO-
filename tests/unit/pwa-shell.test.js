@@ -20,7 +20,7 @@ describe("PWA acceptance shell", () => {
 
   it.each([["manifest.json"], ["public/manifest.json"]])("keeps %s aligned with the vi/VND private product", path => {
     const manifest = JSON.parse(read(path));
-    expect(manifest).toMatchObject({ name: "Sổ thu chi của Thao", short_name: "Sổ của Thao", lang: "vi", id: "/", start_url: "/", scope: "/", display: "standalone" });
+    expect(manifest).toMatchObject({ name: "Sổ thu chi của Thao", short_name: "Sổ của Thao", lang: "vi", id: "/", start_url: "/", scope: "/", display: "standalone", background_color: "#f2f6fb", theme_color: "#f2f6fb" });
     expect(manifest.name).not.toMatch(/2026|家庭|协同/i);
     expect(manifest.icons.map(icon => icon.src)).toEqual(expect.arrayContaining(["/app-icon-192.png", "/app-icon-512.png"]));
     expect(manifest.icons.some(icon => icon.purpose === "maskable")).toBe(true);
@@ -48,6 +48,7 @@ describe("PWA acceptance shell", () => {
   it("declares viewport-fit cover and install metadata for mobile safe areas", () => {
     const html = read("index.html");
     expect(html).toContain("viewport-fit=cover");
+    expect(html).toContain('<meta name="theme-color" content="#f2f6fb">');
     expect(html).toContain('name="apple-mobile-web-app-capable" content="yes"');
     expect(html).toContain('name="apple-mobile-web-app-title" content="Sổ của Thao"');
   });

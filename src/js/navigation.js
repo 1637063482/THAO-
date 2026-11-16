@@ -4,6 +4,7 @@
  * Provides 3 navigation destinations, single active-state tracking,
  * keyboard navigation support, and breakpoint-aware layout helpers.
  */
+import { initDockGesture } from "./dock-gesture.js";
 
 export var NAV_ITEMS = [
   { id: "overview", labelKey: "overview", icon: "home", route: "overview" },
@@ -17,6 +18,8 @@ var _activeId = "overview";
 var _router = null;
 /** @type {(() => void) | null} */
 var _cleanup = null;
+/** @type {ReturnType<typeof initDockGesture> | null} */
+var _dockGesture = null;
 
 /**
  * Get the currently active navigation item ID.
@@ -48,6 +51,7 @@ export function setActive(id) {
       el.setAttribute("aria-current", "false");
     }
   });
+  if (_dockGesture) _dockGesture.sync(id);
 
   return _activeId;
 }
@@ -105,9 +109,16 @@ export function initNavigation(router, root = document) {
     });
   });
 
+  /** @type {HTMLElement | null} */
+  var bottomNav = /** @type {HTMLElement | null} */ (root.querySelectorAll("#bottom-nav")[0] || null);
+  var dockGesture = bottomNav ? initDockGesture(bottomNav, { getActive: getActive, onCommit: navigateTo }) : null;
+  _dockGesture = dockGesture;
+
   _cleanup = function cleanupNavigation() {
     bindings.forEach(function (unbind) { unbind(); });
     bindings = [];
+    if (dockGesture) dockGesture.cleanup();
+    if (_dockGesture === dockGesture) _dockGesture = null;
     _cleanup = null;
     _router = null;
   };

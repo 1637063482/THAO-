@@ -29,6 +29,7 @@ import { createLedgerController } from "../features/ledger/controller.js";
 import { createLedgerInputController } from "../features/ledger/input-controller.js";
 import { createLedgerYearController } from "../features/ledger/year-controller.js";
 import { mountAnalyticsView, refreshAnalyticsView } from "../features/analytics/controller.js";
+import { isDarkTheme, nextThemeMode, readThemeMode, THEME_PREFERENCE_KEY } from "./theme-mode.js";
 
 export function startApplication() {
 
@@ -66,6 +67,7 @@ setRateGetter(function() { return state.fxMode === "auto" ? state.fxRateAuto : s
 
 mountAnalyticsView();
 applyI18n();
+initMobileKeyboardHandling();
 
 // Sync language toggle buttons with persisted locale.
 (function initLangButtons() {
@@ -208,6 +210,7 @@ function switchLanguage(locale) {
     if (emailInput) emailInput.placeholder = t("email");
     if (pwdInput) pwdInput.placeholder = t("password_placeholder");
     applyI18n();
+    updateThemeControl(themeMode);
     refreshAnalyticsView();
     window.dispatchEvent(new CustomEvent("app-locale-rendered", { detail: { locale } }));
     updateLedgerToggleLabel();
@@ -296,21 +299,64 @@ function applyManualRate() {
   savingsController.update();
 }
 
-function toggleDarkMode() {
-  document.documentElement.classList.toggle("dark");
-  var isDark = document.documentElement.classList.contains("dark");
-  localStorage.setItem("thao_dark_mode", isDark ? "1" : "0");
-  updateThemeIcon(isDark);
+const systemThemeQuery = window.matchMedia?.("(prefers-color-scheme: dark)");
+let themeMode = readThemeMode(localStorage);
+
+/** @param {"system" | "light" | "dark"} mode */
+function applyThemeMode(mode) {
+  var isDark = isDarkTheme(mode, systemThemeQuery?.matches ?? false);
+  document.documentElement.classList.toggle("dark", isDark);
+  document.documentElement.dataset.themeMode = mode;
+  var themeColor = document.querySelector('meta[name="theme-color"]');
+  if (themeColor) themeColor.setAttribute("content", isDark ? "#101722" : "#f2f6fb");
+  updateThemeControl(mode);
 }
 
-function updateThemeIcon(isDark) {
+/** @param {"system" | "light" | "dark"} mode */
+function updateThemeControl(mode) {
   var btn = document.getElementById("btn-theme");
   if (!btn) return;
+  var modeLabels = {
+    light: t("theme_mode_light"),
+    dark: t("theme_mode_dark"),
+    system: t("theme_mode_system"),
+  };
+  var modeLabel = modeLabels[mode];
+  var label = btn.querySelector("[data-theme-mode-label]");
   var iconEl = btn.querySelector("[data-icon]");
+  var actionLabel = t("theme_mode_action", { mode: modeLabel });
+  if (label) label.textContent = modeLabel;
+  btn.setAttribute("aria-label", actionLabel);
+  btn.title = actionLabel;
   if (iconEl) {
-    iconEl.dataset.icon = isDark ? "sun" : "moon";
+    iconEl.dataset.icon = mode === "system" ? "settings" : mode === "dark" ? "moon" : "sun";
     initIcons();
   }
+}
+
+function toggleDarkMode() {
+  themeMode = nextThemeMode(themeMode);
+  localStorage.setItem(THEME_PREFERENCE_KEY, themeMode);
+  applyThemeMode(themeMode);
+}
+
+systemThemeQuery?.addEventListener?.("change", function () {
+  if (themeMode === "system") applyThemeMode(themeMode);
+});
+
+applyThemeMode(themeMode);
+
+function initMobileKeyboardHandling() {
+  var viewport = window.visualViewport;
+  if (!viewport) return;
+  var update = function () {
+    var keyboardOpen = window.innerWidth < 768 && window.innerHeight - viewport.height > 140;
+    document.documentElement.classList.toggle("keyboard-open", keyboardOpen);
+  };
+  viewport.addEventListener("resize", update);
+  viewport.addEventListener("scroll", update);
+  window.addEventListener("resize", update);
+  update();
 }
 
 function togglePrivacy() {
@@ -363,16 +409,6 @@ function exportToCSV() {
   link.download = state.activeYear + "_" + t("app_name") + ".csv";
   link.click();
 }
-
-// Initialize dark mode from localStorage
-(function initDarkMode() {
-  var saved = localStorage.getItem("thao_dark_mode");
-  if (saved === "1") {
-    document.documentElement.classList.add("dark");
-    var iconEl = document.querySelector("#btn-theme [data-icon]");
-    if (iconEl) iconEl.dataset.icon = "sun";
-  }
-})();
 
 // Init icons on first load
 setTimeout(initIcons, 50);
