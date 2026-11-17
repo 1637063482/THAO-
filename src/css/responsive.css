@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Responsive & Multi-Terminal Adaptive Layout Stylesheet
+   Sidebar for Desktop/Tablet + Bottom Navigation for Mobile
+   ========================================================================== */
+
+/* ===== 1. Layout Structure & App Shell ===== */
+.app-shell-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100vh;
+  background: var(--color-bg, #f2f2f7);
+}
+
+@media (max-width: 767px) {
+  .app-shell-layout { flex-direction: column; }
+  #sidebar.app-sidebar { display: none; }
+  .app-main-content {
+    padding: 1rem .75rem;
+    padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+@media (min-width: 768px) {
+  .app-shell-layout { flex-direction: row; align-items: flex-start; }
+  #sidebar.app-sidebar {
+    display: flex;
+    flex: 0 0 15.5rem;
+    width: 15.5rem;
+    min-height: 0;
+    height: auto;
+    max-height: calc(100dvh - 7rem);
+    overflow-y: auto;
+    margin: 1rem 0 1rem 1rem;
+    padding: .75rem .5rem;
+    position: sticky;
+    top: 6rem;
+    align-self: flex-start;
+  }
+  .app-main-content {
+    width: auto;
+    max-width: none;
+    min-width: 0;
+    margin: 0;
+    padding: 1.5rem 1.5rem 2.5rem;
+  }
+}
+
+/* ===== 2. Mobile Bottom Nav (< 768px) ===== */
+.app-bottom-nav {
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 64px;
+  background: var(--color-surface, #ffffff);
+  border-top: 1px solid var(--color-separator, rgba(60, 60, 67, 0.12));
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  z-index: 40;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.04);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-label-secondary, #6e6e73);
+  transition: all 0.2s ease;
+  min-height: 48px;
+  touch-action: manipulation;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.bottom-nav-item.active {
+  color: var(--color-primary, #007aff);
+  font-weight: 700;
+}
+
+@media (min-width: 768px) {
+  .app-bottom-nav {
+    display: none !important;
+  }
+}
+
+/* ===== 3. Main Content Area ===== */
+.app-main-content {
+  flex: 1;
+  width: 100%;
+  max-width: 1380px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem;
+  padding-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .app-main-content {
+    padding: 1.5rem 2rem;
+    padding-bottom: 2.5rem;
+  }
+}
+
+/* ===== 4. Data Table / Matrix ===== */
+.table-card {
+  position: relative;
+  background: var(--color-surface, #ffffff);
+  border-radius: var(--radius-card, 12px);
+  border: 1px solid var(--color-separator, rgba(60, 60, 67, 0.12));
+  box-shadow: var(--shadow-card, 0 1px 2px rgba(0, 0, 0, 0.04));
+  overflow: hidden;
+}
+
+.table-scroll-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
+.table-scroll-wrap th {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface, #ffffff);
+  z-index: 10;
+}
+
+.table-scroll-wrap td.sticky-col,
+.table-scroll-wrap th.sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--color-surface, #ffffff);
+  z-index: 12;
+  box-shadow: 2px 0 6px -2px rgba(0, 0, 0, 0.08);
+}
+
+.table-scroll-wrap tr.row-today td.sticky-col {
+  background: rgba(0, 122, 255, 0.06);
+}
+
+/* ===== 5. Savings & Deposits ===== */
+.savings-view-workbench {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+@media (min-width: 1024px) {
+  .savings-view-workbench {
+    display: grid;
+    grid-template-columns: 380px minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+.deposit-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .deposit-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+}
+
+/* ===== 6. Modals ===== */
+.app-global-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-global-modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+
+@media (max-width: 599px) {
+  .app-global-modal:not(.app-global-modal--sheet) {
+    align-items: center;
+  }
+
+  .app-global-modal--sheet {
+    align-items: flex-end;
+  }
+
+  .app-global-modal--sheet .app-global-modal-dialog {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 24px 20px 32px 20px !important;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .app-global-modal--sheet.open .app-global-modal-dialog {
+    transform: translateY(0);
+  }
+
+  .app-global-modal--sheet.open .app-global-modal-dialog.app-global-modal-dialog--flip-start {
+    transform: translateY(100%);
+  }
+
+  .app-global-modal--sheet.closing .app-global-modal-dialog--flip-close {
+    transform: translate(var(--app-global-modal-flip-x), var(--app-global-modal-flip-y)) scale(var(--app-global-modal-flip-scale));
+  }
+}
+
+@media (min-width: 600px) {
+  .app-global-modal-dialog {
+    width: 100%;
+    max-width: 480px;
+    border-radius: 16px;
+    transform: scale(0.95);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .app-global-modal.open .app-global-modal-dialog {
+    transform: scale(1);
+  }
+}

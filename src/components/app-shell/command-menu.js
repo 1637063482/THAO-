@@ -10,9 +10,9 @@ export function renderCommandMenu(host) {
   documentRef.getElementById("nav-secondary")?.remove();
   const panel = documentRef.createElement("div");
   panel.id = "nav-secondary";
-  panel.className = "nav-secondary-group app-command-menu app-confirmation-backdrop";
+  panel.className = "nav-secondary-group app-command-menu app-confirmation-backdrop glass-5";
   panel.innerHTML = `
-      <section class="app-command-menu-dialog app-confirmation-dialog" role="dialog" aria-modal="true" aria-labelledby="nav-secondary-title">
+      <section class="app-command-menu-dialog app-confirmation-dialog glass-4" role="dialog" aria-modal="true" aria-labelledby="nav-secondary-title">
         <header class="app-command-menu-header">
           <div>
             <p class="app-command-menu-eyebrow" data-i18n="command_menu_eyebrow"></p>
@@ -31,8 +31,9 @@ export function renderCommandMenu(host) {
                 <button type="button" id="btn-lang-zh" data-command="language" data-locale="zh-CN" class="month-tab min-w-[40px] text-xs">中文</button>
               </div>
               <button type="button" data-command="theme" class="btn-ghost text-xs py-2" title="" data-i18n="toggle_theme" data-i18n-aria-label="toggle_theme" id="btn-theme">
-                <span data-icon="moon" data-icon-class="w-4 h-4"></span>
+                <span data-icon="settings" data-icon-class="w-4 h-4"></span>
                 <span data-i18n="toggle_theme"></span>
+                <span class="theme-mode-indicator" data-theme-mode-label></span>
               </button>
               <button type="button" data-command="privacy" class="btn-ghost text-xs py-2" title="" data-i18n="toggle_privacy" data-i18n-aria-label="toggle_privacy" id="btn-privacy">
                 <span data-icon="eye" data-icon-class="w-4 h-4"></span>
@@ -103,7 +104,7 @@ export function bindCommandMenu(root = document) {
   /** @type {HTMLElement|null} */
   const dialogElement = panelElement.querySelector(".app-command-menu-dialog");
   if (!dialogElement) return () => {};
-  const closeDuration = 800;
+  const closeDuration = 280;
   panelElement.setAttribute("aria-hidden", "true");
   const body = panelElement.ownerDocument.body;
   const motion = createGlobalModalMotion({

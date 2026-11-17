@@ -59,13 +59,9 @@ describe("Apple UI shell chrome", () => {
     expect(darkBottomRule).toMatch(/background:\s*var\(--color-surface\)/);
   });
 
-  it("blocks scrolling content behind the rounded shell gutters", () => {
-    expect(topBackdropRule).toMatch(/position:\s*fixed/);
-    expect(topBackdropRule).toMatch(/background:\s*var\(--color-bg\)/);
-    expect(topBackdropRule).toMatch(/z-index:\s*49/);
-    expect(bottomBackdropRule).toMatch(/position:\s*fixed/);
-    expect(bottomBackdropRule).toMatch(/background:\s*var\(--color-bg\)/);
-    expect(bottomBackdropRule).toMatch(/z-index:\s*49/);
+  it("keeps opaque shell gutters out of the glass layout", () => {
+    expect(topBackdropRule).toBe("");
+    expect(bottomBackdropRule).toBe("");
   });
 
   it("centers the command menu against the full viewport instead of the header", () => {
@@ -84,7 +80,8 @@ describe("Apple UI shell chrome", () => {
 
   it("uses trigger-origin FLIP motion without changing grid centering", () => {
     expect(commandDialogRule).toMatch(/transform-origin:\s*center/);
-    expect(commandDialogRule).toMatch(/transition:\s*transform 1080ms/);
+    expect(commandDialogRule).toMatch(/transition:\s*transform 240ms/);
+    expect(commandDialogRule).toMatch(/opacity 180ms/);
     expect(commandDialogRule).toMatch(/backface-visibility:\s*hidden/);
     expect(commandDialogRule).toMatch(/-webkit-backface-visibility:\s*hidden/);
     expect(css).toMatch(/#nav-secondary\.open \.app-command-menu-dialog\s*\{[^}]*opacity:\s*1/);

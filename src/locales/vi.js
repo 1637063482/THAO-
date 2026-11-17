@@ -26,7 +26,11 @@ export default {
   auto: "Tự động",
   manual: "Thủ công",
   apply: "Áp dụng",
-  toggle_theme: "Chuyển chế độ sáng/tối",
+  toggle_theme: "Giao diện",
+  theme_mode_light: "Sáng",
+  theme_mode_dark: "Tối",
+  theme_mode_system: "Theo hệ thống",
+  theme_mode_action: "Chuyển chế độ giao diện, hiện tại: {mode}",
   toggle_privacy: "Ẩn/hiện số tiền",
   more: "Thêm",
 

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title data-i18n="app_name">Sổ thu chi của Thao</title>
     <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#007aff">
+    <meta name="theme-color" content="#f2f6fb">
     <meta name="color-scheme" content="light dark">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -25,7 +25,7 @@
                 <h2 class="auth-title font-heading" data-i18n="app_name"></h2>
                 <p class="auth-subtitle" data-i18n="app_subtitle"></p>
             </div>
-            <form class="auth-form auth-card w-full" onsubmit="event.preventDefault();window.handleLogin()">
+            <form class="auth-form auth-card glass-2 w-full" onsubmit="event.preventDefault();window.handleLogin()">
                 <div class="auth-field-group" role="group" data-i18n-aria-label="login">
                     <div class="auth-field">
                         <label class="auth-field-label" for="auth-email" data-i18n="email"></label>
@@ -65,11 +65,11 @@
     <header data-app-header-host></header>
 
     <!-- App Shell: sidebar + main -->
-    <div class="flex flex-col md:flex-row max-w-[2200px] mx-auto">
+    <div class="app-shell-layout flex flex-col md:flex-row max-w-[2200px] mx-auto">
         <!-- Sidebar (desktop) -->
         <aside id="sidebar" data-app-sidebar-host></aside>
 
-        <main class="flex-1 min-w-0 px-4 md:px-6 py-6 pb-24 md:pb-6">
+        <main class="app-main-content flex-1 min-w-0 px-4 md:px-6 py-6 pb-24 md:pb-6">
             <!-- Overview content -->
             <div id="overview-content" class="space-y-5">
                 <!-- Dashboard -->
@@ -113,7 +113,7 @@
                 </div>
 
                 <!-- Month tabs -->
-                <div class="flex flex-wrap gap-1.5 justify-center" id="month-tabs"></div>
+                <div class="month-tabs-toolbar glass-1 flex flex-wrap gap-1.5 justify-center" id="month-tabs"></div>
 
                 <div class="ledger-view-toggle flex justify-end gap-2" role="group" aria-label="Chế độ xem / 视图">
                     <button type="button" id="btn-toggle-ledger" class="month-tab" onclick="window.toggleLedgerView()"></button>
@@ -186,7 +186,7 @@
 
     <!-- Quick-add modal -->
     <div id="quick-add-modal" class="app-global-modal" aria-hidden="true" aria-labelledby="quick-add-title">
-        <div id="quick-add-panel" class="app-global-modal-dialog p-6 w-full max-w-md mx-4" role="dialog" aria-modal="true" aria-labelledby="quick-add-title">
+        <div id="quick-add-panel" class="app-global-modal-dialog glass-4 p-6 w-full max-w-md mx-4" role="dialog" aria-modal="true" aria-labelledby="quick-add-title">
             <div class="flex items-center justify-between mb-5">
                 <h3 id="quick-add-title" class="text-lg font-black text-slate-800 font-heading">
                     <span data-icon="zap" data-icon-class="w-5 h-5 inline mr-1 text-blue-500"></span><span data-i18n="quick_add_title"></span>

@@ -1,5 +1,5 @@
-const openDuration = 1080;
-const openBackdropDuration = 320;
+const openDuration = 240;
+const openBackdropDuration = 180;
 const openEasing = "cubic-bezier(.22, 1, .36, 1)";
 const closeEasing = "cubic-bezier(0.4, 0, 0.6, 1)";
 const backdropHoldOffset = 0.7;
@@ -356,7 +356,7 @@ export function createGlobalModalController({
   trigger = null,
   focusSelector = "",
   targetWidth = 560,
-  closeDuration = 800,
+  closeDuration = 280,
   onClosed,
 }) {
   const documentRef = root.ownerDocument;

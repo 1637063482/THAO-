@@ -14,7 +14,7 @@ describe("application confirmation dialog", () => {
       expect(dialog?.querySelector("[data-confirm-accept]")?.className).toBe("btn-danger");
       /** @type {HTMLButtonElement} */ (dialog?.querySelector("[data-confirm-cancel]")).click();
       await expect(result).resolves.toBe(false);
-      vi.advanceTimersByTime(800);
+      vi.advanceTimersByTime(280);
       expect(document.querySelector("[role=alertdialog]")).toBeNull();
     } finally {
       vi.runAllTimers();
@@ -44,10 +44,10 @@ describe("application confirmation dialog", () => {
 
       dialog.querySelector("[data-confirm-cancel]").click();
       expect(host.classList.contains("closing")).toBe(true);
-      expect(dialog.style.getPropertyValue("transition")).toBe("transform 800ms cubic-bezier(0.4, 0, 0.6, 1)");
-      expect(host.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 640ms");
+      expect(dialog.style.getPropertyValue("transition")).toBe("transform 280ms cubic-bezier(0.4, 0, 0.6, 1)");
+      expect(host.style.getPropertyValue("transition")).toBe("opacity 160ms ease-in 120ms");
       expect(document.body.contains(host)).toBe(true);
-      vi.advanceTimersByTime(799);
+      vi.advanceTimersByTime(279);
       expect(document.body.contains(host)).toBe(true);
       vi.advanceTimersByTime(1);
       await expect(result).resolves.toBe(false);
@@ -82,12 +82,12 @@ describe("application confirmation dialog", () => {
       vi.runAllTimers();
       const dialog = /** @type {HTMLElement} */ (document.querySelector("[role=alertdialog]"));
       const host = dialog.parentElement;
-      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 320);
+      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 180);
       expect(openingBackdropAnimations).toHaveLength(1);
       expect(openingBackdropAnimations[0].keyframes).toEqual([{ opacity: 0 }, { opacity: 1 }]);
       dialog.querySelector("[data-confirm-cancel]").click();
 
-      const closeAnimations = animations.filter(({ options }) => options.duration === 800);
+      const closeAnimations = animations.filter(({ options }) => options.duration === 280);
       expect(closeAnimations).toHaveLength(2);
       expect(document.body.contains(host)).toBe(true);
 
@@ -146,7 +146,7 @@ describe("application confirmation dialog", () => {
       dialog,
       trigger,
       targetWidth: 560,
-      closeDuration: 800,
+      closeDuration: 280,
     });
 
     try {
@@ -155,8 +155,8 @@ describe("application confirmation dialog", () => {
       controller.close();
       controller.open();
 
-      const openingDialogAnimations = animations.filter(({ options }) => options.duration === 1080);
-      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 320);
+      const openingDialogAnimations = animations.filter(({ options }) => options.duration === 240);
+      const openingBackdropAnimations = animations.filter(({ options }) => options.duration === 180);
       expect(openingDialogAnimations).toHaveLength(2);
       expect(openingBackdropAnimations).toHaveLength(2);
       expect(openingDialogAnimations[1].keyframes[0]).toEqual({

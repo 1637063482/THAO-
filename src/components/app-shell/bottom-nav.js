@@ -5,14 +5,14 @@ import { NAV_ITEMS } from "../../js/navigation.js";
  */
 export function renderBottomNav(host) {
   if (!host) throw new Error("App bottom navigation host is required");
-  host.className = "app-bottom-nav";
+  host.className = "app-bottom-nav glass-3";
   host.setAttribute("role", "navigation");
   host.setAttribute("data-i18n-aria-label", "main_navigation");
-  host.innerHTML = NAV_ITEMS.map((item, index) => `
+  host.innerHTML = `<span class="bottom-nav-lens" data-bottom-nav-lens aria-hidden="true"></span>${NAV_ITEMS.map((item, index) => `
     <button type="button" class="bottom-nav-item${index === 0 ? " active" : ""}" data-nav="${item.id}" aria-current="${index === 0 ? "page" : "false"}">
       <span data-icon="${item.icon}" data-icon-class="w-5 h-5"></span>
       <span data-i18n="${item.labelKey}"></span>
     </button>
-  `).join("");
+  `).join("")}`;
   return host;
 }

@@ -1,5 +1,5 @@
 const CACHE_PREFIX = 'thao-expense-shell-';
-const CACHE_NAME = `${CACHE_PREFIX}v5`;
+const CACHE_NAME = `${CACHE_PREFIX}v6`;
 const CORE_ASSETS = [
   '/',
   '/index.html',

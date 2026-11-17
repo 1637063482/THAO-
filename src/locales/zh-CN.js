@@ -26,7 +26,11 @@ export default {
   auto: "自动",
   manual: "手动",
   apply: "应用",
-  toggle_theme: "切换深色/浅色模式",
+  toggle_theme: "外观模式",
+  theme_mode_light: "浅色",
+  theme_mode_dark: "深色",
+  theme_mode_system: "跟随系统",
+  theme_mode_action: "切换外观模式，当前：{mode}",
   toggle_privacy: "隐藏/显示金额",
   more: "更多",
 
